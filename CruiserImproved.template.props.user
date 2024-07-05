@@ -2,7 +2,7 @@
 <Project>
     <PropertyGroup>
         <LethalCompanyDir>\path\to\steamapps\common\Lethal Company\</LethalCompanyDir>
-        <TestProfileDir>\path\to\BepInEx\plugins\</TestProfileDir>
+        <TestProfileDir>\path\to\test\profile</TestProfileDir>
         <ShouldCopyToTestProfile>false</ShouldCopyToTestProfile>
     </PropertyGroup>
 </Project>

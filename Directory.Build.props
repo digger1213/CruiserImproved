@@ -1,12 +1,43 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <Import Project="Sdk.props" Sdk="Sigurd.Thunderstore.Sdk" />
+	
 	<PropertyGroup>
 		<LangVersion>latest</LangVersion>
+		<DebugType>pdbonly</DebugType>
+        <ClearCopyLocalPaths>true</ClearCopyLocalPaths>
 	</PropertyGroup>
 
 	<!-- Release optimisations -->
     <PropertyGroup Condition="$(Configuration) == 'Release'">
         <Optimize>true</Optimize>
     </PropertyGroup>
+
+	<!-- Thunderstore metadata -->
+	<PropertyGroup>
+		<IsThunderstorePackable>false</IsThunderstorePackable>
+		<ThunderstoreNamespace>DiggC</ThunderstoreNamespace>
+		<ThunderstoreReadmePath>$(MSBuildProjectDirectory)\..\README.md</ThunderstoreReadmePath>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<ThunderstoreBuildCopyPath Include="$(ProjectDir)..\LICENSE" Destination="/" />
+		<ThunderstoreBuildCopyPath Include="$(ProjectDir)..\CHANGELOG.md" Destination="/" />
+		<ThunderstorePublishCommunity Include="lethal-company" CategorySlugs="tweaks-and-quality-of-life;bug-fixes;mods;bepinex" />
+		<ThunderstoreDependency Include="BepInEx-BepInExPack" Version="5.4.2100" />
+	</ItemGroup>
+
+	<!-- MinVer -->
+    <PropertyGroup>
+        <MinVerDefaultPreReleaseIdentifiers>dev</MinVerDefaultPreReleaseIdentifiers>
+        <MinVerTagPrefix>v</MinVerTagPrefix>
+    </PropertyGroup>
+    <ItemGroup>
+        <PackageReference Include="MinVer" Version="4.3.0">
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+            <PrivateAssets>all</PrivateAssets>
+        </PackageReference>
+		<SetThunderstorePackageVersionTargetName Include="SetThunderstorePackageVersion" />
+    </ItemGroup>
 
     <!-- Import local user props -->
     <Import Project="$(SolutionDir)CruiserImproved.props.user" Condition="$(CI) != 'true'" />

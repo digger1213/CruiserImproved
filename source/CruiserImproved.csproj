@@ -2,10 +2,23 @@
 
 	<PropertyGroup>
 		<TargetFramework>netstandard2.1</TargetFramework>
-		<Nullable>disable</Nullable>
 		<RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
 	</PropertyGroup>
 
+	<!-- Thunderstore -->
+	<PropertyGroup>
+		<IsThunderstorePackable>true</IsThunderstorePackable>
+		<ThunderstoreName>CruiserImproved</ThunderstoreName>
+		<ThunderstoreDescription>Reliability improvements for the Company Cruiser.</ThunderstoreDescription>
+		<ThunderstoreWebsiteUrl>https://github.com/digger1213/CruiserImproved/</ThunderstoreWebsiteUrl>
+		<ThunderstoreIconPath>$(ProjectDir)assets\icons\icon.png</ThunderstoreIconPath>
+	</PropertyGroup>
+	<ItemGroup>
+		<ThunderstoreBuildCopyPath Include="$(TargetDir)*.dll" Destination="BepInEx/plugins/$(ProjectName)/" />
+		<ThunderstoreBuildCopyPath Include="$(TargetDir)*.pdb" Destination="BepInEx/plugins/$(ProjectName)/" />
+	</ItemGroup>
+	
+	
     <ItemGroup Condition="$(CI) != 'true'">
         <Reference Include="Assembly-CSharp" Publicize="true">
             <HintPath>$(LethalCompanyDir)Lethal Company_Data/Managed/Assembly-CSharp.dll</HintPath>
@@ -39,10 +52,10 @@
       </PackageReference>
       <PackageReference Include="BepInEx.Core" Version="5.4.21" />
       <PackageReference Include="BepInEx.PluginInfoProps" Version="2.1.0" />
-      <PackageReference Include="UnityEngine.Modules" Version="2022.3.9"/>
+      <PackageReference Include="UnityEngine.Modules" Version="2022.3.9" />
     </ItemGroup>
 
     <Target Name="PostBuild" AfterTargets="PostBuildEvent" Condition="$(ShouldCopyToTestProfile)=='true'">
-	  <Copy SourceFiles="$(TargetDir)$(ProjectName).dll;$(TargetDir)$(ProjectName).pdb" DestinationFolder="$(TestProfileDir)DiggC_$(ProjectName)"/>
+	  <Copy SourceFiles="$(TargetDir)$(ProjectName).dll;$(TargetDir)$(ProjectName).pdb" DestinationFolder="$(TestProfileDir)DiggC_$(ProjectName)" />
     </Target>
 </Project>
