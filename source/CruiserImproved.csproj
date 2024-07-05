@@ -39,13 +39,10 @@
       </PackageReference>
       <PackageReference Include="BepInEx.Core" Version="5.4.21" />
       <PackageReference Include="BepInEx.PluginInfoProps" Version="2.1.0" />
-      <PackageReference Include="UnityEngine.Modules" Version="6000.0.5">
-        <PrivateAssets>all</PrivateAssets>
-        <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-      </PackageReference>
+      <PackageReference Include="UnityEngine.Modules" Version="2022.3.9"/>
     </ItemGroup>
 
     <Target Name="PostBuild" AfterTargets="PostBuildEvent" Condition="$(ShouldCopyToTestProfile)=='true'">
-      <Exec Command="xcopy $(TargetDir)*.dll $(TestProfileDir)DiggC_$(ProjectName) /I /Y&#xD;&#xA;xcopy $(TargetDir)*.pdb $(TestProfileDir)DiggC_$(ProjectName) /I /Y" />
+	  <Copy SourceFiles="$(TargetDir)$(ProjectName).dll;$(TargetDir)$(ProjectName).pdb" DestinationFolder="$(TestProfileDir)DiggC_$(ProjectName)"/>
     </Target>
 </Project>
