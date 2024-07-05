@@ -2,6 +2,7 @@
  A clientside mod to improve the behaviour of Lethal Company's 'Company Cruiser' and fix some issues with its usage such as low visibility, high damage received from small impacts, and fix bugs.
 
 ### Features
+All features can be configured or disabled in the generated .cfg file in BepInEx/config.
 - Ability to lean to look back around the side of the truck and through the small window by turning the camera around.
 - Increased seat height for better visibility over the Cruiser's hood.
 - Slight invulnerability for the Cruiser after taking damage to reduce the damage taken by rolling or multi-impacts at low speed.

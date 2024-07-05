@@ -19,6 +19,8 @@ namespace DiggCruiserImproved.Patches
         [HarmonyTranspiler]
         static IEnumerable<CodeInstruction> SpawnExplosion_Transpiler(IEnumerable<CodeInstruction> instructions)
         {
+            if (!UserConfig.PreventMissileKnockback.Value) return instructions;
+
             var codes = instructions.ToList();
 
             int findIndex = PatchUtils.LocateCodeSegment(0, codes, [

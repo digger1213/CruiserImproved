@@ -14,8 +14,6 @@ namespace DiggCruiserImproved.Patches
     internal class VehicleControllerPatches
     {
         static int CriticalThreshold = 2;
-        static float InvulnDuration = 1.0f;
-        static float CriticalInvulnDuration = 4.0f;
 
         class VehicleControllerData
         {
@@ -47,8 +45,11 @@ namespace DiggCruiserImproved.Patches
             }
 
             //Allow player to turn further backward for the lean mechanic
-            __instance.driverSeatTrigger.horizontalClamp = 163f;
-            __instance.passengerSeatTrigger.horizontalClamp = 163f;
+            if (UserConfig.AllowLean.Value)
+            {
+                __instance.driverSeatTrigger.horizontalClamp = 163f;
+                __instance.passengerSeatTrigger.horizontalClamp = 163f;
+            }
         }
 
         [HarmonyPatch("DealPermanentDamage")]
@@ -74,8 +75,11 @@ namespace DiggCruiserImproved.Patches
             float timeSinceDamage = Time.realtimeSinceStartup - extraData.timeLastDamaged;
             float timeSinceCriticallyDamaged = Time.realtimeSinceStartup - extraData.timeLastCriticalDamage;
 
-            bool isInvulnerable = timeSinceDamage < InvulnDuration; //TODO: Add config
-            bool isCritInvulnerable = timeSinceCriticallyDamaged < CriticalInvulnDuration;
+            float invulnDuration = UserConfig.CruiserInvulnerabilityDuration.Value;
+            float critInvulnDuration = UserConfig.CruiserCriticalInvulnerabilityDuration.Value;
+
+            bool isInvulnerable = timeSinceDamage < invulnDuration;
+            bool isCritInvulnerable = timeSinceCriticallyDamaged < critInvulnDuration;
 
             //Prevent damage less than what we last received if within I-frame duration
             if (isInvulnerable && extraData.lastDamageReceived >= damageAmount)
@@ -113,12 +117,12 @@ namespace DiggCruiserImproved.Patches
                 }
 
                 //Prevent car from dropping below 1HP if we have crit I-frames
-                if (timeSinceCriticallyDamaged < CriticalInvulnDuration)
+                if (timeSinceCriticallyDamaged < critInvulnDuration)
                 {
                     damageAmount = Mathf.Min(damageAmount, __instance.carHP - 1);
                     if(activatedCritThisDamage)
                     {
-                        CruiserImproved.Log.LogMessage($"Critical protection triggered for {CriticalInvulnDuration}s due to {damageAmount} vehicle damage");
+                        CruiserImproved.Log.LogMessage($"Critical protection triggered for {critInvulnDuration}s due to {damageAmount} vehicle damage");
 
                     }
                     else
@@ -146,8 +150,8 @@ namespace DiggCruiserImproved.Patches
             float timeSinceDamage = Time.realtimeSinceStartup - extraData.timeLastDamaged;
             float timeSinceCriticallyDamaged = Time.realtimeSinceStartup - extraData.timeLastCriticalDamage;
 
-            bool isInvulnerable = timeSinceDamage < InvulnDuration; //TODO: Add config
-            bool isCritInvulnerable = timeSinceCriticallyDamaged < CriticalInvulnDuration;
+            bool isInvulnerable = timeSinceDamage < UserConfig.CruiserInvulnerabilityDuration.Value;
+            bool isCritInvulnerable = timeSinceCriticallyDamaged < UserConfig.CruiserCriticalInvulnerabilityDuration.Value;
 
             if (isCritInvulnerable) return;
 
@@ -268,8 +272,6 @@ namespace DiggCruiserImproved.Patches
         [HarmonyTranspiler]
         static IEnumerable<CodeInstruction> OnCollisionEnter_Transpiler(IEnumerable<CodeInstruction> instructions)
         {
-
-            //Replace the less than 3 health instakill with less than 0 (so it never activates)
             var codes = instructions.ToList();
 
             FieldInfo carHP = typeof(VehicleController).GetField("carHP");
@@ -297,7 +299,7 @@ namespace DiggCruiserImproved.Patches
                 return codes;
             }
             
-            //Replace the 'less than 3 health, destroy car' code with 'deal carHP-2 damage or 2 damage, whichever is larger)
+            //Replace the 'less than 3 health, destroy car' code with 'deal carHP-2 damage or 2 damage, whichever is larger'. This has identical outcome to vanilla but allows DealPermanentDamage prefix to run first for I-frames
             codes.RemoveRange(targetIndex, removeEndIndex - targetIndex);
             codes.InsertRange(targetIndex, [
                 new(OpCodes.Ldarg_0),
@@ -308,21 +310,6 @@ namespace DiggCruiserImproved.Patches
                 new(OpCodes.Ldc_I4_2),
                 new(OpCodes.Call, typeof(Math).GetMethod("Max", [typeof(int), typeof(int)])),
                 ]);
-
-            //bool found = false;
-
-            //for (int i = 0; i < codes.Count - 2; i++)
-            //{
-            //    CodeInstruction code = codes[i];
-
-            //    if (code.opcode == OpCodes.Ldfld && (FieldInfo)code.operand == fieldFind && codes[i + 1].opcode == OpCodes.Ldc_I4_3)
-            //    {
-            //        codes[i + 1].opcode = OpCodes.Ldc_I4_0;
-            //        found = true;
-            //        break;
-            //    }
-            //}
-            //if (!found) CruiserImproved.Log.LogError("CompanyCruiserImproved: Failed to patch truck instakill in OnCollisionEnter!");
 
             return codes;
         }
