@@ -6,7 +6,6 @@ using System.Reflection;
 using System.Reflection.Emit;
 using Unity.Netcode;
 using UnityEngine;
-using UnityEngine.Diagnostics;
 
 namespace DiggCruiserImproved.Patches
 {
@@ -312,6 +311,18 @@ namespace DiggCruiserImproved.Patches
                 ]);
 
             return codes;
+        }
+
+        [HarmonyPatch("SetCarEffects")]
+        [HarmonyPrefix]
+        static void SetCarEffectsPrefix(VehicleController __instance, ref float setSteering)
+        {
+            //Fix the steering wheel desync bug
+            if (__instance.localPlayerInControl)
+            {
+                setSteering = 0f;
+                __instance.steeringWheelAnimFloat = __instance.steeringInput / 6f;
+            }
         }
     }
 }

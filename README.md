@@ -13,6 +13,7 @@ All features can be configured or disabled in the generated .cfg file in BepInEx
 - \[Host\] Prevent the gas pedal or brake pedal from being stuck down if the player leaves the Cruiser while holding them.
 - \[Client\] Fix small entities (anything except Eyeless Dog, Kidnapper Fox, Forest Giant, Old Bird) being impossible to run over.
 - \[Client\] Fix entities dying clientside but still alive for other players when run over.
+- \[Client\] Fix steering wheel visually desyncing from the actual steering angle.
 
 ### Compatibility
 Compatible with V56.
