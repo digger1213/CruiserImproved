@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project>
+    <PropertyGroup>
+        <LethalCompanyDir>\path\to\steamapps\common\Lethal Company\</LethalCompanyDir>
+        <TestProfileDir>\path\to\BepInEx\plugins\</TestProfileDir>
+        <ShouldCopyToTestProfile>false</ShouldCopyToTestProfile>
+    </PropertyGroup>
+</Project>

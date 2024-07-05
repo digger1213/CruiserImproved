@@ -1,0 +1,13 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+	<PropertyGroup>
+		<LangVersion>latest</LangVersion>
+	</PropertyGroup>
+
+	<!-- Release optimisations -->
+    <PropertyGroup Condition="$(Configuration) == 'Release'">
+        <Optimize>true</Optimize>
+    </PropertyGroup>
+
+    <!-- Import local user props -->
+    <Import Project="$(SolutionDir)CruiserImproved.props.user" Condition="$(CI) != 'true'" />
+</Project>
