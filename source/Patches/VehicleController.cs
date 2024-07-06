@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
+using System.Runtime.CompilerServices;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -19,6 +20,8 @@ namespace DiggCruiserImproved.Patches
             public int lastDamageReceived;
             public float timeLastDamaged;
             public float timeLastCriticalDamage;
+            public int hitsBlockedThisCrit;
+            public Coroutine destroyCoroutine;
         }
 
         static Dictionary<VehicleController, VehicleControllerData> vehicleData = new();
@@ -49,6 +52,16 @@ namespace DiggCruiserImproved.Patches
                 __instance.driverSeatTrigger.horizontalClamp = 163f;
                 __instance.passengerSeatTrigger.horizontalClamp = 163f;
             }
+        }
+
+        static System.Collections.IEnumerator DestroyAfterSeconds(VehicleController __instance, float seconds)
+        {
+            VehicleControllerData extraData = vehicleData[__instance];
+            yield return new WaitForSeconds(seconds);
+
+            __instance.DestroyCarServerRpc((int)GameNetworkManager.Instance.localPlayerController.playerClientId);
+            __instance.DestroyCar();
+            extraData.destroyCoroutine = null;
         }
 
         [HarmonyPatch("DealPermanentDamage")]
@@ -112,6 +125,7 @@ namespace DiggCruiserImproved.Patches
                 {
                     activatedCritThisDamage = true;
                     extraData.timeLastCriticalDamage = Time.realtimeSinceStartup;
+                    extraData.hitsBlockedThisCrit = 0;
                     timeSinceCriticallyDamaged = 0.0f;
                 }
 
@@ -119,14 +133,24 @@ namespace DiggCruiserImproved.Patches
                 if (timeSinceCriticallyDamaged < critInvulnDuration)
                 {
                     damageAmount = Mathf.Min(damageAmount, __instance.carHP - 1);
-                    if(activatedCritThisDamage)
+                    if (__instance.carHP - damageAmount == 1) //blocked a hit at 1hp, count as a block
                     {
-                        CruiserImproved.Log.LogMessage($"Critical protection triggered for {critInvulnDuration}s due to {damageAmount} vehicle damage");
+                        extraData.hitsBlockedThisCrit++;
+                        if (extraData.hitsBlockedThisCrit > UserConfig.MaxCriticalHitCount.Value && extraData.destroyCoroutine == null)
+                        {
+                            float timeUntilExplosion = UserConfig.CruiserCriticalInvulnerabilityDuration.Value - (Time.realtimeSinceStartup - extraData.timeLastCriticalDamage);
+                            extraData.destroyCoroutine = __instance.StartCoroutine(DestroyAfterSeconds(__instance, timeUntilExplosion));
+                        }
+                    }
+                    string blockedCounterStr = $"({extraData.hitsBlockedThisCrit}/{UserConfig.MaxCriticalHitCount.Value})";
+                    if (activatedCritThisDamage)
+                    {
+                        CruiserImproved.Log.LogMessage($"{blockedCounterStr} Critical protection triggered for {critInvulnDuration}s due to {damageAmount} vehicle damage");
 
                     }
                     else
                     {
-                        CruiserImproved.Log.LogMessage($"Critical protection reduced vehicle damage from {beforeCritDamage} to {damageAmount}");
+                        CruiserImproved.Log.LogMessage($"{blockedCounterStr} Critical protection reduced vehicle damage from {beforeCritDamage} to {damageAmount}");
                     }
                 }
             }
@@ -146,11 +170,25 @@ namespace DiggCruiserImproved.Patches
 
             VehicleControllerData extraData = vehicleData[__instance];
 
+            //if knocked into critical, reset critical related variables
+            if (__instance.carHP <= CriticalThreshold && __instance.carHP + amount > CriticalThreshold)
+            {
+                extraData.timeLastCriticalDamage = Time.realtimeSinceStartup;
+                extraData.hitsBlockedThisCrit = 0;
+            }
+
             float timeSinceDamage = Time.realtimeSinceStartup - extraData.timeLastDamaged;
             float timeSinceCriticallyDamaged = Time.realtimeSinceStartup - extraData.timeLastCriticalDamage;
 
             bool isInvulnerable = timeSinceDamage < UserConfig.CruiserInvulnerabilityDuration.Value;
             bool isCritInvulnerable = timeSinceCriticallyDamaged < UserConfig.CruiserCriticalInvulnerabilityDuration.Value;
+
+            //if receiving damage that will knock the car to 1hp, increase the hitsBlocked
+            if (!isInvulnerable && isCritInvulnerable && (__instance.carHP - amount == 1))
+            {
+                CruiserImproved.Log.LogMessage("Received critical damage blocked from network");
+                extraData.hitsBlockedThisCrit++;
+            }
 
             if (isCritInvulnerable) return;
 
@@ -163,11 +201,26 @@ namespace DiggCruiserImproved.Patches
             {
                 extraData.lastDamageReceived = amount;
             }
+        }
 
-            if (__instance.carHP <= CriticalThreshold && __instance.carHP + amount > CriticalThreshold)
+        [HarmonyPatch("Update")]
+        [HarmonyPostfix]
+        static void Update_Postfix(VehicleController __instance)
+        {
+            VehicleControllerData extraData = vehicleData[__instance];
+
+            bool networkDestroyImminent = extraData.hitsBlockedThisCrit > UserConfig.MaxCriticalHitCount.Value && __instance.carHP == 1;
+            if (networkDestroyImminent || extraData.destroyCoroutine != null)
             {
-                CruiserImproved.Log.LogMessage("Received critical car damage from network");
-                extraData.timeLastCriticalDamage = Time.realtimeSinceStartup;
+                __instance.underExtremeStress = true;
+
+                //ownership got transferred mid destruction from a client, let's start the coroutine here too
+                if(__instance.IsOwner && extraData.destroyCoroutine == null && !__instance.carDestroyed)
+                {
+                    float timeUntilExplosion = UserConfig.CruiserCriticalInvulnerabilityDuration.Value - (Time.realtimeSinceStartup - extraData.timeLastCriticalDamage);
+                    CruiserImproved.Log.LogMessage("Destruction coroutine transferred due to ownership switch");
+                    extraData.destroyCoroutine = __instance.StartCoroutine(DestroyAfterSeconds(__instance, timeUntilExplosion));
+                }
             }
         }
 
@@ -198,6 +251,24 @@ namespace DiggCruiserImproved.Patches
             codes.RemoveRange(searchTargetIndex, 3);
 
             return codes;
+        }
+
+        //Allow player to push a destroyed vehicle
+        [HarmonyPatch("DestroyCar")]
+        [HarmonyPostfix]
+        static void DestroyCar_Postfix(VehicleController __instance)
+        {
+            if (!UserConfig.AllowPushDestroyedCar.Value) return;
+
+            foreach(Transform child in __instance.transform)
+            {
+                if(child.name == "PushTrigger")
+                {
+                    child.GetComponent<InteractTrigger>().interactable = true;
+                    CruiserImproved.Log.LogMessage("Made car pushable");
+                    break;
+                }
+            }
         }
 
 

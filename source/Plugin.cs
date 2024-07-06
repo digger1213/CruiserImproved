@@ -36,23 +36,31 @@ namespace DiggCruiserImproved
     {
         internal static ConfigEntry<bool> AllowLean;
         internal static ConfigEntry<bool> PreventMissileKnockback;
+        internal static ConfigEntry<bool> AllowPushDestroyedCar;
         internal static ConfigEntry<float> SeatBoostScale;
         internal static ConfigEntry<float> CruiserInvulnerabilityDuration;
         internal static ConfigEntry<float> CruiserCriticalInvulnerabilityDuration;
+        internal static ConfigEntry<int> MaxCriticalHitCount;
         internal static void InitConfig()
         {
             ConfigFile config = CruiserImproved.Instance.Config;
-            AllowLean = config.Bind("Settings", "Allow Leaning", true, "If true, allow the player to look backward out the window or through the cabin window.");
-            PreventMissileKnockback = config.Bind("Settings", "Prevent Missile Knockback", true, "If true, prevent the player being ejected from seats by Old Bird missile knockback.");
+
+            AllowLean = config.Bind("General", "Allow Leaning", true, "If true, allow the player to look backward out the window or through the cabin window.");
+            PreventMissileKnockback = config.Bind("General", "Prevent Missile Knockback", true, "If true, prevent the player being ejected from seats by Old Bird missile knockback.");
+            AllowPushDestroyedCar = config.Bind("General", "Allow Pushing Destroyed Cruisers", true, "If true, allow players to push destroyed cruisers.");
 
             AcceptableValueRange<float> seatScale = new(0f, 1f);
-            SeatBoostScale = config.Bind("Settings", "Seat Boost Scale", 1.0f, new ConfigDescription("How much to boost the seat up? Set 0 to disable.", seatScale));
+            SeatBoostScale = config.Bind("General", "Seat Boost Scale", 1.0f, new ConfigDescription("How much to boost the seat up? Set 0 to disable.", seatScale));
 
             AcceptableValueRange<float> invulnerableDuration = new(0f, 2f);
-            CruiserInvulnerabilityDuration = config.Bind("Settings", "Cruiser Invulnerability Duration", 1.0f, new ConfigDescription("How long after taking damage is the Cruiser invulnerable for? Set 0 to disable.", invulnerableDuration));
+            CruiserInvulnerabilityDuration = config.Bind("Cruiser Health", "Cruiser Invulnerability Duration", 0.5f, new ConfigDescription("How long after taking damage is the Cruiser invulnerable for? Set 0 to disable.", invulnerableDuration));
 
-            AcceptableValueRange<float> criticalInvulnerableDuration = new(0f, 4f);
-            CruiserCriticalInvulnerabilityDuration = config.Bind("Settings", "Cruiser Critical Invulnerability Duration", 3.0f, new ConfigDescription("How long after critical damage (engine on fire) is the Cruiser invulnerable for? Set 0 to disable.", criticalInvulnerableDuration));
+            AcceptableValueRange<float> criticalInvulnerableDuration = new(0f, 6f);
+            CruiserCriticalInvulnerabilityDuration = config.Bind("Cruiser Health", "Cruiser Critical Invulnerability Duration", 4.0f, new ConfigDescription("How long after critical damage (engine on fire) is the Cruiser invulnerable for? Set 0 to disable.", criticalInvulnerableDuration));
+
+
+            AcceptableValueRange<int> criticalHitCount = new(0, 100);
+            MaxCriticalHitCount = config.Bind("Cruiser Health", "Critical Protection Hit Count", 1, new ConfigDescription("Number of hits the Cruiser can block during the Critical Invulnerability Duration. \nIf the Cruiser receives this many hits while critical, it will emit a sound cue before exploding once the duration is up.\nIf 0, any hit that triggers the critical state will also trigger this delayed explosion.", criticalHitCount));
         }
     }
 }
