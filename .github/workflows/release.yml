@@ -1,0 +1,40 @@
+name: Release
+
+on: 
+  release:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
+
+    - name: Restore dependencies
+      run: |
+        dotnet restore
+        dotnet tool restore
+
+    - name: Build
+      run: dotnet build -c Release --no-restore
+
+    - name: Upload Github release
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: gh release upload ${{ github.event.release.tag_name }} .source/bin/Release/netstandard2.1/dist/*.zip
+      
+    - name: Upload Thunderstore artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: thunderstore-build
+        path: |
+          ./source/bin/Release/netstandard2.1/dist/*.zip
+          ./source/assets/thunderstore.toml.user
+      
