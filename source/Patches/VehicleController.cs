@@ -400,20 +400,31 @@ namespace DiggCruiserImproved.Patches
             new(OpCodes.Br, afterCheckJumpOperand)]);
         }
 
-        //Fix entities only dying on clientside when run over
-        static void PatchLocalEntityKill(List<CodeInstruction> codes) 
+        //Fix slow impacts not actually damaging entities
+        static void PatchLocalEntityDamage(List<CodeInstruction> codes) 
         {
             //Replace all instances of KillEnemy with KillEnemyOnOwnerClient
-            MethodInfo methodFind = typeof(EnemyAI).GetMethod("KillEnemy", BindingFlags.Instance | BindingFlags.Public);
-            MethodInfo methodReplace = typeof(EnemyAI).GetMethod("KillEnemyServerRpc", BindingFlags.Instance | BindingFlags.Public);
+            MethodInfo hitEnemy = typeof(EnemyAI).GetMethod("HitEnemy", BindingFlags.Instance | BindingFlags.Public);
+            MethodInfo hitEnemyOnLocalClient = typeof(EnemyAI).GetMethod("HitEnemyOnLocalClient", BindingFlags.Instance | BindingFlags.Public);
 
-            foreach (CodeInstruction code in codes)
+            var get_zero = typeof(Vector2).GetMethod("get_zero", BindingFlags.Static | BindingFlags.GetProperty | BindingFlags.Public);
+
+            int insertBefore = PatchUtils.LocateCodeSegment(0, codes, [
+                new(OpCodes.Ldarg_0),
+                new(OpCodes.Ldfld),
+                new(OpCodes.Ldc_I4_1),
+                new(OpCodes.Ldc_I4),
+                new(OpCodes.Callvirt, hitEnemy)
+                ]);
+
+            if(insertBefore == -1)
             {
-                if (code.opcode == OpCodes.Callvirt && (MethodInfo)code.operand == methodFind)
-                {
-                    code.operand = methodReplace;
-                }
+                CruiserImproved.Log.LogError("PatchLocalEntityDamage: Failed to find HitEnemy call!");
+                return;
             }
+
+            codes[insertBefore + 4].operand = hitEnemyOnLocalClient;
+            codes.Insert(insertBefore, new(OpCodes.Call, get_zero));
         }
 
         [HarmonyPatch("CarReactToObstacle")]
@@ -423,7 +434,7 @@ namespace DiggCruiserImproved.Patches
             var codes = instructions.ToList();
 
             PatchSmallEntityCarKill(codes);
-            PatchLocalEntityKill(codes);
+            PatchLocalEntityDamage(codes);
 
             return codes;
         }
