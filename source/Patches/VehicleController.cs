@@ -1,4 +1,5 @@
-﻿using HarmonyLib;
+﻿using GameNetcodeStuff;
+using HarmonyLib;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -283,6 +284,83 @@ namespace DiggCruiserImproved.Patches
             __instance.moveInputVector = Vector2.zero;
         }
 
+        //Fix inputs still working while chat or pause menu is open        
+        [HarmonyPatch("GetVehicleInput")]
+        [HarmonyTranspiler]
+        static IEnumerable<CodeInstruction> GetVehicleInput_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator il)
+        {
+            var codes = instructions.ToList();
+
+            var currentDriver = typeof(VehicleController).GetField("currentDriver");
+            var isTypingChat = typeof(PlayerControllerB).GetField("isTypingChat");
+            var quickMenuManager = typeof(PlayerControllerB).GetField("quickMenuManager");
+            var isMenuOpen = typeof(QuickMenuManager).GetField("isMenuOpen");
+            var moveInputVector = typeof(VehicleController).GetField("moveInputVector");
+            var steeringWheelTurnSpeed = typeof(VehicleController).GetField("steeringWheelTurnSpeed");
+
+            if (currentDriver == null || isTypingChat == null || quickMenuManager == null || isMenuOpen == null || moveInputVector == null || steeringWheelTurnSpeed == null)
+            {
+                CruiserImproved.Log.LogError("Could not find fields for VehicleInput transpiler!");
+                return codes;
+            }
+
+            var get_zero = typeof(Vector2).GetMethod("get_zero", BindingFlags.Static | BindingFlags.GetProperty | BindingFlags.Public);
+
+            if(get_zero == null)
+            {
+                CruiserImproved.Log.LogError("Could not find vector method required for VehicleInput transpiler!");
+                return codes;
+            }
+
+            int insertIndex = PatchUtils.LocateCodeSegment(0, codes, [
+                new(OpCodes.Ldarg_0),
+                new(OpCodes.Ldfld, steeringWheelTurnSpeed),
+                new(OpCodes.Stloc_0)
+                ]);
+
+            if(insertIndex == -1)
+            {
+                CruiserImproved.Log.LogError("Could not find insertion point for VehicleInput transpiler!");
+            }
+
+            var labelMove = codes[insertIndex].labels;
+            var afterIfJump = il.DefineLabel();
+            var inIfJump = il.DefineLabel();
+            codes[insertIndex].labels = [afterIfJump];
+
+            CodeInstruction inIfBegin = new(OpCodes.Ldarg_0);
+            inIfBegin.labels.Add(inIfJump);
+
+            /*
+             * IL Code:
+             * 
+             *  if (this.currentDriver.isTypingChat || this.currentDriver.quickMenuManager.isMenuOpen)
+		     *  {
+			 *      this.moveInputVector = Vector2.zero;
+		     *  }
+             * 
+             */
+
+            codes.InsertRange(insertIndex, [
+                new(OpCodes.Ldarg_0),
+                new(OpCodes.Ldfld, currentDriver),
+                new(OpCodes.Ldfld, isTypingChat),
+                new(OpCodes.Brtrue_S, inIfJump),
+                new(OpCodes.Ldarg_0),
+                new(OpCodes.Ldfld, currentDriver),
+                new(OpCodes.Ldfld, quickMenuManager),
+                new(OpCodes.Ldfld, isMenuOpen),
+                new(OpCodes.Brfalse_S, afterIfJump),
+                inIfBegin,
+                new(OpCodes.Call, get_zero),
+                new(OpCodes.Stfld, moveInputVector)
+                ]);
+
+            codes[insertIndex].labels.AddRange(labelMove);
+
+            return codes;
+        }
+
         //Fix small entities (ie everything except Eyeless Dogs, Kidnapper Foxes, Forest Giants and Radmechs) not taking dying when run over
         static void PatchSmallEntityCarKill(List<CodeInstruction> codes)
         {
@@ -326,7 +404,7 @@ namespace DiggCruiserImproved.Patches
             }
         }
 
-        [HarmonyPatch(typeof(VehicleController), "CarReactToObstacle")]
+        [HarmonyPatch("CarReactToObstacle")]
         [HarmonyTranspiler]
         static IEnumerable<CodeInstruction> CarReactToObstacle_Transpiler(IEnumerable<CodeInstruction> instructions)
         {
@@ -386,7 +464,7 @@ namespace DiggCruiserImproved.Patches
 
         [HarmonyPatch("SetCarEffects")]
         [HarmonyPrefix]
-        static void SetCarEffectsPrefix(VehicleController __instance, ref float setSteering)
+        static void SetCarEffects_Prefix(VehicleController __instance, ref float setSteering)
         {
             //Fix the steering wheel desync bug
             if (__instance.localPlayerInControl)
