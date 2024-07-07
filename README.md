@@ -13,8 +13,10 @@ All features can be configured or disabled in the generated .cfg file in BepInEx
 ### Bugfixes
 - \[Host\] Prevent the gas pedal or brake pedal from being stuck down if the player leaves the Cruiser while holding them.
 - \[Client\] Fix small entities (anything except Eyeless Dog, Kidnapper Fox, Forest Giant, Old Bird) being impossible to run over.
-- \[Client\] Fix entities dying clientside but still alive for other players when run over.
 - \[Client\] Fix steering wheel visually desyncing from the actual steering angle.
+- \[Client\] Fixed Baboon Hawks requiring very high speed to run over.
+- \[Client\] Fixed controls continuing to work in the Cruiser while typing in chat or the pause menu is open.
+- \[Client\] Fixed slow collisions dealing 2 damage to entities clientside (thanks to [Buttery Stancakes](https://github.com/ButteryStancakes))
 
 ### Feedback
 
