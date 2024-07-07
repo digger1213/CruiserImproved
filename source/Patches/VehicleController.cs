@@ -204,6 +204,35 @@ namespace DiggCruiserImproved.Patches
             }
         }
 
+        [HarmonyPatch("FixedUpdate")]
+        [HarmonyPostfix]
+        static void FixedUpdate_Postfix(VehicleController __instance)
+        {
+            List<WheelCollider> wheels = [__instance.FrontLeftWheel, __instance.FrontRightWheel, __instance.BackLeftWheel, __instance.BackRightWheel];
+
+            Vector3 groundNormal = Vector3.zero;
+            int groundedWheelCount = 0;
+            foreach(WheelCollider wheel in wheels)
+            {
+                if(wheel.GetGroundHit(out var hit))
+                {
+                    groundNormal += hit.normal;
+                    groundedWheelCount++;
+                }
+            }
+            groundNormal = groundNormal.normalized;
+            if (groundedWheelCount < 3 || Vector3.Angle(-groundNormal, Physics.gravity) > 30f) return;
+
+            Vector3 carFrontHillDirection = Vector3.ProjectOnPlane(__instance.transform.forward, groundNormal).normalized;
+            Vector3 hillGravity = -groundNormal * Physics.gravity.magnitude;
+
+            Vector3 force = Vector3.ProjectOnPlane(hillGravity - Physics.gravity, carFrontHillDirection);
+
+            //CruiserImproved.Log.LogMessage("Anti-slip force magnitude " + force.magnitude);
+
+            __instance.mainRigidbody.AddForce(force, ForceMode.Acceleration);
+        }
+
         [HarmonyPatch("Update")]
         [HarmonyPostfix]
         static void Update_Postfix(VehicleController __instance)
