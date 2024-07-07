@@ -4,8 +4,10 @@ on:
   release:
 
 jobs:
-  build:
+  build-release:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
     - name: Checkout
       uses: actions/checkout@v4
@@ -28,7 +30,7 @@ jobs:
     - name: Upload Github release
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: gh release upload ${{ github.event.release.tag_name }} .source/bin/Release/netstandard2.1/dist/*.zip
+      run: gh release upload ${{ github.event.release.tag_name }} ./source/bin/Release/netstandard2.1/dist/*.zip
       
     - name: Upload Thunderstore artifact
       uses: actions/upload-artifact@v4
