@@ -369,13 +369,13 @@ namespace DiggCruiserImproved.Patches
                 return codes;
             }
             
-            //Replace the 'less than 3 health, destroy car' code with 'deal carHP-2 damage or 2 damage, whichever is larger'. This has identical outcome to vanilla but allows DealPermanentDamage prefix to run first for I-frames
+            //Replace the 'less than 3 health, destroy car' code with 'deal carHP-1 damage or 2 damage, whichever is larger'. This has identical outcome to vanilla but allows DealPermanentDamage prefix to run first for I-frames
             codes.RemoveRange(targetIndex, removeEndIndex - targetIndex);
             codes.InsertRange(targetIndex, [
                 new(OpCodes.Ldarg_0),
                 new(OpCodes.Ldarg_0),
                 new(OpCodes.Ldfld, carHP),
-                new(OpCodes.Ldc_I4_2),
+                new(OpCodes.Ldc_I4_1),
                 new(OpCodes.Sub),
                 new(OpCodes.Ldc_I4_2),
                 new(OpCodes.Call, typeof(Math).GetMethod("Max", [typeof(int), typeof(int)])),
