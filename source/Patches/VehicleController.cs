@@ -361,6 +361,18 @@ namespace DiggCruiserImproved.Patches
             return codes;
         }
 
+        [HarmonyPatch("DoTurboBoost")]
+        [HarmonyPrefix]
+        static bool DoTurboBoost_Prefix(VehicleController __instance)
+        {
+            //Prevent turbo or car jumping if chat is open or player is paused
+            if (__instance.localPlayerInControl && __instance.currentDriver)
+            {
+                if (__instance.currentDriver.isTypingChat || __instance.currentDriver.quickMenuManager.isMenuOpen) return false;
+            }
+            return true;
+        }
+
         //Fix small entities (ie everything except Eyeless Dogs, Kidnapper Foxes, Forest Giants and Radmechs) not taking dying when run over
         static void PatchSmallEntityCarKill(List<CodeInstruction> codes)
         {
