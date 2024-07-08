@@ -9,6 +9,8 @@ All features can be configured or disabled in the generated .cfg file in BepInEx
 - Short invulnerability for the Cruiser when critically damaged (engine on fire) allowing players to react and escape before the Cruiser explodes.
 - Prevent knockback from Old Bird missiles knocking players out of the seat.
 - Ability to push destroyed cruisers.
+- Prevent the cruiser from sliding sideways down slopes (ie, when dropped off the magnet on Artifice).
+- \[Host\] Prevent anyone in the lobby other than the driver pressing the eject button on cruisers. Disabled in the config by default.
 
 ### Bugfixes
 - \[Host\] Prevent the gas pedal or brake pedal from being stuck down if the player leaves the Cruiser while holding them.
@@ -17,6 +19,7 @@ All features can be configured or disabled in the generated .cfg file in BepInEx
 - \[Client\] Fixed Baboon Hawks requiring very high speed to run over.
 - \[Client\] Fixed controls continuing to work in the Cruiser while typing in chat or the pause menu is open.
 - \[Client\] Fixed slow collisions dealing 2 damage to entities clientside (thanks to [Buttery Stancakes](https://github.com/ButteryStancakes))
+- \[Client\] Fixed cruiser colliding with players standing on it, or colliding with entities standing in the back.
 
 ### Feedback
 

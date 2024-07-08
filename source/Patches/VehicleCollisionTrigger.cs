@@ -27,7 +27,6 @@ namespace CruiserImproved.Patches
             {
                 if(__instance.mainScript.physicsRegion.physicsTransform == player.physicsParent)
                 {
-                    CruiserImproved.Log.LogMessage("Prevented collision with player attached to cruiser!");
                     return false;
                 }
                 return true;
@@ -44,7 +43,6 @@ namespace CruiserImproved.Patches
                 Vector3 destination = enemyAI.mainScript.agent.destination;
                 if (navmeshOn.transform.IsChildOf(__instance.mainScript.transform) || __instance.insideTruckNavMeshBounds.ClosestPoint(destination) == destination)
                 {
-                    CruiserImproved.Log.LogMessage("Prevented collision with enemy in back of cruiser!");
                     return false;
                 }
                 return true;

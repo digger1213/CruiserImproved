@@ -1,3 +1,12 @@
+## 1.0.3
+
+### Features
+- Prevent the cruiser from sliding sideways down slopes (ie, when dropped off the magnet on Artifice).
+- \[Host\] Prevent anyone in the lobby other than the driver pressing the eject button on cruisers. Disabled in the config by default.
+
+### Bugfixes
+- \[Client\] Fixed cruiser colliding with players standing on it, or colliding with entities standing in the back.
+
 ## 1.0.2
 
 ### Bugfixes
