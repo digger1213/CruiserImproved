@@ -38,10 +38,10 @@ namespace CruiserImproved.Patches
                 {
                     return true;
                 }
-                //Prevent hitting entities inside the truck or trying to path into the truck
+                //Prevent hitting entities inside the truck
                 Behaviour navmeshOn = (Behaviour)enemyAI.mainScript.agent.navMeshOwner;
                 Vector3 destination = enemyAI.mainScript.agent.destination;
-                if (navmeshOn.transform.IsChildOf(__instance.mainScript.transform) || __instance.insideTruckNavMeshBounds.ClosestPoint(destination) == destination)
+                if (navmeshOn.transform.IsChildOf(__instance.mainScript.transform))
                 {
                     return false;
                 }
