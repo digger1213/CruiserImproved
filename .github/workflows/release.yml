@@ -39,4 +39,9 @@ jobs:
         path: |
           ./source/bin/Release/netstandard2.1/dist/*.zip
           ./source/assets/thunderstore.toml.user
+
+    - name: Publish to Thunderstore
+      env:
+        TCLI_AUTH_TOKEN: ${{ secrets.THUNDERSTORE_TOKEN }}
+      run: dotnet build -c Release --no-restore -target:ThunderstorePublish
       
