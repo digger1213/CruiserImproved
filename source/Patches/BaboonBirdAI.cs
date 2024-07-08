@@ -1,6 +1,6 @@
 ﻿using HarmonyLib;
 
-namespace DiggCruiserImproved.Patches
+namespace CruiserImproved.Patches
 {
     [HarmonyPatch(typeof(BaboonBirdAI))]
     internal class BaboonBirdAIPatches

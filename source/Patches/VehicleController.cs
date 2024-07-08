@@ -8,7 +8,7 @@ using System.Reflection.Emit;
 using Unity.Netcode;
 using UnityEngine;
 
-namespace DiggCruiserImproved.Patches
+namespace CruiserImproved.Patches
 {
     [HarmonyPatch(typeof(VehicleController))]
     internal class VehicleControllerPatches
@@ -253,7 +253,7 @@ namespace DiggCruiserImproved.Patches
                     CruiserImproved.Log.LogMessage("Destruction coroutine transferred due to ownership switch");
                     extraData.destroyCoroutine = __instance.StartCoroutine(DestroyAfterSeconds(__instance, timeUntilExplosion));
                 }
-            }
+            }            
         }
 
         [HarmonyPatch("Update")]

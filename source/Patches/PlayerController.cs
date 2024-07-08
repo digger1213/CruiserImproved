@@ -2,7 +2,7 @@
 using HarmonyLib;
 using UnityEngine;
 
-namespace DiggCruiserImproved.Patches
+namespace CruiserImproved.Patches
 {
     [HarmonyPatch(typeof(PlayerControllerB))]
     internal class PlayerControllerPatches

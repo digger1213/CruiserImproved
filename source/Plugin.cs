@@ -4,7 +4,7 @@ using BepInEx.Configuration;
 using BepInEx.Logging;
 using HarmonyLib.Tools;
 
-namespace DiggCruiserImproved 
+namespace CruiserImproved 
 {
     [BepInPlugin(modGUID, "CompanyCruiserImproved", modVersion)]
     internal class CruiserImproved : BaseUnityPlugin
@@ -39,7 +39,6 @@ namespace DiggCruiserImproved
         internal static ConfigEntry<bool> PreventMissileKnockback;
         internal static ConfigEntry<bool> AllowPushDestroyedCar;
         internal static ConfigEntry<bool> PreventPassengersEjectingDriver;
-        internal static ConfigEntry<bool> PreventCruiserSideslip;
         internal static ConfigEntry<float> SeatBoostScale;
 
         //Cruiser Health

@@ -7,7 +7,7 @@ using HarmonyLib;
 using MonoMod.Utils;
 using UnityEngine;
 
-namespace DiggCruiserImproved.Patches
+namespace CruiserImproved.Patches
 {
 
     [HarmonyPatch(typeof(Landmine))]
