@@ -14,8 +14,7 @@
 		<ThunderstoreIconPath>$(ProjectDir)assets\icons\icon.png</ThunderstoreIconPath>
 	</PropertyGroup>
 	<ItemGroup>
-		<ThunderstoreBuildCopyPath Include="$(TargetDir)*.dll" Destination="BepInEx/plugins/$(ProjectName)/" />
-		<ThunderstoreBuildCopyPath Include="$(TargetDir)*.pdb" Destination="BepInEx/plugins/$(ProjectName)/" />
+		<ThunderstoreBuildCopyPath Include="$(TargetPath);$(TargetDir)$(ProjectName).pdb" Destination="BepInEx/plugins/$(ProjectName)/" />
 	</ItemGroup>
 	
 	
