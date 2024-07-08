@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
-using System.Runtime.CompilerServices;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -524,6 +523,26 @@ namespace DiggCruiserImproved.Patches
                 setSteering = 0f;
                 __instance.steeringWheelAnimFloat = __instance.steeringInput / 6f;
             }
+        }
+
+        //Patch non-drivers ejecting drivers in the Cruiser
+        //Since we need to know who sent the rpc and SpringDriverSeatServerRpc doesn't take rpcParams we need to patch the rpc handler directly for access to this data
+        //The ulong handler id appears to be identical between versions so this patch *shouldn't* break
+        [HarmonyPatch("__rpc_handler_46143233")]
+        [HarmonyPrefix]
+        static bool SpringDriverSeatServerRpc_Handler_Prefix(NetworkBehaviour target, FastBufferReader reader, __RpcParams rpcParams)
+        {
+            if (!UserConfig.PreventPassengersEjectingDriver.Value) return true;
+            NetworkManager networkManager = target.NetworkManager;
+            if (networkManager == null || !networkManager.IsListening)
+            {
+                return true;
+            }
+            var targetVehicle = (VehicleController)target;
+
+            //don't process the rpc if the sender isn't the driver
+            if (rpcParams.Server.Receive.SenderClientId != targetVehicle.currentDriver.actualClientId) return false;
+            return true;
         }
     }
 }

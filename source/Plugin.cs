@@ -37,6 +37,7 @@ namespace DiggCruiserImproved
         internal static ConfigEntry<bool> AllowLean;
         internal static ConfigEntry<bool> PreventMissileKnockback;
         internal static ConfigEntry<bool> AllowPushDestroyedCar;
+        internal static ConfigEntry<bool> PreventPassengersEjectingDriver;
         internal static ConfigEntry<float> SeatBoostScale;
         internal static ConfigEntry<float> CruiserInvulnerabilityDuration;
         internal static ConfigEntry<float> CruiserCriticalInvulnerabilityDuration;
@@ -48,6 +49,7 @@ namespace DiggCruiserImproved
             AllowLean = config.Bind("General", "Allow Leaning", true, "If true, allow the player to look backward out the window or through the cabin window.");
             PreventMissileKnockback = config.Bind("General", "Prevent Missile Knockback", true, "If true, prevent the player being ejected from seats by Old Bird missile knockback.");
             AllowPushDestroyedCar = config.Bind("General", "Allow Pushing Destroyed Cruisers", true, "If true, allow players to push destroyed cruisers.");
+            PreventPassengersEjectingDriver = config.Bind("General", "Prevent Passengers Eject Driver", false, "If true, prevent anyone except the driver of the cruiser from using the eject button.");
 
             AcceptableValueRange<float> seatScale = new(0f, 1f);
             SeatBoostScale = config.Bind("General", "Seat Boost Scale", 1.0f, new ConfigDescription("How much to boost the seat up? Set 0 to disable.", seatScale));
