@@ -207,8 +207,11 @@ namespace DiggCruiserImproved.Patches
         [HarmonyPostfix]
         static void FixedUpdate_Postfix(VehicleController __instance)
         {
+            //Anti-hill sideslip
+            if (!UserConfig.AntiSideslip.Value) return;
             List<WheelCollider> wheels = [__instance.FrontLeftWheel, __instance.FrontRightWheel, __instance.BackLeftWheel, __instance.BackRightWheel];
 
+            //If at least 3 wheels are on the ground, apply a sideways force to the Cruiser, directed up the hill slope, to counter gravity pulling it down the slope.
             Vector3 groundNormal = Vector3.zero;
             int groundedWheelCount = 0;
             foreach(WheelCollider wheel in wheels)

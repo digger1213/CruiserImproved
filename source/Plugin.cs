@@ -34,14 +34,21 @@ namespace DiggCruiserImproved
 
     internal class UserConfig
     {
+        //General
         internal static ConfigEntry<bool> AllowLean;
         internal static ConfigEntry<bool> PreventMissileKnockback;
         internal static ConfigEntry<bool> AllowPushDestroyedCar;
         internal static ConfigEntry<bool> PreventPassengersEjectingDriver;
+        internal static ConfigEntry<bool> PreventCruiserSideslip;
         internal static ConfigEntry<float> SeatBoostScale;
+
+        //Cruiser Health
         internal static ConfigEntry<float> CruiserInvulnerabilityDuration;
         internal static ConfigEntry<float> CruiserCriticalInvulnerabilityDuration;
         internal static ConfigEntry<int> MaxCriticalHitCount;
+
+        //Physics
+        internal static ConfigEntry<bool> AntiSideslip;
         internal static void InitConfig()
         {
             ConfigFile config = CruiserImproved.Instance.Config;
@@ -63,6 +70,8 @@ namespace DiggCruiserImproved
 
             AcceptableValueRange<int> criticalHitCount = new(0, 100);
             MaxCriticalHitCount = config.Bind("Cruiser Health", "Critical Protection Hit Count", 1, new ConfigDescription("Number of hits the Cruiser can block during the Critical Invulnerability Duration. \nIf the Cruiser receives this many hits while critical, it will emit a sound cue before exploding once the duration is up.\nIf 0, any hit that triggers the critical state will also trigger this delayed explosion.", criticalHitCount));
+
+            AntiSideslip = config.Bind("Physics", "Anti-Sideslip", true, "If true, prevent the Cruiser from sliding sideways when on slopes.");
         }
     }
 }
