@@ -547,5 +547,58 @@ namespace CruiserImproved.Patches
             if (rpcParams.Server.Receive.SenderClientId != targetVehicle.currentDriver.actualClientId) return false;
             return true;
         }
+
+        //dropin for Physics.Linecast in the CanExitCar method. Return true if cannot use exitPoint, return false if can
+        static bool CheckExitPointInvalid(Vector3 playerPos, Vector3 exitPoint, int layerMask, QueryTriggerInteraction interaction)
+        {
+            //The vanilla linecast check to the exitPoint
+            if (Physics.Linecast(playerPos, exitPoint, layerMask, interaction)) return true;
+
+            //Added check: Make sure nothing is around the exit point
+            if (Physics.CheckCapsule(exitPoint, exitPoint+Vector3.up, 0.5f, layerMask, interaction)) return true;
+
+            return false;
+        }
+
+        [HarmonyPatch("CanExitCar")]
+        [HarmonyTranspiler]
+        static IEnumerable<CodeInstruction> CanExitCar_Transpiler(IEnumerable<CodeInstruction> instructions)
+        {
+            //Replace all Physics.Linecast with CheckExitPointInvalid so we can run more tests on the exit point
+            MethodInfo linecast = typeof(Physics).GetMethod("Linecast", BindingFlags.Static | BindingFlags.Public, null, [typeof(Vector3), typeof(Vector3), typeof(int), typeof(QueryTriggerInteraction)], null);
+            MethodInfo exitPointInvalid = typeof(VehicleControllerPatches).GetMethod("CheckExitPointInvalid", BindingFlags.Static | BindingFlags.NonPublic, null, [typeof(Vector3), typeof(Vector3), typeof(int), typeof(QueryTriggerInteraction)], null);
+
+            foreach (var instruction in instructions)
+            {
+                if (instruction.opcode == OpCodes.Call && (MethodInfo)instruction.operand == linecast)
+                {
+                    instruction.operand = exitPointInvalid;
+                }
+            }
+            return instructions;
+        }
+
+        [HarmonyPatch("ExitPassengerSideSeat")]
+        [HarmonyTranspiler]
+        static IEnumerable<CodeInstruction> ExitPassengerSideSeat_Transpiler(IEnumerable<CodeInstruction> instructions)
+        {
+            var codes = instructions.ToList();
+
+            MethodInfo canExitCar = typeof(VehicleController).GetMethod("CanExitCar");
+
+            //replace CanExitCar(true) with CanExxitCar(false) so it properly checks the passenger side
+            int index = PatchUtils.LocateCodeSegment(0, codes, [
+                new(OpCodes.Ldc_I4_1),
+                new(OpCodes.Call, canExitCar)
+                ]);
+
+            if(index == -1)
+            {
+                CruiserImproved.Log.LogError("Could not patch ExitPassengerSideSeat!");
+                return codes;
+            }
+            codes[index].opcode = OpCodes.Ldc_I4_0;
+            return codes;
+        }
     }
 }
