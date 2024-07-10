@@ -8,9 +8,11 @@ All features can be configured or disabled in the generated .cfg file in BepInEx
 - Slight invulnerability for the Cruiser after taking damage to reduce the damage taken by rolling or multi-impacts at low speed.
 - Short invulnerability for the Cruiser when critically damaged (engine on fire) allowing players to react and escape before the Cruiser explodes.
 - Prevent knockback from Old Bird missiles knocking players out of the seat.
-- Ability to push destroyed cruisers.
-- Prevent the cruiser from sliding sideways down slopes (ie, when dropped off the magnet on Artifice).
-- \[Host\] Prevent anyone in the lobby other than the driver pressing the eject button on cruisers. Disabled in the config by default.
+- Ability to push destroyed Cruisers.
+- Prevent the Cruiser from sliding sideways down slopes (ie, when dropped off the magnet on Artifice).
+- Prevent the Cruiser damage sound being detected by dogs if the engine is off, preventing them from repeatedly attacking Cruisers due to the sound they cause.
+- \[Host\] Prevent anyone in the lobby other than the driver pressing the eject button on Cruisers. Disabled in the config by default.
+- \[Host\] Entities pathfind around stationary Cruisers with no one seated, instead of walking straight through and causing damage.
 
 ### Bugfixes
 - \[Host\] Prevent the gas pedal or brake pedal from being stuck down if the player leaves the Cruiser while holding them.
@@ -19,7 +21,9 @@ All features can be configured or disabled in the generated .cfg file in BepInEx
 - \[Client\] Fixed Baboon Hawks requiring very high speed to run over.
 - \[Client\] Fixed controls continuing to work in the Cruiser while typing in chat or the pause menu is open.
 - \[Client\] Fixed slow collisions dealing 2 damage to entities clientside (thanks to [Buttery Stancakes](https://github.com/ButteryStancakes))
-- \[Client\] Fixed cruiser colliding with players standing on it, or colliding with entities standing in the back.
+- \[Client\] Fixed Cruiser colliding with players standing on it, or colliding with entities standing in the back.
+- \[Client\] Fixed passengers being able to exit the Cruiser into walls, which would often launch both the player and the Cruiser.
+- \[Client\] Improved driver and passenger exit space check. Player will be placed into the seat instead of outside if there is little or no room, such as when magneted to the ship.
 
 ### Feedback
 

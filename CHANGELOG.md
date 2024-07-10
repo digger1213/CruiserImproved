@@ -1,11 +1,25 @@
+## 1.1.0
+
+### Features
+- \[Host\] Entities pathfind around stationary Cruisers with no one seated, instead of walking straight through and causing damage.
+- Prevent the Cruiser damage sound being detected by dogs if the engine is off, preventing them from repeatedly attacking Cruisers due to the sound they cause.
+
+
+### Bugfixes
+- \[Client\] Fixed passengers being able to exit the Cruiser into walls, which would often launch both the player and the Cruiser.
+- \[Client\] Improved driver and passenger exit space check. Player will be placed into the seat instead of outside if there is little or no room, such as when magneted to the ship.
+
+### Other
+- Fixed issue from 1.0.3 that could prevent entities taking damage when run over
+
 ## 1.0.3
 
 ### Features
-- Prevent the cruiser from sliding sideways down slopes (ie, when dropped off the magnet on Artifice).
-- \[Host\] Prevent anyone in the lobby other than the driver pressing the eject button on cruisers. Disabled in the config by default.
+- Prevent the Cruiser from sliding sideways down slopes (ie, when dropped off the magnet on Artifice).
+- \[Host\] Prevent anyone in the lobby other than the driver pressing the eject button on Cruisers. Disabled in the config by default.
 
 ### Bugfixes
-- \[Client\] Fixed cruiser colliding with players standing on it, or colliding with entities standing in the back.
+- \[Client\] Fixed Cruiser colliding with players standing on it, or colliding with entities standing in the back.
 
 ## 1.0.2
 
@@ -20,7 +34,7 @@
 ## 1.0.1
 
 ### Features
-- Added the ability to push destroyed cruisers
+- Added the ability to push destroyed Cruisers
 
 ### Other
 - Improved critical damage protection to block a limited number of hits before exploding after the protection wears off, configured by `Critical Protection Hit Count`
