@@ -2,7 +2,6 @@
 using HarmonyLib;
 using BepInEx.Configuration;
 using BepInEx.Logging;
-using HarmonyLib.Tools;
 
 namespace CruiserImproved 
 {
@@ -39,6 +38,7 @@ namespace CruiserImproved
         internal static ConfigEntry<bool> PreventMissileKnockback;
         internal static ConfigEntry<bool> AllowPushDestroyedCar;
         internal static ConfigEntry<bool> PreventPassengersEjectingDriver;
+        internal static ConfigEntry<bool> EntitiesAvoidCruiser;
         internal static ConfigEntry<float> SeatBoostScale;
 
         //Cruiser Health
@@ -55,6 +55,7 @@ namespace CruiserImproved
             AllowLean = config.Bind("General", "Allow Leaning", true, "If true, allow the player to look backward out the window or through the cabin window.");
             PreventMissileKnockback = config.Bind("General", "Prevent Missile Knockback", true, "If true, prevent the player being ejected from seats by Old Bird missile knockback.");
             AllowPushDestroyedCar = config.Bind("General", "Allow Pushing Destroyed Cruisers", true, "If true, allow players to push destroyed cruisers.");
+            EntitiesAvoidCruiser = config.Bind("General", "Entities Avoid Cruiser", true, "If true, entities will pathfind around stationary cruisers with no driver.\nEyeless dogs will still attack it if they hear noise!");
             PreventPassengersEjectingDriver = config.Bind("General", "Prevent Passengers Eject Driver", false, "If true, prevent anyone except the driver of the cruiser from using the eject button.");
 
             AcceptableValueRange<float> seatScale = new(0f, 1f);

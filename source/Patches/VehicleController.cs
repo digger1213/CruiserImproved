@@ -7,6 +7,7 @@ using System.Reflection;
 using System.Reflection.Emit;
 using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.AI;
 
 namespace CruiserImproved.Patches
 {
@@ -15,22 +16,24 @@ namespace CruiserImproved.Patches
     {
         static int CriticalThreshold = 2;
 
-        class VehicleControllerData
+        public class VehicleControllerData
         {
             public int lastDamageReceived;
             public float timeLastDamaged;
             public float timeLastCriticalDamage;
             public int hitsBlockedThisCrit;
             public Coroutine destroyCoroutine;
+            public NavMeshObstacle navObstacle;
         }
 
-        static Dictionary<VehicleController, VehicleControllerData> vehicleData = new();
+        public static Dictionary<VehicleController, VehicleControllerData> vehicleData = new();
 
         [HarmonyPatch("Awake")]
         [HarmonyPostfix]
         private static void Awake_Postfix(VehicleController __instance)
         {
-            vehicleData.Add(__instance, new());
+            VehicleControllerData thisData = new();
+            vehicleData.Add(__instance, thisData);
 
             List<VehicleController> vehiclesToRemove = new();
             foreach (VehicleController vehicle in vehicleData.Keys)
@@ -51,6 +54,23 @@ namespace CruiserImproved.Patches
             {
                 __instance.driverSeatTrigger.horizontalClamp = 163f;
                 __instance.passengerSeatTrigger.horizontalClamp = 163f;
+            }
+
+            //Set up the car's NavMeshObstacle
+            if (UserConfig.EntitiesAvoidCruiser.Value)
+            {
+                GameObject cruiserNavBlockerObject = new("CruiserObstacle");
+                cruiserNavBlockerObject.transform.localPosition = new Vector3(0, -2, 0);
+                cruiserNavBlockerObject.transform.localScale = new Vector3(4, -2, 9);
+
+                var navmeshObstacle = cruiserNavBlockerObject.AddComponent<NavMeshObstacle>();
+                navmeshObstacle.carveOnlyStationary = true;
+                navmeshObstacle.carving = true;
+                navmeshObstacle.shape = NavMeshObstacleShape.Box;
+
+                thisData.navObstacle = navmeshObstacle;
+
+                cruiserNavBlockerObject.transform.parent = __instance.transform;
             }
         }
 
@@ -211,7 +231,7 @@ namespace CruiserImproved.Patches
             if (!UserConfig.AntiSideslip.Value) return;
             List<WheelCollider> wheels = [__instance.FrontLeftWheel, __instance.FrontRightWheel, __instance.BackLeftWheel, __instance.BackRightWheel];
 
-            //If at least 3 wheels are on the ground, apply a sideways force to the Cruiser, directed up the hill slope, to counter gravity pulling it down the slope.
+            //If at least 3 wheels are on the ground, apply a force to the Cruiser, directed up the hill slope, to counter gravity pulling it down the slope.
             Vector3 groundNormal = Vector3.zero;
             int groundedWheelCount = 0;
             foreach(WheelCollider wheel in wheels)
@@ -228,7 +248,13 @@ namespace CruiserImproved.Patches
             Vector3 carFrontHillDirection = Vector3.ProjectOnPlane(__instance.transform.forward, groundNormal).normalized;
             Vector3 hillGravity = -groundNormal * Physics.gravity.magnitude;
 
-            Vector3 force = Vector3.ProjectOnPlane(hillGravity - Physics.gravity, carFrontHillDirection);
+            Vector3 force = hillGravity - Physics.gravity; //apply the difference between real gravity and the 'hill' downward gravity
+
+            //if we're not in park, don't apply forces in the forward or backward direction (car should still roll down hills)
+            if(__instance.gear != CarGearShift.Park)
+            {
+                force = Vector3.ProjectOnPlane(force, carFrontHillDirection);
+            }
 
             //CruiserImproved.Log.LogMessage("Anti-slip force magnitude " + force.magnitude);
 
@@ -253,7 +279,13 @@ namespace CruiserImproved.Patches
                     CruiserImproved.Log.LogMessage("Destruction coroutine transferred due to ownership switch");
                     extraData.destroyCoroutine = __instance.StartCoroutine(DestroyAfterSeconds(__instance, timeUntilExplosion));
                 }
-            }            
+            }
+            if(UserConfig.EntitiesAvoidCruiser.Value && extraData.navObstacle)
+            {
+                bool enableObstacle = __instance.averageVelocity.magnitude < 0.5f && !__instance.currentDriver && !__instance.currentPassenger;
+
+                extraData.navObstacle.gameObject.SetActive(enableObstacle);
+            }
         }
 
         [HarmonyPatch("Update")]

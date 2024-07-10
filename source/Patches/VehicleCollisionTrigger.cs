@@ -1,6 +1,5 @@
 ﻿using GameNetcodeStuff;
 using HarmonyLib;
-using System.ComponentModel;
 using UnityEngine;
 
 namespace CruiserImproved.Patches
@@ -21,9 +20,11 @@ namespace CruiserImproved.Patches
                 return true;
             }
 
+            var extraData = VehicleControllerPatches.vehicleData[__instance.mainScript];
+
             PlayerControllerB player;
             //Patch hitting players standing on/in the cruiser
-            if (player = other.GetComponentInParent<PlayerControllerB>())
+            if (other.CompareTag("Player") && (player = other.GetComponentInParent<PlayerControllerB>()))
             {
                 if(__instance.mainScript.physicsRegion.physicsTransform == player.physicsParent)
                 {
@@ -32,15 +33,26 @@ namespace CruiserImproved.Patches
                 return true;
             }
             EnemyAICollisionDetect enemyAI;
-            if(enemyAI = other.GetComponentInParent<EnemyAICollisionDetect>())
+            if(other.CompareTag("Enemy") && (enemyAI = other.GetComponentInParent<EnemyAICollisionDetect>()))
             {
                 if(!enemyAI.mainScript || !enemyAI.mainScript.agent || !enemyAI.mainScript.agent.navMeshOwner)
                 {
                     return true;
                 }
+
+                if (UserConfig.EntitiesAvoidCruiser.Value)
+                {
+                    MouthDogAI dog = enemyAI.mainScript as MouthDogAI;
+                    bool isAngryDog = dog && dog.suspicionLevel > 8;
+                    //prevent hits if the cruiser is blocking entity navigation and it's not an angry dog
+                    if(!isAngryDog && extraData.navObstacle.gameObject.activeSelf)
+                    {
+                        return false;
+                    }
+                }
+
                 //Prevent hitting entities inside the truck
                 Behaviour navmeshOn = (Behaviour)enemyAI.mainScript.agent.navMeshOwner;
-                Vector3 destination = enemyAI.mainScript.agent.destination;
                 if (navmeshOn.transform.IsChildOf(__instance.mainScript.transform))
                 {
                     return false;
