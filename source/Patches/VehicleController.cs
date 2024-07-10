@@ -632,5 +632,53 @@ namespace CruiserImproved.Patches
             codes[index].opcode = OpCodes.Ldc_I4_0;
             return codes;
         }
+
+        [HarmonyPatch("PlayRandomClipAndPropertiesFromAudio")]
+        [HarmonyTranspiler]
+        static IEnumerable<CodeInstruction> PlayRandomClipAndPropertiesFromAudio_Transpiler(IEnumerable<CodeInstruction> instructions)
+        {
+            //Prevent the cruiser from creating detectable sounds on collision if the engine is off, to prevent dogs from repeatedly attacking cruisers.
+            if (!UserConfig.SilentCollisions.Value) return instructions;
+
+            var codes = instructions.ToList();
+
+            var getRoundManagerInstance = typeof(RoundManager).GetMethod("get_Instance", BindingFlags.Static | BindingFlags.Public | BindingFlags.GetProperty);
+            var ignitionStarted = typeof(VehicleController).GetField("ignitionStarted");
+
+            int index = PatchUtils.LocateCodeSegment(0, codes, [
+                new(OpCodes.Ldarg_S, 4),
+                new(OpCodes.Ldc_I4_2),
+                new(OpCodes.Blt),
+                new(OpCodes.Call, getRoundManagerInstance)
+                ]);
+
+            if(index == -1)
+            {
+                CruiserImproved.Log.LogError("Failed to find code segment in PlayRandomClipAndPropertiesFromAudio");
+                return codes;
+            }
+
+            int jumpIndex = PatchUtils.LocateCodeSegment(index, codes, [
+                new(OpCodes.Ldarg_S, 4),
+                new(OpCodes.Ldc_I4_M1),
+                new(OpCodes.Bne_Un),
+                ]);
+
+            if(jumpIndex == -1)
+            {
+                CruiserImproved.Log.LogError("Failed to find end jump segment in PlayRandomClipAndPropertiesFromAudio");
+                return codes;
+            }
+
+            Label destinationLabel = codes[jumpIndex].labels[0];
+
+            codes.InsertRange(index, [
+                new(OpCodes.Ldarg_0),
+                new(OpCodes.Ldfld, ignitionStarted),
+                new(OpCodes.Brfalse_S, destinationLabel)
+                ]);
+
+            return codes;
+        }
     }
 }
