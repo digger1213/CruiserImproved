@@ -267,6 +267,9 @@ namespace CruiserImproved.Patches
         {
             VehicleControllerData extraData = vehicleData[__instance];
 
+            //Fix sound not playing when magneted if this cruiser was loaded in
+            if (__instance.finishedMagneting) __instance.loadedVehicleFromSave = false;
+
             if (__instance.magnetedToShip) __instance.physicsRegion.priority = 1;
 
             bool networkDestroyImminent = extraData.hitsBlockedThisCrit > UserConfig.MaxCriticalHitCount.Value && __instance.carHP == 1;
