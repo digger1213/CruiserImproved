@@ -720,6 +720,22 @@ namespace CruiserImproved.Patches
         {
             var codes = instructions.ToList();
 
+            int retIndex = PatchUtils.LocateCodeSegment(0, codes, [
+                new(OpCodes.Ldarg_0),
+                new(OpCodes.Call),
+                new(OpCodes.Brtrue),
+                new(OpCodes.Ret)
+                ]);
+
+            if(retIndex == -1)
+            {
+                CruiserImproved.Log.LogError("Failed to remove owner check from StartMagneting!");
+            }
+            else
+            {
+                codes.RemoveRange(retIndex, 4);
+            }
+
             var collectItemsInTruck = typeof(VehicleController).GetMethod("CollectItemsInTruck", BindingFlags.NonPublic | BindingFlags.Instance);
             var fixMagnet = typeof(VehicleControllerPatches).GetMethod("FixMagnet", BindingFlags.NonPublic | BindingFlags.Static);
 
