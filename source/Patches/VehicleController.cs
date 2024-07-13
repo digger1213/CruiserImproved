@@ -267,6 +267,8 @@ namespace CruiserImproved.Patches
         {
             VehicleControllerData extraData = vehicleData[__instance];
 
+            if (__instance.magnetedToShip) __instance.physicsRegion.priority = 1;
+
             bool networkDestroyImminent = extraData.hitsBlockedThisCrit > UserConfig.MaxCriticalHitCount.Value && __instance.carHP == 1;
             if (networkDestroyImminent || extraData.destroyCoroutine != null)
             {
@@ -584,10 +586,24 @@ namespace CruiserImproved.Patches
         static bool CheckExitPointInvalid(Vector3 playerPos, Vector3 exitPoint, int layerMask, QueryTriggerInteraction interaction)
         {
             //The vanilla linecast check to the exitPoint
-            if (Physics.Linecast(playerPos, exitPoint, layerMask, interaction)) return true;
+            if (Physics.Linecast(playerPos, exitPoint, layerMask, interaction))
+            {
+                return true;
+            }
 
             //Added check: Make sure nothing is around the exit point
-            if (Physics.CheckCapsule(exitPoint, exitPoint+Vector3.up, 0.5f, layerMask, interaction)) return true;
+            if (Physics.CheckCapsule(exitPoint, exitPoint + Vector3.up, 0.5f, layerMask, interaction))
+            {
+                return true;
+            }
+
+            LayerMask maskAndVehicle = layerMask | LayerMask.GetMask("Vehicle");
+
+            //Added check: Check for ground below the exit point
+            if (!Physics.Linecast(exitPoint, exitPoint + Vector3.down * 4f, maskAndVehicle, interaction))
+            {
+                return true;
+            }
 
             return false;
         }
@@ -618,7 +634,7 @@ namespace CruiserImproved.Patches
 
             MethodInfo canExitCar = typeof(VehicleController).GetMethod("CanExitCar");
 
-            //replace CanExitCar(true) with CanExxitCar(false) so it properly checks the passenger side
+            //replace CanExitCar(true) with CanExitCar(false) so it properly checks the passenger side
             int index = PatchUtils.LocateCodeSegment(0, codes, [
                 new(OpCodes.Ldc_I4_1),
                 new(OpCodes.Call, canExitCar)
@@ -652,7 +668,7 @@ namespace CruiserImproved.Patches
                 new(OpCodes.Call, getRoundManagerInstance)
                 ]);
 
-            if(index == -1)
+            if (index == -1)
             {
                 CruiserImproved.Log.LogError("Failed to find code segment in PlayRandomClipAndPropertiesFromAudio");
                 return codes;
