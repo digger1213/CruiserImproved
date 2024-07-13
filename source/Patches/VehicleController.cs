@@ -716,13 +716,16 @@ namespace CruiserImproved.Patches
 
         [HarmonyPatch("StartMagneting")]
         [HarmonyTranspiler]
-        static IEnumerable<CodeInstruction> StartMagneting_Transpiler(IEnumerable<CodeInstruction> instructions)
+        static IEnumerable<CodeInstruction> StartMagneting_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator il)
         {
             var codes = instructions.ToList();
 
+            var getIsOwner = typeof(NetworkBehaviour).GetMethod("get_IsOwner", BindingFlags.Instance | BindingFlags.Public | BindingFlags.GetProperty);
+
             int retIndex = PatchUtils.LocateCodeSegment(0, codes, [
+                //locate early return if not owner to remove it
                 new(OpCodes.Ldarg_0),
-                new(OpCodes.Call),
+                new(OpCodes.Call, getIsOwner),
                 new(OpCodes.Brtrue),
                 new(OpCodes.Ret)
                 ]);
@@ -748,10 +751,20 @@ namespace CruiserImproved.Patches
                 CruiserImproved.Log.LogError("Failed to patch StartMagneting!");
             }
 
+            var jumpLabel = il.DefineLabel();
+            codes[index + 1].labels.Add(jumpLabel);
+
             codes.InsertRange(index + 1, [
+                //call custom fixMagnet method
                 new(OpCodes.Ldarg_0),
                 new(OpCodes.Call, fixMagnet),
-                new(OpCodes.Stloc_1)
+                new(OpCodes.Stloc_1),
+
+                //return early if not owner
+                new(OpCodes.Ldarg_0),
+                new(OpCodes.Call, getIsOwner),
+                new(OpCodes.Brtrue, jumpLabel),
+                new(OpCodes.Ret)
                 ]);
 
             return codes;
