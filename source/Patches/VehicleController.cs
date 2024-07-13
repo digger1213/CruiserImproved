@@ -696,5 +696,49 @@ namespace CruiserImproved.Patches
 
             return codes;
         }
+
+        //Method to override StartMagneting's target angle and position. Returns eulerAngles, sets magnetTargetPosition and magnetTargetRotation fields.
+        static Vector3 FixMagnet(VehicleController instance)
+        {
+            Vector3 eulerAngles = instance.transform.eulerAngles;
+            eulerAngles.y = Mathf.Round((eulerAngles.y + 90f) / 180f) * 180f - 90f;
+            eulerAngles.z = Mathf.Round(eulerAngles.z / 90f) * 90f;
+            eulerAngles.x += UnityEngine.Random.Range(-5f, 5f);
+            eulerAngles.x = Mathf.Clamp(eulerAngles.x, -20f, 20f);
+            instance.magnetTargetRotation = Quaternion.Euler(eulerAngles);
+
+            Vector3 offset = new(0f, -0.5f, -instance.boundsCollider.size.x * 0.5f * instance.boundsCollider.transform.lossyScale.x);
+            Vector3 localPos = StartOfRound.Instance.magnetPoint.position + offset;
+            instance.magnetTargetPosition = StartOfRound.Instance.elevatorTransform.InverseTransformPoint(localPos);
+
+            return eulerAngles;
+        }
+
+        [HarmonyPatch("StartMagneting")]
+        [HarmonyTranspiler]
+        static IEnumerable<CodeInstruction> StartMagneting_Transpiler(IEnumerable<CodeInstruction> instructions)
+        {
+            var codes = instructions.ToList();
+
+            var collectItemsInTruck = typeof(VehicleController).GetMethod("CollectItemsInTruck", BindingFlags.NonPublic | BindingFlags.Instance);
+            var fixMagnet = typeof(VehicleControllerPatches).GetMethod("FixMagnet", BindingFlags.NonPublic | BindingFlags.Static);
+
+            int index = PatchUtils.LocateCodeSegment(0, codes, [
+                new(OpCodes.Call, collectItemsInTruck)
+                ]);
+
+            if(index == -1)
+            {
+                CruiserImproved.Log.LogError("Failed to patch StartMagneting!");
+            }
+
+            codes.InsertRange(index + 1, [
+                new(OpCodes.Ldarg_0),
+                new(OpCodes.Call, fixMagnet),
+                new(OpCodes.Stloc_1)
+                ]);
+
+            return codes;
+        }
     }
 }
