@@ -24,6 +24,10 @@ All features can be configured or disabled in the generated .cfg file in BepInEx
 - \[Client\] Fixed Cruiser colliding with players standing on it, or colliding with entities standing in the back.
 - \[Client\] Fixed passengers being able to exit the Cruiser into walls, which would often launch both the player and the Cruiser.
 - \[Client\] Improved driver and passenger exit space check. Player will be placed into the seat instead of outside if there is little or no room, such as when magneted to the ship.
+- \[Client\] Fix clients seeing a saved Cruiser in the wrong spot when connecting.
+- \[Client\] Fix sliding off the Cruiser while the ship is taking off or landing.
+- \[Client\] Fix being abandoned when standing on or sitting in a magneted Cruiser while the ship is taking off.
+- \[Client\] Fix ship magnet attaching the Cruiser in the wrong position or rotation (will not stick frontfirst into the ship)
 
 ### Feedback
 

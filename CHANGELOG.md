@@ -1,3 +1,15 @@
+## 1.1.1
+
+### Bugfixes
+- \[Client\] Fix clients seeing a saved Cruiser in the wrong spot when connecting.
+- \[Client\] Fix sliding off the Cruiser while the ship is taking off or landing.
+- \[Client\] Fix being abandoned when standing on or sitting in a magneted Cruiser while the ship is taking off.
+- \[Client\] Fix ship magnet attaching the Cruiser in the wrong position or rotation (will not stick frontfirst into the ship)
+
+### Other
+- Improve driver and passenger exit check to not drop players off edges.
+- Fix Cruisers that existed at save load not playing the magnet sound effect.
+
 ## 1.1.0
 
 ### Features
