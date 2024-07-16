@@ -1,25 +1,24 @@
 ﻿using GameNetcodeStuff;
 using HarmonyLib;
 
-namespace CruiserImproved.Patches
+namespace CruiserImproved.Patches;
+
+[HarmonyPatch(typeof(ElevatorAnimationEvents))]
+internal class ElevatorAnimationEventsPatches
 {
-    [HarmonyPatch(typeof(ElevatorAnimationEvents))]
-    internal class ElevatorAnimationEventsPatches
+    [HarmonyPatch("ElevatorFullyRunning")]
+    [HarmonyPrefix]
+    static void ElevatorFullyRunning_Prefix()
     {
-        [HarmonyPatch("ElevatorFullyRunning")]
-        [HarmonyPrefix]
-        static void ElevatorFullyRunning_Prefix()
+        PlayerControllerB localPlayer = GameNetworkManager.Instance.localPlayerController;
+
+        if (localPlayer.physicsParent == null) return;
+
+        VehicleController vehicle = localPlayer.physicsParent.GetComponentInParent<VehicleController>();
+        if (vehicle && vehicle.magnetedToShip)
         {
-            PlayerControllerB localPlayer = GameNetworkManager.Instance.localPlayerController;
-
-            if (localPlayer.physicsParent == null) return;
-
-            VehicleController vehicle = localPlayer.physicsParent.GetComponentInParent<VehicleController>();
-            if (vehicle && vehicle.magnetedToShip)
-            {
-                localPlayer.isInElevator = true;
-                CruiserImproved.Log.LogMessage("Local player had magneted Vehicle parent and was not abandoned.");
-            }
+            localPlayer.isInElevator = true;
+            CruiserImproved.Log.LogMessage("Local player had magneted Vehicle parent and was not abandoned.");
         }
     }
 }
