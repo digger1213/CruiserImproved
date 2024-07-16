@@ -12,6 +12,7 @@
 		<ThunderstoreDescription>Reliability improvements for the Company Cruiser.</ThunderstoreDescription>
 		<ThunderstoreWebsiteUrl>https://github.com/digger1213/CruiserImproved/</ThunderstoreWebsiteUrl>
 		<ThunderstoreIconPath>$(ProjectDir)assets\icons\icon.png</ThunderstoreIconPath>
+		<HasBepInPlugin>true</HasBepInPlugin>
 	</PropertyGroup>
 	<ItemGroup>
 		<ThunderstoreBuildCopyPath Include="$(TargetPath);$(TargetDir)$(ProjectName).pdb" Destination="BepInEx/plugins/$(ProjectName)/" />

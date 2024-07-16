@@ -4,6 +4,7 @@
 	<PropertyGroup>
 		<LangVersion>latest</LangVersion>
 		<DebugType>pdbonly</DebugType>
+		<NoWarn>$(NoWarn);CS2002;Harmony003</NoWarn>
         <ClearCopyLocalPaths>true</ClearCopyLocalPaths>
 	</PropertyGroup>
 

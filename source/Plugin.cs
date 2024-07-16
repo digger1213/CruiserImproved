@@ -5,11 +5,12 @@ using BepInEx.Logging;
 
 namespace CruiserImproved 
 {
-    [BepInPlugin(modGUID, "CompanyCruiserImproved", modVersion)]
+    [BepInPlugin(modGUID, modName, modVersion)]
     internal class CruiserImproved : BaseUnityPlugin
     {
-        internal const string modGUID = "DiggC.CompanyCruiserImproved";
-        internal const string modVersion = "1.0.0";
+        internal const string modGUID = MyPluginInfo.PLUGIN_GUID;
+        internal const string modName = MyPluginInfo.PLUGIN_NAME;
+        internal const string modVersion = MyPluginInfo.PLUGIN_VERSION;
 
         private Harmony harmony;
 
