@@ -51,6 +51,19 @@ internal class VehicleControllerPatches
             vehicleData.Remove(vehicle);
         }
 
+        //Move all cruiser children from MoldSpore to Triggers so weedkiller can't shrink it
+        Transform[] allChildObjects = __instance.GetComponentsInChildren<Transform>();
+        int moldSporeLayer = LayerMask.NameToLayer("MoldSpore");
+        int replaceLayer = LayerMask.NameToLayer("Triggers");
+
+        foreach (Transform transform in allChildObjects)
+        {
+            if (transform.gameObject.layer == moldSporeLayer)
+            {
+                transform.gameObject.layer = replaceLayer;
+            }
+        }
+
         //Allow player to turn further backward for the lean mechanic
         if (NetworkSync.Config.AllowLean)
         {
