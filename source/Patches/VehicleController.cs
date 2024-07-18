@@ -746,8 +746,8 @@ internal class VehicleControllerPatches
         Vector3 eulerAngles = instance.transform.eulerAngles;
         eulerAngles.y = Mathf.Round((eulerAngles.y + 90f) / 180f) * 180f - 90f;
         eulerAngles.z = Mathf.Round(eulerAngles.z / 90f) * 90f;
-        eulerAngles.x += UnityEngine.Random.Range(-5f, 5f);
-        eulerAngles.x = Mathf.Clamp(eulerAngles.x, -20f, 20f);
+        float x = Mathf.Repeat(eulerAngles.x + UnityEngine.Random.Range(-5f, 5f) + 180, 360) - 180;
+        eulerAngles.x = Mathf.Clamp(x, -20f, 20f);
         instance.magnetTargetRotation = Quaternion.Euler(eulerAngles);
 
         Vector3 offset = new(0f, -0.5f, -instance.boundsCollider.size.x * 0.5f * instance.boundsCollider.transform.lossyScale.x);
