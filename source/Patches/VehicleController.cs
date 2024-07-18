@@ -25,6 +25,7 @@ internal class VehicleControllerPatches
         public int hitsBlockedThisCrit;
         public Coroutine destroyCoroutine;
         public NavMeshObstacle navObstacle;
+        public float lastSteeringAngle;
     }
 
     public static Dictionary<VehicleController, VehicleControllerData> vehicleData = new();
@@ -554,15 +555,49 @@ internal class VehicleControllerPatches
         return codes;
     }
 
+    //Rpc Args: NetworkObjectReference cruiserRef, float angle
+    static public void SyncSteeringRpc(ulong clientId, FastBufferReader reader)
+    {
+        reader.ReadNetworkSerializable(out NetworkObjectReference cruiserRef);
+        reader.ReadValue(out float angle);
+        if (!cruiserRef.TryGet(out NetworkObject cruiserNetObj)) return;
+        if (!cruiserNetObj.TryGetComponent(out VehicleController vehicle)) return;
+
+        if (NetworkManager.Singleton.IsHost)
+        {
+            CruiserImproved.Log.LogMessage("Sending steering data to clients!");
+            FastBufferWriter bufferWriter = new(16, Unity.Collections.Allocator.Temp);
+
+            bufferWriter.WriteValue(cruiserRef);
+            bufferWriter.WriteValue(angle);
+            NetworkSync.SendToClients("SyncSteeringRpc", bufferWriter);
+        }
+
+        vehicleData[vehicle].lastSteeringAngle = angle;
+    }
+
     [HarmonyPatch("SetCarEffects")]
     [HarmonyPrefix]
     static void SetCarEffects_Prefix(VehicleController __instance, ref float setSteering)
     {
         //Fix the steering wheel desync bug
+        setSteering = 0f;
         if (__instance.localPlayerInControl)
         {
-            setSteering = 0f;
             __instance.steeringWheelAnimFloat = __instance.steeringInput / 6f;
+            if (Mathf.Abs(__instance.steeringInput - vehicleData[__instance].lastSteeringAngle) > 0.02f)
+            {
+                FastBufferWriter bufferWriter = new(16, Unity.Collections.Allocator.Temp);
+
+                bufferWriter.WriteValue(new NetworkObjectReference(__instance.NetworkObject));
+                bufferWriter.WriteValue(__instance.steeringInput);
+                NetworkSync.SendToHost("SyncSteeringRpc", bufferWriter);
+            }
+        }
+        else
+        {
+            __instance.steeringWheelAnimFloat = vehicleData[__instance].lastSteeringAngle / 6f;
+            __instance.steeringInput = vehicleData[__instance].lastSteeringAngle;
         }
     }
 

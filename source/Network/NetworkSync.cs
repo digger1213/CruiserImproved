@@ -1,4 +1,5 @@
-﻿using System;
+﻿using CruiserImproved.Patches;
+using System;
 using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Netcode;
@@ -17,6 +18,8 @@ internal static class NetworkSync
         Config = new NetworkConfig();
         Config.CopyLocalConfig();
         SyncedWithHost = false;
+
+        AddAllMessageHandlers();
 
         if (NetworkManager.Singleton.IsHost)
         {
@@ -38,6 +41,13 @@ internal static class NetworkSync
 
             CruiserImproved.Log.LogMessage("Setup as client!");
         }
+    }
+
+    static public void AddAllMessageHandlers()
+    {
+        //no need to clean these up as NetworkManager's CustomMessageHandler gets destroyed when not in a lobby
+
+        SetupMessageHandler("SyncSteeringRpc", VehicleControllerPatches.SyncSteeringRpc);
     }
 
     static public void Cleanup()
@@ -66,6 +76,7 @@ internal static class NetworkSync
         NetworkManager.Singleton.CustomMessagingManager.UnregisterNamedMessageHandler("CruiserImproved." + name);
     }
 
+    //Send to specific clients
     static public void SendToClients(string name, IReadOnlyList<ulong> clients, FastBufferWriter buffer)
     {
         if (!NetworkManager.Singleton.IsHost)
@@ -74,6 +85,17 @@ internal static class NetworkSync
             return;
         }
         NetworkManager.Singleton.CustomMessagingManager.SendNamedMessage("CruiserImproved." + name, clients, buffer);
+    }
+
+    //Send to all CruiserImproved clients
+    static public void SendToClients(string name, FastBufferWriter buffer)
+    {
+        if (!NetworkManager.Singleton.IsHost)
+        {
+            CruiserImproved.Log.LogError("SendToClients called from client!");
+            return;
+        }
+        NetworkManager.Singleton.CustomMessagingManager.SendNamedMessage("CruiserImproved." + name, HostSyncedList, buffer);
     }
 
     static public void SendToHost(string name, FastBufferWriter buffer)
