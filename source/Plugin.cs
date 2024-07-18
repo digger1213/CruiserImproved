@@ -1,15 +1,14 @@
 ﻿using BepInEx;
 using HarmonyLib;
 using BepInEx.Logging;
+using System;
 
 namespace CruiserImproved; 
 
-[BepInPlugin(modGUID, modName, modVersion)]
+[BepInPlugin(MyPluginInfo.PLUGIN_GUID, MyPluginInfo.PLUGIN_NAME, MyPluginInfo.PLUGIN_VERSION)]
 internal class CruiserImproved : BaseUnityPlugin
 {
-    internal const string modGUID = MyPluginInfo.PLUGIN_GUID;
-    internal const string modName = MyPluginInfo.PLUGIN_NAME;
-    internal const string modVersion = MyPluginInfo.PLUGIN_VERSION;
+    static public Version Version = new(MyPluginInfo.PLUGIN_VERSION);
 
     private Harmony harmony;
 
@@ -20,7 +19,7 @@ internal class CruiserImproved : BaseUnityPlugin
     {
         Instance = this;
         Log = Logger;
-        harmony = new Harmony(modGUID);
+        harmony = new Harmony(MyPluginInfo.PLUGIN_GUID);
         UserConfig.InitConfig();
         harmony.PatchAll();
     }

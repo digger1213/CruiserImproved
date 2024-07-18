@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
+using CruiserImproved.Network;
 using GameNetcodeStuff;
 using HarmonyLib;
 using MonoMod.Utils;
@@ -13,14 +14,17 @@ namespace CruiserImproved.Patches;
 [HarmonyPatch(typeof(Landmine))]
 internal class LandminePatches
 {
+    //Injected method, return true if a hit should not deal knockback
+    static bool ShouldNotDealKnockback(PlayerControllerB instance)
+    {
+        return NetworkSync.Config.PreventMissileKnockback && instance.inVehicleAnimation;
+    }
 
     static MethodInfo get_magnitude = typeof(Vector3).GetMethod("get_magnitude", BindingFlags.Instance | BindingFlags.Public | BindingFlags.GetProperty);
     [HarmonyPatch("SpawnExplosion")]
     [HarmonyTranspiler]
     static IEnumerable<CodeInstruction> SpawnExplosion_Transpiler(IEnumerable<CodeInstruction> instructions)
     {
-        if (!UserConfig.PreventMissileKnockback.Value) return instructions;
-
         var codes = instructions.ToList();
 
         int findIndex = PatchUtils.LocateCodeSegment(0, codes, [
@@ -43,7 +47,7 @@ internal class LandminePatches
 
         List<CodeInstruction> newCodes = [
             new CodeInstruction(OpCodes.Ldloc_S, 4),
-            new CodeInstruction(OpCodes.Ldfld, typeof(PlayerControllerB).GetField("inVehicleAnimation")),
+            new CodeInstruction(OpCodes.Call, typeof(LandminePatches).GetMethod("ShouldNotDealKnockback", BindingFlags.Static | BindingFlags.NonPublic)),
             new CodeInstruction(OpCodes.Brtrue_S, jumpOperand)
             ];
 

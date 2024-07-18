@@ -1,4 +1,5 @@
-﻿using GameNetcodeStuff;
+﻿using CruiserImproved.Network;
+using GameNetcodeStuff;
 using HarmonyLib;
 using System;
 using System.Collections.Generic;
@@ -50,14 +51,14 @@ internal class VehicleControllerPatches
         }
 
         //Allow player to turn further backward for the lean mechanic
-        if (UserConfig.AllowLean.Value)
+        if (NetworkSync.Config.AllowLean)
         {
             __instance.driverSeatTrigger.horizontalClamp = 163f;
             __instance.passengerSeatTrigger.horizontalClamp = 163f;
         }
 
         //Set up the car's NavMeshObstacle
-        if (UserConfig.EntitiesAvoidCruiser.Value)
+        if (NetworkSync.Config.EntitiesAvoidCruiser)
         {
             GameObject cruiserNavBlockerObject = new("CruiserObstacle");
             cruiserNavBlockerObject.transform.localPosition = new Vector3(0, -2, 0);
@@ -107,8 +108,8 @@ internal class VehicleControllerPatches
         float timeSinceDamage = Time.realtimeSinceStartup - extraData.timeLastDamaged;
         float timeSinceCriticallyDamaged = Time.realtimeSinceStartup - extraData.timeLastCriticalDamage;
 
-        float invulnDuration = UserConfig.CruiserInvulnerabilityDuration.Value;
-        float critInvulnDuration = UserConfig.CruiserCriticalInvulnerabilityDuration.Value;
+        float invulnDuration = NetworkSync.Config.CruiserInvulnerabilityDuration;
+        float critInvulnDuration = NetworkSync.Config.CruiserCriticalInvulnerabilityDuration;
 
         bool isInvulnerable = timeSinceDamage < invulnDuration;
         bool isCritInvulnerable = timeSinceCriticallyDamaged < critInvulnDuration;
@@ -156,13 +157,13 @@ internal class VehicleControllerPatches
                 if (__instance.carHP - damageAmount == 1) //blocked a hit at 1hp, count as a block
                 {
                     extraData.hitsBlockedThisCrit++;
-                    if (extraData.hitsBlockedThisCrit > UserConfig.MaxCriticalHitCount.Value && extraData.destroyCoroutine == null)
+                    if (extraData.hitsBlockedThisCrit > NetworkSync.Config.MaxCriticalHitCount && extraData.destroyCoroutine == null)
                     {
-                        float timeUntilExplosion = UserConfig.CruiserCriticalInvulnerabilityDuration.Value - (Time.realtimeSinceStartup - extraData.timeLastCriticalDamage);
+                        float timeUntilExplosion = NetworkSync.Config.CruiserCriticalInvulnerabilityDuration - (Time.realtimeSinceStartup - extraData.timeLastCriticalDamage);
                         extraData.destroyCoroutine = __instance.StartCoroutine(DestroyAfterSeconds(__instance, timeUntilExplosion));
                     }
                 }
-                string blockedCounterStr = $"({extraData.hitsBlockedThisCrit}/{UserConfig.MaxCriticalHitCount.Value})";
+                string blockedCounterStr = $"({extraData.hitsBlockedThisCrit}/{NetworkSync.Config.MaxCriticalHitCount})";
                 if (activatedCritThisDamage)
                 {
                     CruiserImproved.Log.LogMessage($"{blockedCounterStr} Critical protection triggered for {critInvulnDuration}s due to {damageAmount} vehicle damage");
@@ -200,8 +201,8 @@ internal class VehicleControllerPatches
         float timeSinceDamage = Time.realtimeSinceStartup - extraData.timeLastDamaged;
         float timeSinceCriticallyDamaged = Time.realtimeSinceStartup - extraData.timeLastCriticalDamage;
 
-        bool isInvulnerable = timeSinceDamage < UserConfig.CruiserInvulnerabilityDuration.Value;
-        bool isCritInvulnerable = timeSinceCriticallyDamaged < UserConfig.CruiserCriticalInvulnerabilityDuration.Value;
+        bool isInvulnerable = timeSinceDamage < NetworkSync.Config.CruiserInvulnerabilityDuration;
+        bool isCritInvulnerable = timeSinceCriticallyDamaged < NetworkSync.Config.CruiserCriticalInvulnerabilityDuration;
 
         //if receiving damage that will knock the car to 1hp, increase the hitsBlocked
         if (!isInvulnerable && isCritInvulnerable && (__instance.carHP - amount == 1))
@@ -228,7 +229,7 @@ internal class VehicleControllerPatches
     static void FixedUpdate_Postfix(VehicleController __instance)
     {
         //Anti-hill sideslip
-        if (!UserConfig.AntiSideslip.Value) return;
+        if (!NetworkSync.Config.AntiSideslip) return;
         List<WheelCollider> wheels = [__instance.FrontLeftWheel, __instance.FrontRightWheel, __instance.BackLeftWheel, __instance.BackRightWheel];
 
         //If at least 3 wheels are on the ground, apply a force to the Cruiser, directed up the hill slope, to counter gravity pulling it down the slope.
@@ -272,7 +273,7 @@ internal class VehicleControllerPatches
 
         if (__instance.magnetedToShip) __instance.physicsRegion.priority = 1;
 
-        bool networkDestroyImminent = extraData.hitsBlockedThisCrit > UserConfig.MaxCriticalHitCount.Value && __instance.carHP == 1;
+        bool networkDestroyImminent = extraData.hitsBlockedThisCrit > NetworkSync.Config.MaxCriticalHitCount && __instance.carHP == 1;
         if (networkDestroyImminent || extraData.destroyCoroutine != null)
         {
             __instance.underExtremeStress = true;
@@ -280,12 +281,12 @@ internal class VehicleControllerPatches
             //ownership got transferred mid destruction from a client, let's start the coroutine here too
             if(__instance.IsOwner && extraData.destroyCoroutine == null && !__instance.carDestroyed)
             {
-                float timeUntilExplosion = UserConfig.CruiserCriticalInvulnerabilityDuration.Value - (Time.realtimeSinceStartup - extraData.timeLastCriticalDamage);
+                float timeUntilExplosion = NetworkSync.Config.CruiserCriticalInvulnerabilityDuration - (Time.realtimeSinceStartup - extraData.timeLastCriticalDamage);
                 CruiserImproved.Log.LogMessage("Destruction coroutine transferred due to ownership switch");
                 extraData.destroyCoroutine = __instance.StartCoroutine(DestroyAfterSeconds(__instance, timeUntilExplosion));
             }
         }
-        if(UserConfig.EntitiesAvoidCruiser.Value && extraData.navObstacle)
+        if(NetworkSync.Config.EntitiesAvoidCruiser && extraData.navObstacle)
         {
             bool enableObstacle = __instance.averageVelocity.magnitude < 0.5f && !__instance.currentDriver && !__instance.currentPassenger;
 
@@ -327,7 +328,7 @@ internal class VehicleControllerPatches
     [HarmonyPostfix]
     static void DestroyCar_Postfix(VehicleController __instance)
     {
-        if (!UserConfig.AllowPushDestroyedCar.Value) return;
+        if (!NetworkSync.Config.AllowPushDestroyedCar) return;
 
         foreach(Transform child in __instance.transform)
         {
@@ -572,7 +573,7 @@ internal class VehicleControllerPatches
     [HarmonyPrefix]
     static bool SpringDriverSeatServerRpc_Handler_Prefix(NetworkBehaviour target, FastBufferReader reader, __RpcParams rpcParams)
     {
-        if (!UserConfig.PreventPassengersEjectingDriver.Value) return true;
+        if (!NetworkSync.Config.PreventPassengersEjectingDriver) return true;
         NetworkManager networkManager = target.NetworkManager;
         if (networkManager == null || !networkManager.IsListening)
         {
@@ -652,13 +653,17 @@ internal class VehicleControllerPatches
         return codes;
     }
 
+    //Injected method, return true if impact audio should be detectable by dogs
+    static bool ShouldPlayDetectableAudio(VehicleController instance)
+    {
+        return instance.ignitionStarted || !NetworkSync.Config.SilentCollisions;
+    }
+
     [HarmonyPatch("PlayRandomClipAndPropertiesFromAudio")]
     [HarmonyTranspiler]
     static IEnumerable<CodeInstruction> PlayRandomClipAndPropertiesFromAudio_Transpiler(IEnumerable<CodeInstruction> instructions)
     {
         //Prevent the cruiser from creating detectable sounds on collision if the engine is off, to prevent dogs from repeatedly attacking cruisers.
-        if (!UserConfig.SilentCollisions.Value) return instructions;
-
         var codes = instructions.ToList();
 
         var getRoundManagerInstance = typeof(RoundManager).GetMethod("get_Instance", BindingFlags.Static | BindingFlags.Public | BindingFlags.GetProperty);
@@ -693,7 +698,7 @@ internal class VehicleControllerPatches
 
         codes.InsertRange(index, [
             new(OpCodes.Ldarg_0),
-            new(OpCodes.Ldfld, ignitionStarted),
+            new(OpCodes.Call, typeof(VehicleControllerPatches).GetMethod("ShouldPlayDetectableAudio", BindingFlags.Static | BindingFlags.NonPublic)),
             new(OpCodes.Brfalse_S, destinationLabel)
             ]);
 

@@ -1,0 +1,130 @@
+﻿using System;
+using System.Collections.Generic;
+using Unity.Collections;
+using Unity.Netcode;
+
+namespace CruiserImproved.Network;
+
+internal static class NetworkSync
+{
+    static public NetworkConfig Config = null;
+    static public bool SyncedWithHost = false;
+
+    static public List<ulong> HostSyncedList = null;
+
+    static public void Init()
+    {
+        Config = new NetworkConfig();
+        Config.CopyLocalConfig();
+        SyncedWithHost = false;
+
+        if (NetworkManager.Singleton.IsHost)
+        {
+            CruiserImproved.Log.LogMessage("Setup as host!");
+            HostSyncedList = new();
+            SyncedWithHost = true;
+            SetupMessageHandler("ContactServerRpc", ContactServerRpc);
+
+            NetworkManager.Singleton.OnClientDisconnectCallback += OnClientDisconnect;
+        }
+        else if (NetworkManager.Singleton.IsClient)
+        {
+            SetupMessageHandler("SendConfigClientRpc", SendConfigClientRpc);
+
+            string text = CruiserImproved.Version.ToString();
+            FastBufferWriter fastBufferWriter = new FastBufferWriter(text.Length * sizeof(char), Allocator.Temp);
+            fastBufferWriter.WriteValue(text);
+            SendToHost("ContactServerRpc", fastBufferWriter);
+
+            CruiserImproved.Log.LogMessage("Setup as client!");
+        }
+    }
+
+    static public void Cleanup()
+    {
+        Config = null;
+        SyncedWithHost = false;
+        HostSyncedList = null;
+        NetworkManager.Singleton.OnClientDisconnectCallback -= OnClientDisconnect;
+    }
+
+    static public void OnClientDisconnect(ulong clientId)
+    {
+        if (HostSyncedList.Remove(clientId))
+        {
+            CruiserImproved.Log.LogMessage("CruiserImproved client " + clientId + " disconnected.");
+        }
+    }
+
+    static public void SetupMessageHandler(string name, CustomMessagingManager.HandleNamedMessageDelegate del)
+    {
+        NetworkManager.Singleton.CustomMessagingManager.RegisterNamedMessageHandler("CruiserImproved." + name, del);
+    }
+
+    static public void DeleteMessageHandler(string name)
+    {
+        NetworkManager.Singleton.CustomMessagingManager.UnregisterNamedMessageHandler("CruiserImproved." + name);
+    }
+
+    static public void SendToClients(string name, IReadOnlyList<ulong> clients, FastBufferWriter buffer)
+    {
+        if (!NetworkManager.Singleton.IsHost)
+        {
+            CruiserImproved.Log.LogError("SendToClients called from client!");
+            return;
+        }
+        NetworkManager.Singleton.CustomMessagingManager.SendNamedMessage("CruiserImproved." + name, clients, buffer);
+    }
+
+    static public void SendToHost(string name, FastBufferWriter buffer)
+    {
+        NetworkManager.Singleton.CustomMessagingManager.SendNamedMessage("CruiserImproved." + name, NetworkManager.ServerClientId, buffer);
+    }
+
+    static public void ContactServerRpc(ulong clientId, FastBufferReader reader)
+    {
+        reader.ReadValue(out string clientVersionStr);
+        Version clientVersion = new(clientVersionStr);
+        if (clientVersion > CruiserImproved.Version)
+        {
+            CruiserImproved.Log.LogWarning("Client " + clientId + " connected with newer CruiserImproved version " + clientVersion + ". We're running outdated " + CruiserImproved.Version);
+        }
+        else if(clientVersion < CruiserImproved.Version)
+        {
+            CruiserImproved.Log.LogWarning("Client " + clientId + " connected with outdated CruiserImproved version " + clientVersion + ". We're running " + CruiserImproved.Version);
+        }
+        else
+        {
+            CruiserImproved.Log.LogMessage("Client " + clientId + " connected with CruiserImproved version match " + clientVersion);
+        }
+
+        HostSyncedList.Add(clientId);
+
+        FastBufferWriter writer = new FastBufferWriter(128, Allocator.Temp, 1024);
+        writer.WriteNetworkSerializable(Config);
+
+        SendToClients("SendConfigClientRpc", [clientId], writer);
+    }
+
+    static public void SendConfigClientRpc(ulong clientId, FastBufferReader reader)
+    {
+        reader.ReadNetworkSerializableInPlace(ref Config);
+        SyncedWithHost = true;
+
+        Version hostVersion = Config.version;
+
+        if (hostVersion > CruiserImproved.Version)
+        {
+            CruiserImproved.Log.LogWarning("Host successfuly synced with newer CruiserImproved version " + hostVersion + ". We're running outdated " + CruiserImproved.Version);
+        }
+        else if (hostVersion < CruiserImproved.Version)
+        {
+            CruiserImproved.Log.LogWarning("Host successfuly synced with outdated CruiserImproved version " + hostVersion + ". We're running " + CruiserImproved.Version);
+        }
+        else
+        {
+            CruiserImproved.Log.LogMessage("Host successfuly synced with CruiserImproved version " + hostVersion);
+        }
+    }
+}
+

@@ -1,4 +1,5 @@
-﻿using GameNetcodeStuff;
+﻿using CruiserImproved.Network;
+using GameNetcodeStuff;
 using HarmonyLib;
 using UnityEngine;
 
@@ -40,7 +41,7 @@ internal class VehicleCollisionTriggerPatches
                 return true;
             }
 
-            if (UserConfig.EntitiesAvoidCruiser.Value)
+            if (NetworkSync.Config.EntitiesAvoidCruiser)
             {
                 MouthDogAI dog = enemyAI.mainScript as MouthDogAI;
                 bool isAngryDog = dog && dog.suspicionLevel > 8;

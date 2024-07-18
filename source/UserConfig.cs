@@ -11,8 +11,6 @@ internal class UserConfig
     internal static ConfigEntry<bool> AllowLean;
     internal static ConfigEntry<bool> PreventMissileKnockback;
     internal static ConfigEntry<bool> AllowPushDestroyedCar;
-    internal static ConfigEntry<bool> PreventPassengersEjectingDriver;
-    internal static ConfigEntry<bool> EntitiesAvoidCruiser;
     internal static ConfigEntry<bool> SilentCollisions;
     internal static ConfigEntry<float> SeatBoostScale;
 
@@ -24,8 +22,10 @@ internal class UserConfig
     //Physics
     internal static ConfigEntry<bool> AntiSideslip;
 
-    //Hosting
-    internal static ConfigEntry<bool> SyncSeatSettings;
+    //Host-side
+    internal static ConfigEntry<bool> SyncSeat;
+    internal static ConfigEntry<bool> PreventPassengersEjectingDriver;
+    internal static ConfigEntry<bool> EntitiesAvoidCruiser;
 
     internal static Dictionary<ConfigDefinition, ConfigEntryBase> ConfigMigrations;
 
@@ -59,9 +59,11 @@ internal class UserConfig
         AntiSideslip = config.Bind("Physics", "Anti-Sideslip", true, "If true, prevent the Cruiser from sliding sideways when on slopes.");
 
         //Host-side
-        //SyncSeatSettings = config.Bind("Host-side", "Synchronise Seat", false, "If true, set all other players using CruiserImproved in your lobbies to have the same Seat Boost Scale and Allow Leaning setting as you.");
+        SyncSeat = config.Bind("Host-side", "Synchronise Seat Boost", false, "If true, set all other players using CruiserImproved in your lobbies to have the same Seat Boost Scale setting as you.\nAll other settings are always synchronised.");
         EntitiesAvoidCruiser = config.Bind("Host-side", "Entities Avoid Cruiser", true, "If true, entities will pathfind around stationary cruisers with no driver.\nEyeless Dogs will still attack it if they hear noise!");
         PreventPassengersEjectingDriver = config.Bind("Host-side", "Prevent Passengers Eject Driver", false, "If true, prevent anyone except the driver of the cruiser from using the eject button in your lobbies.");
+
+        CruiserImproved.Log.LogMessage("Seat settings: Host-side " + SyncSeat.Value + " Seat scale " + SeatBoostScale.Value + " Lean " + AllowLean.Value + " Anti-sideslip " + AntiSideslip.Value);
         MigrateOldConfigs(config);
         config.Save();
         config.SaveOnConfigSet = true;
