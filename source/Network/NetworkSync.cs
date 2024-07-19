@@ -41,7 +41,7 @@ internal static class NetworkSync
             string text = CruiserImproved.Version.ToString();
             FastBufferWriter fastBufferWriter = new FastBufferWriter(text.Length * sizeof(char), Allocator.Temp);
             fastBufferWriter.WriteValue(text);
-            SendToHost("ContactServerRpc", fastBufferWriter);
+            SendToHost("ContactServerRpc", fastBufferWriter, true);
 
             CruiserImproved.Log.LogMessage("Setup as client!");
         }
@@ -95,8 +95,9 @@ internal static class NetworkSync
     //Send to all CruiserImproved clients
     static public void SendToClients(string name, FastBufferWriter buffer) => SendToClients(name, HostSyncedList, buffer);
 
-    static public void SendToHost(string name, FastBufferWriter buffer)
+    static public void SendToHost(string name, FastBufferWriter buffer, bool forceSend = false)
     {
+        if (!forceSend && !SyncedWithHost) return;
         NetworkManager.Singleton.CustomMessagingManager.SendNamedMessage("CruiserImproved." + name, NetworkManager.ServerClientId, buffer);
     }
 
