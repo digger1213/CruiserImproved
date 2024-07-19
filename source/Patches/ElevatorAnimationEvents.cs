@@ -18,7 +18,6 @@ internal class ElevatorAnimationEventsPatches
         if (vehicle && vehicle.magnetedToShip)
         {
             localPlayer.isInElevator = true;
-            CruiserImproved.Log.LogMessage("Local player had magneted Vehicle parent and was not abandoned.");
         }
     }
 }

@@ -239,7 +239,6 @@ internal class VehicleControllerPatches
         //if receiving damage that will knock the car to 1hp, increase the hitsBlocked
         if (!isInvulnerable && isCritInvulnerable && (__instance.carHP - amount == 1))
         {
-            CruiserImproved.Log.LogMessage("Received critical damage blocked from network");
             extraData.hitsBlockedThisCrit++;
         }
 
@@ -314,7 +313,6 @@ internal class VehicleControllerPatches
             if(__instance.IsOwner && extraData.destroyCoroutine == null && !__instance.carDestroyed)
             {
                 float timeUntilExplosion = NetworkSync.Config.CruiserCriticalInvulnerabilityDuration - (Time.realtimeSinceStartup - extraData.timeLastCriticalDamage);
-                CruiserImproved.Log.LogMessage("Destruction coroutine transferred due to ownership switch");
                 extraData.destroyCoroutine = __instance.StartCoroutine(DestroyAfterSeconds(__instance, timeUntilExplosion));
             }
         }
@@ -383,7 +381,6 @@ internal class VehicleControllerPatches
             if(child.name == "PushTrigger")
             {
                 child.GetComponent<InteractTrigger>().interactable = true;
-                CruiserImproved.Log.LogMessage("Made car pushable");
                 break;
             }
         }
