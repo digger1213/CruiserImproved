@@ -64,7 +64,7 @@ internal class VehicleControllerPatches
             }
         }
 
-        if (NetworkSync.SyncedWithHost)
+        if (NetworkSync.FinishedSync)
         {
             SetupSyncedVehicleFeatures(__instance);
         }
