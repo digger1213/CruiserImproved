@@ -88,15 +88,7 @@ internal static class NetworkSync
     }
 
     //Send to all CruiserImproved clients
-    static public void SendToClients(string name, FastBufferWriter buffer)
-    {
-        if (!NetworkManager.Singleton.IsHost)
-        {
-            CruiserImproved.Log.LogError("SendToClients called from client!");
-            return;
-        }
-        NetworkManager.Singleton.CustomMessagingManager.SendNamedMessage("CruiserImproved." + name, HostSyncedList, buffer);
-    }
+    static public void SendToClients(string name, FastBufferWriter buffer) => SendToClients(name, HostSyncedList, buffer);
 
     static public void SendToHost(string name, FastBufferWriter buffer)
     {

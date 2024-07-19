@@ -2,6 +2,7 @@
 using HarmonyLib;
 using System.Collections.Generic;
 using System.Reflection;
+using System.IO;
 
 namespace CruiserImproved;
 
@@ -32,6 +33,7 @@ internal class UserConfig
     internal static void InitConfig()
     {
         ConfigFile config = CruiserImproved.Instance.Config;
+        RetrieveOldConfigFile(config);
 
         config.SaveOnConfigSet = false;
 
@@ -63,10 +65,22 @@ internal class UserConfig
         EntitiesAvoidCruiser = config.Bind("Host-side", "Entities Avoid Cruiser", true, "If true, entities will pathfind around stationary cruisers with no driver.\nEyeless Dogs will still attack it if they hear noise!");
         PreventPassengersEjectingDriver = config.Bind("Host-side", "Prevent Passengers Eject Driver", false, "If true, prevent anyone except the driver of the cruiser from using the eject button in your lobbies.");
 
-        CruiserImproved.Log.LogMessage("Seat settings: Host-side " + SyncSeat.Value + " Seat scale " + SeatBoostScale.Value + " Lean " + AllowLean.Value + " Anti-sideslip " + AntiSideslip.Value);
         MigrateOldConfigs(config);
         config.Save();
         config.SaveOnConfigSet = true;
+    }
+
+    //If the old config file still exists, rename and move to the new DiggC.CruiserImproved.cfg
+    static void RetrieveOldConfigFile(ConfigFile config)
+    {
+        string oldConfigPath = Path.Combine(BepInEx.Paths.ConfigPath, "DiggC.CompanyCruiserImproved.cfg");
+        if (File.Exists(oldConfigPath))
+        {
+            File.Copy(oldConfigPath, config.ConfigFilePath, true);
+            File.Delete(oldConfigPath);
+            config.Reload();
+            CruiserImproved.Log.LogMessage("Successfuly renamed old config file.");
+        }
     }
 
     static void MigrateOldConfigs(ConfigFile config)
@@ -83,11 +97,10 @@ internal class UserConfig
         {
             if(ConfigMigrations.TryGetValue(entry.Key, out var newConfig))
             {
-                CruiserImproved.Log.LogMessage("Migrated old config from " + entry.Key + " with value " + entry.Value + " to " + newConfig);
+                CruiserImproved.Log.LogMessage("Migrated old config " + entry.Key + " : " + entry.Value);
                 newConfig.SetSerializedValue(entry.Value);
             }
         }
-        CruiserImproved.Log.LogMessage("Finished migration");
         orphanedEntries.Clear();
     }
 }
