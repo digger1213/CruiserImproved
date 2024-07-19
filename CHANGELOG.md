@@ -1,3 +1,7 @@
+## 1.2.1
+
+- Fixed issue from 1.2.0 preventing the lean feature from working on newly purchased Cruisers as client.
+
 ## 1.2.0
 
 Added network sync. Clients will copy the host's config settings if they also have CruiserImproved.
