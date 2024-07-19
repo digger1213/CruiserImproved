@@ -1,3 +1,15 @@
+## 1.2.0
+
+Added network sync. Clients will copy the host's config settings if they also have CruiserImproved.
+
+### Bugfixes
+- \[Host&Client\] Fix steering wheel position not synchronizing between players.
+- \[Client\] Fix weedkiller being able to shrink the Cruiser's bounding box.
+
+### Other
+- Fixed the magnet almost always attaching the Cruiser fully nose-down.
+- Weedkiller can now prevent an imminent Cruiser explosion when critically damaged during the CriticalInvulnerabilityDuration.
+
 ## 1.1.1
 
 ### Bugfixes

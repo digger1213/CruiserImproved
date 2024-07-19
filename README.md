@@ -3,6 +3,7 @@
 
 ### Features
 All features can be configured or disabled in the generated .cfg file in BepInEx/config.
+Clients will copy the host's settings if both sides have the mod installed.
 - Ability to lean to look back around the side of the truck and through the small window by turning the camera around.
 - Increased seat height for better visibility over the Cruiser's hood.
 - Slight invulnerability for the Cruiser after taking damage to reduce the damage taken by rolling or multi-impacts at low speed.
@@ -15,6 +16,7 @@ All features can be configured or disabled in the generated .cfg file in BepInEx
 - \[Host\] Entities pathfind around stationary Cruisers with no one seated, instead of walking straight through and causing damage.
 
 ### Bugfixes
+- \[Host&Client\] Fix steering wheel position not synchronizing between players.
 - \[Host\] Prevent the gas pedal or brake pedal from being stuck down if the player leaves the Cruiser while holding them.
 - \[Client\] Fix small entities (anything except Eyeless Dog, Kidnapper Fox, Forest Giant, Old Bird) being impossible to run over.
 - \[Client\] Fix steering wheel visually desyncing from the actual steering angle.
@@ -28,6 +30,7 @@ All features can be configured or disabled in the generated .cfg file in BepInEx
 - \[Client\] Fix sliding off the Cruiser while the ship is taking off or landing.
 - \[Client\] Fix being abandoned when standing on or sitting in a magneted Cruiser while the ship is taking off.
 - \[Client\] Fix ship magnet attaching the Cruiser in the wrong position or rotation (will not stick frontfirst into the ship)
+- \[Client\] Fix weedkiller being able to shrink the Cruiser's bounding box.
 
 ### Feedback
 
