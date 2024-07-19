@@ -20,4 +20,11 @@ internal static class RoundManagerPatches
     {
         NetworkSync.Cleanup();
     }
+
+    [HarmonyPatch("FinishGeneratingNewLevelClientRpc")]
+    [HarmonyPostfix]
+    static void FinishGeneratingNewLevelClientRpc_Postfix()
+    {
+        NetworkSync.FinishSync(false);
+    }
 }

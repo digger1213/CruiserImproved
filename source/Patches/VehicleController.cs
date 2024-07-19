@@ -64,15 +64,25 @@ internal class VehicleControllerPatches
             }
         }
 
+        if (NetworkSync.SyncedWithHost)
+        {
+            SetupSyncedVehicleFeatures(__instance);
+        }
+    }
+
+    static void SetupSyncedVehicleFeatures(VehicleController vehicle)
+    {
+        VehicleControllerData thisData = vehicleData[vehicle];
+
         //Allow player to turn further backward for the lean mechanic
         if (NetworkSync.Config.AllowLean)
         {
-            __instance.driverSeatTrigger.horizontalClamp = 163f;
-            __instance.passengerSeatTrigger.horizontalClamp = 163f;
+            vehicle.driverSeatTrigger.horizontalClamp = 163f;
+            vehicle.passengerSeatTrigger.horizontalClamp = 163f;
         }
 
-        //Set up the car's NavMeshObstacle
-        if (NetworkSync.Config.EntitiesAvoidCruiser)
+        //Set up the car's NavMeshObstacle if host has it enabled (it's mostly meaningless otherwise)
+        if (NetworkSync.SyncedWithHost && NetworkSync.Config.EntitiesAvoidCruiser)
         {
             GameObject cruiserNavBlockerObject = new("CruiserObstacle");
             cruiserNavBlockerObject.transform.localPosition = new Vector3(0, -2, 0);
@@ -85,7 +95,15 @@ internal class VehicleControllerPatches
 
             thisData.navObstacle = navmeshObstacle;
 
-            cruiserNavBlockerObject.transform.parent = __instance.transform;
+            cruiserNavBlockerObject.transform.parent = vehicle.transform;
+        }
+    }
+
+    public static void OnSync()
+    {
+        foreach(var elem in vehicleData)
+        {
+            SetupSyncedVehicleFeatures(elem.Key);
         }
     }
 
@@ -305,6 +323,22 @@ internal class VehicleControllerPatches
             bool enableObstacle = __instance.averageVelocity.magnitude < 0.5f && !__instance.currentDriver && !__instance.currentPassenger;
 
             extraData.navObstacle.gameObject.SetActive(enableObstacle);
+        }
+    }
+
+    [HarmonyPatch("AddEngineOilOnLocalClient")]
+    [HarmonyPostfix]
+    static void AddEngineOilOnLocalClient_Postfix(VehicleController __instance, int setCarHP)
+    {
+        if (setCarHP <= 1) return;
+
+        VehicleControllerData extraData = vehicleData[__instance];
+
+        if(extraData.destroyCoroutine != null)
+        {
+            __instance.StopCoroutine(extraData.destroyCoroutine);
+            extraData.destroyCoroutine = null;
+            __instance.underExtremeStress = false;
         }
     }
 
@@ -578,7 +612,6 @@ internal class VehicleControllerPatches
 
         if (NetworkManager.Singleton.IsHost)
         {
-            CruiserImproved.Log.LogMessage("Sending steering data to clients!");
             FastBufferWriter bufferWriter = new(16, Unity.Collections.Allocator.Temp);
 
             bufferWriter.WriteValue(cruiserRef);

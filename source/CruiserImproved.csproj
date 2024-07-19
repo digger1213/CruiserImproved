@@ -3,7 +3,8 @@
 	<PropertyGroup>
 		<TargetFramework>netstandard2.1</TargetFramework>
 		<RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
-		<AssemblyName>DiggC.CruiserImproved</AssemblyName>
+		<AssemblyName>$(ThunderstoreNamespace).$(MSBuildProjectName)</AssemblyName>
+		<Product>$(MSBuildProjectName)</Product>
 	</PropertyGroup>
 
 	<!-- Thunderstore -->
@@ -17,7 +18,7 @@
 	</PropertyGroup>
 	<ItemGroup>
 		<ThunderstoreBuildCopyPath Include="$(TargetPath);$(TargetDir)$(AssemblyName).pdb" Destination="BepInEx/plugins/$(ProjectName)/" />
-	</ItemGroup>
+	</ItemGroup>	
 	
 	
     <ItemGroup Condition="$(CI) != 'true'">

@@ -10,6 +10,7 @@ internal static class NetworkSync
 {
     static public NetworkConfig Config = null;
     static public bool SyncedWithHost = false;
+    static public bool FinishedSync = false;
 
     static public List<ulong> HostSyncedList = null;
 
@@ -18,6 +19,7 @@ internal static class NetworkSync
         Config = new NetworkConfig();
         Config.CopyLocalConfig();
         SyncedWithHost = false;
+        FinishedSync = false;
 
         AddAllMessageHandlers();
 
@@ -27,6 +29,8 @@ internal static class NetworkSync
             HostSyncedList = new();
             SyncedWithHost = true;
             SetupMessageHandler("ContactServerRpc", ContactServerRpc);
+
+            FinishSync(true);
 
             NetworkManager.Singleton.OnClientDisconnectCallback += OnClientDisconnect;
         }
@@ -55,6 +59,7 @@ internal static class NetworkSync
         Config = null;
         SyncedWithHost = false;
         HostSyncedList = null;
+        FinishedSync = false;
         NetworkManager.Singleton.OnClientDisconnectCallback -= OnClientDisconnect;
     }
 
@@ -123,7 +128,6 @@ internal static class NetworkSync
     static public void SendConfigClientRpc(ulong clientId, FastBufferReader reader)
     {
         reader.ReadNetworkSerializableInPlace(ref Config);
-        SyncedWithHost = true;
 
         Version hostVersion = Config.version;
 
@@ -139,6 +143,21 @@ internal static class NetworkSync
         {
             CruiserImproved.Log.LogMessage("Host successfuly synced with CruiserImproved version " + hostVersion);
         }
+        FinishSync(true);
+    }
+
+    static public void FinishSync(bool hostSynced)
+    {
+        if (FinishedSync) return;
+
+        SyncedWithHost = hostSynced;
+        FinishedSync = true;
+
+        if (!SyncedWithHost)
+        {
+            CruiserImproved.Log.LogMessage("Could not sync with host CruiserImproved instance. Only client-side effects will apply.");
+        }
+        VehicleControllerPatches.OnSync();
     }
 }
 

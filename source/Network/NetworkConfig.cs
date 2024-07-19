@@ -9,7 +9,7 @@ internal class NetworkConfig : INetworkSerializable
 
     //Settings as of v1.2.0 (Implementation of NetworkedSettings)
     public bool SyncSeat = false;
-    public float SeatBoostScale = 1.0f;
+    public float SeatBoostScale = 0.0f;
 
     public bool AllowLean = false;
     public bool PreventMissileKnockback = false;
