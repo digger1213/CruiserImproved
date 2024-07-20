@@ -660,7 +660,7 @@ internal class VehicleControllerPatches
         var targetVehicle = (VehicleController)target;
 
         //don't process the rpc if the sender isn't the driver
-        if (rpcParams.Server.Receive.SenderClientId != targetVehicle.currentDriver.actualClientId) return false;
+        if (targetVehicle.currentDriver != null && rpcParams.Server.Receive.SenderClientId != targetVehicle.currentDriver.actualClientId) return false;
         return true;
     }
 
