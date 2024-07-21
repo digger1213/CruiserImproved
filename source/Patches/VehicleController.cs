@@ -29,14 +29,9 @@ internal class VehicleControllerPatches
     }
 
     public static Dictionary<VehicleController, VehicleControllerData> vehicleData = new();
-
-    [HarmonyPatch("Awake")]
-    [HarmonyPostfix]
-    private static void Awake_Postfix(VehicleController __instance)
+    
+    private static void PruneOldData()
     {
-        VehicleControllerData thisData = new();
-        vehicleData.Add(__instance, thisData);
-
         List<VehicleController> vehiclesToRemove = new();
         foreach (VehicleController vehicle in vehicleData.Keys)
         {
@@ -50,6 +45,16 @@ internal class VehicleControllerPatches
         {
             vehicleData.Remove(vehicle);
         }
+    }
+
+    [HarmonyPatch("Awake")]
+    [HarmonyPostfix]
+    private static void Awake_Postfix(VehicleController __instance)
+    {
+        PruneOldData();
+
+        VehicleControllerData thisData = new();
+        vehicleData.Add(__instance, thisData);
 
         //Move all cruiser children from MoldSpore to Triggers so weedkiller can't shrink it
         Transform[] allChildObjects = __instance.GetComponentsInChildren<Transform>();
@@ -101,9 +106,18 @@ internal class VehicleControllerPatches
 
     public static void OnSync()
     {
-        foreach(var elem in vehicleData)
+        PruneOldData();
+
+        foreach (var elem in vehicleData)
         {
-            SetupSyncedVehicleFeatures(elem.Key);
+            try
+            {
+                SetupSyncedVehicleFeatures(elem.Key);
+            }
+            catch (Exception e)
+            {
+                CruiserImproved.Log.LogError("Exception caught setting up synced vehicle features:\n" + e);
+            }
         }
     }
 
