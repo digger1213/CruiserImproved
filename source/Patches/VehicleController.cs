@@ -799,7 +799,7 @@ internal class VehicleControllerPatches
 
     //Method to override StartMagneting's target angle and position. Returns eulerAngles, sets magnetTargetPosition and magnetTargetRotation fields.
     static Vector3 FixMagnet(VehicleController instance)
-    {
+    {        
         Vector3 eulerAngles = instance.transform.eulerAngles;
         eulerAngles.y = Mathf.Round((eulerAngles.y + 90f) / 180f) * 180f - 90f;
         eulerAngles.z = Mathf.Round(eulerAngles.z / 90f) * 90f;
@@ -863,6 +863,13 @@ internal class VehicleControllerPatches
             //return early if not owner
             new(OpCodes.Ldarg_0),
             new(OpCodes.Call, getIsOwner),
+            new(OpCodes.Brtrue, jumpLabel),
+            new(OpCodes.Ret),
+
+            //return early if no localPlayerController yet to prevent a nullref when calling the rpc
+            new(OpCodes.Call, typeof(GameNetworkManager).GetMethod("get_Instance")),
+            new(OpCodes.Ldfld, typeof(GameNetworkManager).GetField("localPlayerController")),
+            new(OpCodes.Call, typeof(UnityEngine.Object).GetMethod("op_Implicit")),
             new(OpCodes.Brtrue, jumpLabel),
             new(OpCodes.Ret)
             ]);
