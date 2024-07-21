@@ -1,3 +1,9 @@
+## 1.2.2
+
+- Fixed null reference when syncing vehicle features. This should fix issues after reloading a save with a Cruiser in play.
+- Fixed null reference exception logged in StartMagneting when hosting a game.
+- Fixed null reference when hitting the eject button on a Cruiser with no driver (thanks to [1A3Dev](https://github.com/1A3Dev))
+
 ## 1.2.1
 
 - Fixed issue from 1.2.0 preventing the lean feature from working on newly purchased Cruisers as client.
