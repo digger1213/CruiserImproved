@@ -75,11 +75,6 @@ internal class StartOfRoundPatches
             CruiserImproved.Log.LogError("Could not patch LoadShipGrabbableItems sorting!");
         }
 
-        foreach(var code in codes)
-        {
-            CruiserImproved.Log.LogMessage(code);
-        }
-
         return codes;
     }
 }

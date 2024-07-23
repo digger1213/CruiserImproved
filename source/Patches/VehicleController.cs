@@ -2,10 +2,12 @@
 using GameNetcodeStuff;
 using HarmonyLib;
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
+using System.Runtime.CompilerServices;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.AI;
@@ -26,6 +28,7 @@ internal class VehicleControllerPatches
         public Coroutine destroyCoroutine;
         public NavMeshObstacle navObstacle;
         public float lastSteeringAngle;
+        public float timeLastSyncedRadio;
     }
 
     public static Dictionary<VehicleController, VehicleControllerData> vehicleData = new();
@@ -312,6 +315,16 @@ internal class VehicleControllerPatches
     static void Update_Postfix(VehicleController __instance)
     {
         VehicleControllerData extraData = vehicleData[__instance];
+
+        if(__instance.IsHost && (Time.realtimeSinceStartup - extraData.timeLastSyncedRadio > 1f))
+        {
+            extraData.timeLastSyncedRadio = Time.realtimeSinceStartup;
+            FastBufferWriter bufferWriter = new(16, Unity.Collections.Allocator.Temp);
+
+            bufferWriter.WriteValue(new NetworkObjectReference(__instance.NetworkObject));
+            bufferWriter.WriteValue(__instance.currentSongTime);
+            NetworkSync.SendToClients("SyncRadioTimeRpc", bufferWriter);
+        }
 
         //Fix sound not playing when magneted if this cruiser was loaded in
         if (__instance.finishedMagneting) __instance.loadedVehicleFromSave = false;
@@ -875,5 +888,58 @@ internal class VehicleControllerPatches
             ]);
 
         return codes;
+    }
+
+    //fix radio not changing station for clients
+    [HarmonyPatch("SetRadioStationClientRpc")]
+    [HarmonyPostfix]
+    static void SetRadioStationClientRpc_Transpiler(VehicleController __instance)
+    {
+        __instance.SetRadioOnLocalClient(true, true);
+    }
+
+    //injected method to set radio time the same way as the owner does
+    static void SetRadioTime(VehicleController instance)
+    {
+        instance.radioAudio.time = Mathf.Clamp(instance.currentSongTime % instance.radioAudio.clip.length, 0.01f, instance.radioAudio.clip.length - 0.1f);
+    }
+
+    [HarmonyPatch("SetRadioOnLocalClient")]
+    [HarmonyTranspiler]
+    static IEnumerable<CodeInstruction> SetRadioOnLocalClient(IEnumerable<CodeInstruction> instructions)
+    {
+        var codes = instructions.ToList();
+
+        int index = PatchUtils.LocateCodeSegment(0, codes, [
+            new(OpCodes.Ldfld),
+            new(OpCodes.Ldelem_Ref),
+            new(OpCodes.Callvirt),
+            ]);
+
+        if(index == -1)
+        {
+            CruiserImproved.Log.LogError("Failed to patch SetRadioOnLocalClient!");
+            return codes;
+        }
+
+        //call SetRadioTime
+        codes.InsertRange(index + 3, [
+            new(OpCodes.Ldarg_0),
+            new(OpCodes.Call, typeof(VehicleControllerPatches).GetMethod("SetRadioTime", BindingFlags.NonPublic | BindingFlags.Static))
+            ]);
+
+        return codes;
+    }
+
+    //Rpc Args: NetworkObjectReference cruiserRef, float radioTime
+    static public void SyncRadioTimeRpc(ulong clientId, FastBufferReader reader)
+    {
+        reader.ReadNetworkSerializable(out NetworkObjectReference cruiserRef);
+        reader.ReadValue(out float radioTime);
+        if (!cruiserRef.TryGet(out NetworkObject cruiserNetObj)) return;
+        if (!cruiserNetObj.TryGetComponent(out VehicleController vehicle)) return;
+        if (clientId != NetworkManager.ServerClientId) return;
+
+        vehicle.currentSongTime = radioTime;
     }
 }
