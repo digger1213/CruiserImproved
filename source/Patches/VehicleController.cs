@@ -316,6 +316,11 @@ internal class VehicleControllerPatches
     {
         VehicleControllerData extraData = vehicleData[__instance];
 
+        if (NetworkSync.Config.DisableRadioStatic)
+        {
+            __instance.radioSignalQuality = 3f;
+        }
+
         if(__instance.IsHost && (Time.realtimeSinceStartup - extraData.timeLastSyncedRadio > 1f))
         {
             extraData.timeLastSyncedRadio = Time.realtimeSinceStartup;

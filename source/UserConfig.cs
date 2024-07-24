@@ -14,6 +14,7 @@ internal class UserConfig
     internal static ConfigEntry<bool> AllowPushDestroyedCar;
     internal static ConfigEntry<bool> SilentCollisions;
     internal static ConfigEntry<float> SeatBoostScale;
+    internal static ConfigEntry<bool> DisableRadioStatic;
 
     //Cruiser Health
     internal static ConfigEntry<float> CruiserInvulnerabilityDuration;
@@ -43,6 +44,8 @@ internal class UserConfig
         PreventMissileKnockback = config.Bind("General", "Prevent Missile Knockback", true, "If true, prevent the player being ejected from seats by Old Bird missile knockback.");
         AllowPushDestroyedCar = config.Bind("General", "Allow Pushing Destroyed Cruisers", true, "If true, allow players to push destroyed cruisers.");
         SilentCollisions = config.Bind("General", "Silent Collisions", true, "If true, entities hitting the Cruiser when it's engine is off will not make noise.\nThis means Eyeless Dogs will not get stuck in a loop attacking it, triggering noise, and attacking it again while the engine is off.");
+        DisableRadioStatic = config.Bind("General", "Disable Radio Static", false, "If true, disable the radio interference static sound on the radio.");
+
 
         AcceptableValueRange<float> seatScale = new(0f, 1f);
         SeatBoostScale = config.Bind("General", "Seat Boost Scale", 1.0f, new ConfigDescription("How much to boost the seat up? Set 0 to disable.", seatScale));

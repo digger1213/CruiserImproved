@@ -24,6 +24,9 @@ internal class NetworkConfig : INetworkSerializable
 
     public bool AntiSideslip = false;
 
+    //Settings as of v1.3.0
+    public bool DisableRadioStatic = false;
+
     //Initialize NetworkedSettings from local config
     public void CopyLocalConfig()
     {
@@ -43,6 +46,9 @@ internal class NetworkConfig : INetworkSerializable
         MaxCriticalHitCount = UserConfig.MaxCriticalHitCount.Value;
 
         AntiSideslip = UserConfig.AntiSideslip.Value;
+
+        //v1.3.0
+        DisableRadioStatic = UserConfig.DisableRadioStatic.Value;
     }
 
     public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
@@ -72,5 +78,9 @@ internal class NetworkConfig : INetworkSerializable
         serializer.SerializeValue(ref MaxCriticalHitCount);
 
         serializer.SerializeValue(ref AntiSideslip);
+
+        if (version < new Version(1, 3, 0)) return;
+
+        serializer.SerializeValue(ref DisableRadioStatic);
     }
 }
