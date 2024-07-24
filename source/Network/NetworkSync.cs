@@ -82,8 +82,14 @@ internal static class NetworkSync
         NetworkManager.Singleton.CustomMessagingManager.UnregisterNamedMessageHandler("CruiserImproved." + name);
     }
 
+    static public void SendClientSyncRpcs(ulong clientId)
+    {
+        CruiserImproved.Log.LogMessage($"Sent sync for client {clientId}.");
+        VehicleControllerPatches.SendClientSyncData(clientId);
+    }
+
     //Send to specific clients
-    static public void SendToClients(string name, IReadOnlyList<ulong> clients, FastBufferWriter buffer)
+    static public void SendToClients(string name, IReadOnlyList<ulong> clients, ref FastBufferWriter buffer)
     {
         if (!NetworkManager.Singleton.IsHost)
         {
@@ -94,7 +100,7 @@ internal static class NetworkSync
     }
 
     //Send to all CruiserImproved clients
-    static public void SendToClients(string name, FastBufferWriter buffer) => SendToClients(name, HostSyncedList, buffer);
+    static public void SendToClients(string name, ref FastBufferWriter buffer) => SendToClients(name, HostSyncedList, ref buffer);
 
     static public void SendToHost(string name, FastBufferWriter buffer, bool forceSend = false)
     {
@@ -124,7 +130,7 @@ internal static class NetworkSync
         FastBufferWriter writer = new FastBufferWriter(128, Allocator.Temp, 1024);
         writer.WriteNetworkSerializable(Config);
 
-        SendToClients("SendConfigClientRpc", [clientId], writer);
+        SendToClients("SendConfigClientRpc", [clientId], ref writer);
     }
 
     static public void SendConfigClientRpc(ulong clientId, FastBufferReader reader)

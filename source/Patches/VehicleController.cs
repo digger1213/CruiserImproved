@@ -124,6 +124,44 @@ internal class VehicleControllerPatches
         }
     }
 
+    public static void SendClientSyncData(ulong clientId)
+    {
+        PruneOldData();
+
+        foreach (var elem in vehicleData)
+        {
+            VehicleController vehicle = elem.Key;
+            if(vehicle.turboBoosts > 0)
+            {
+                //Call AddTurboBoostClientRpc(0, vehicle.turboBoosts);
+                RpcSender.SendClientRpc(vehicle, 4268487771U, [clientId], (ref FastBufferWriter fastBufferWriter) => 
+                {
+                    BytePacker.WriteValueBitPacked(fastBufferWriter, 0);
+                    BytePacker.WriteValueBitPacked(fastBufferWriter, vehicle.turboBoosts);
+                });
+            }
+            if (vehicle.ignitionStarted)
+            {
+                //Call StartIgnitionClientRpc(0);
+                RpcSender.SendClientRpc(vehicle, 3273216474U, [clientId], (ref FastBufferWriter fastBufferWriter) =>
+                {
+                    BytePacker.WriteValueBitPacked(fastBufferWriter, 0);
+                });
+            }
+            if (vehicle.magnetedToShip)
+            {
+                //Call MagnetCarClientRpc(vehicle.magnetTargetPosition, vehicle.magnetTargetRotation, 0);
+                RpcSender.SendClientRpc(vehicle, 2845017736U, [clientId], (ref FastBufferWriter fastBufferWriter) =>
+                {
+                    fastBufferWriter.WriteValueSafe(in vehicle.magnetTargetPosition);
+                    Vector3 eulerAngles = vehicle.magnetTargetRotation.eulerAngles;
+                    fastBufferWriter.WriteValueSafe(in eulerAngles);
+                    BytePacker.WriteValueBitPacked(fastBufferWriter, 0);
+                });
+            }
+        }
+    }
+
     static System.Collections.IEnumerator DestroyAfterSeconds(VehicleController __instance, float seconds)
     {
         VehicleControllerData extraData = vehicleData[__instance];
@@ -328,7 +366,7 @@ internal class VehicleControllerPatches
 
             bufferWriter.WriteValue(new NetworkObjectReference(__instance.NetworkObject));
             bufferWriter.WriteValue(__instance.currentSongTime);
-            NetworkSync.SendToClients("SyncRadioTimeRpc", bufferWriter);
+            NetworkSync.SendToClients("SyncRadioTimeRpc", ref bufferWriter);
         }
 
         //Fix sound not playing when magneted if this cruiser was loaded in
@@ -645,7 +683,7 @@ internal class VehicleControllerPatches
 
             bufferWriter.WriteValue(cruiserRef);
             bufferWriter.WriteValue(angle);
-            NetworkSync.SendToClients("SyncSteeringRpc", bufferWriter);
+            NetworkSync.SendToClients("SyncSteeringRpc", ref bufferWriter);
         }
 
         vehicleData[vehicle].lastSteeringAngle = angle;
@@ -946,5 +984,12 @@ internal class VehicleControllerPatches
         if (clientId != NetworkManager.ServerClientId) return;
 
         vehicle.currentSongTime = radioTime;
+    }
+
+    [HarmonyPatch("MagnetCarClientRpc")]
+    [HarmonyPrefix]
+    static public void MagnetCarClientRpc_Prefix(VehicleController __instance)
+    {
+        CruiserImproved.Log.LogMessage("MagnetCarClientRpc called!");
     }
 }

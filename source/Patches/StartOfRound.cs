@@ -4,6 +4,8 @@ using System.Linq;
 using UnityEngine;
 using System.Reflection;
 using System.Reflection.Emit;
+using System;
+using Random = UnityEngine.Random;
 
 namespace CruiserImproved.Patches;
 
@@ -76,5 +78,40 @@ internal class StartOfRoundPatches
         }
 
         return codes;
+    }
+
+    [HarmonyPatch("LoadAttachedVehicle")]
+    [HarmonyPostfix]
+    static void LoadAttachedVehicle_Postfix(StartOfRound __instance)
+    {
+        try
+        {
+            string saveName = GameNetworkManager.Instance.currentSaveFileName;
+            if (__instance.attachedVehicle)
+            {
+                var vehicle = __instance.attachedVehicle;
+
+                if(SaveManager.TryLoad<Vector3>("AttachedVehicleRotation", out var rotation))
+                {
+                    vehicle.transform.rotation = Quaternion.Euler(rotation);
+                }
+                if(SaveManager.TryLoad<Vector3>("AttachedVehiclePosition", out var position))
+                {
+                    vehicle.transform.position = StartOfRound.Instance.elevatorTransform.TransformPoint(position);
+                }
+                if(SaveManager.TryLoad<int>("AttachedVehicleTurbo", out var turbos))
+                {
+                    vehicle.turboBoosts = turbos;
+                }
+                if(SaveManager.TryLoad<bool>("AttachedVehicleIgnition", out var ignition))
+                {
+                    vehicle.SetIgnition(ignition);
+                }
+            }
+        }
+        catch(Exception e)
+        {
+            CruiserImproved.Log.LogError("Caught error loading saved Cruiser data:\n" + e);
+        }
     }
 }

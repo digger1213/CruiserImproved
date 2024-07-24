@@ -79,6 +79,7 @@ internal class NetworkConfig : INetworkSerializable
 
         serializer.SerializeValue(ref AntiSideslip);
 
+        //v1.3.0
         if (version < new Version(1, 3, 0)) return;
 
         serializer.SerializeValue(ref DisableRadioStatic);
