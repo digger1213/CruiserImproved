@@ -936,42 +936,36 @@ internal class VehicleControllerPatches
     //fix radio not changing station for clients
     [HarmonyPatch("SetRadioStationClientRpc")]
     [HarmonyPostfix]
-    static void SetRadioStationClientRpc_Transpiler(VehicleController __instance)
+    static void SetRadioStationClientRpc_Postfix(VehicleController __instance)
     {
         __instance.SetRadioOnLocalClient(true, true);
     }
 
-    //injected method to set radio time the same way as the owner does
+    //Set radio time consistently across owner and non-owners
     static void SetRadioTime(VehicleController instance)
     {
         instance.radioAudio.time = Mathf.Clamp(instance.currentSongTime % instance.radioAudio.clip.length, 0.01f, instance.radioAudio.clip.length - 0.1f);
     }
 
     [HarmonyPatch("SetRadioOnLocalClient")]
-    [HarmonyTranspiler]
-    static IEnumerable<CodeInstruction> SetRadioOnLocalClient(IEnumerable<CodeInstruction> instructions)
+    [HarmonyPostfix]
+    static void SetRadioOnLocalClient_Postfix(VehicleController __instance, bool on, bool setClip)
     {
-        var codes = instructions.ToList();
-
-        int index = PatchUtils.LocateCodeSegment(0, codes, [
-            new(OpCodes.Ldfld),
-            new(OpCodes.Ldelem_Ref),
-            new(OpCodes.Callvirt),
-            ]);
-
-        if(index == -1)
+        if(on && setClip)
         {
-            CruiserImproved.Log.LogError("Failed to patch SetRadioOnLocalClient!");
-            return codes;
+            SetRadioTime(__instance);
         }
+    }
 
-        //call SetRadioTime
-        codes.InsertRange(index + 3, [
-            new(OpCodes.Ldarg_0),
-            new(OpCodes.Call, typeof(VehicleControllerPatches).GetMethod("SetRadioTime", BindingFlags.NonPublic | BindingFlags.Static))
-            ]);
-
-        return codes;
+    [HarmonyPatch("SwitchRadio")]
+    [HarmonyPostfix]
+    static void SwitchRadio_Postfix(VehicleController __instance)
+    {
+        if (__instance.radioOn)
+        {
+            __instance.SetRadioStationServerRpc(__instance.currentRadioClip, (int)Mathf.Round(__instance.radioSignalQuality));
+            SetRadioTime(__instance);
+        }
     }
 
     //Rpc Args: NetworkObjectReference cruiserRef, float radioTime
