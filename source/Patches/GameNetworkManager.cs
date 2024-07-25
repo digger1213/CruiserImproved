@@ -13,7 +13,7 @@ internal class GameNetworkManagerPatches
         //save cruiser data if we have one
         try
         {
-            if (StartOfRound.Instance && StartOfRound.Instance.attachedVehicle)
+            if (UserConfig.SaveCruiserValues.Value && StartOfRound.Instance.attachedVehicle)
             {
                 VehicleController vehicle = StartOfRound.Instance.attachedVehicle;
                 SaveManager.Save("AttachedVehicleRotation", vehicle.magnetTargetRotation.eulerAngles);
@@ -21,6 +21,13 @@ internal class GameNetworkManagerPatches
                 SaveManager.Save("AttachedVehicleTurbo", vehicle.turboBoosts);
                 SaveManager.Save("AttachedVehicleIgnition", vehicle.ignitionStarted);
                 CruiserImproved.Log.LogMessage("Successfully saved cruiser data.");
+            }
+            else
+            {
+                SaveManager.Delete("AttachedVehicleRotation");
+                SaveManager.Delete("AttachedVehiclePosition");
+                SaveManager.Delete("AttachedVehicleTurbo");
+                SaveManager.Delete("AttachedVehicleIgnition");
             }
         }
         catch(Exception e)

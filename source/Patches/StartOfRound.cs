@@ -87,7 +87,7 @@ internal class StartOfRoundPatches
         try
         {
             string saveName = GameNetworkManager.Instance.currentSaveFileName;
-            if (__instance.attachedVehicle)
+            if (UserConfig.SaveCruiserValues.Value && __instance.attachedVehicle)
             {
                 var vehicle = __instance.attachedVehicle;
 

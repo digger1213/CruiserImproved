@@ -21,4 +21,9 @@ internal static class SaveManager
         data = ES3.Load<T>(SavePrefix + key, GameNetworkManager.Instance.currentSaveFileName);
         return true;
     }
+
+    public static void Delete(string key)
+    {
+        ES3.DeleteKey(SavePrefix + key, GameNetworkManager.Instance.currentSaveFileName);
+    }
 }
