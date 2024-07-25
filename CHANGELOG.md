@@ -1,3 +1,14 @@
+## 1.3.0
+
+### Features
+- \[Host\] Equipment and weapons moved into the ship from the Cruiser on save reload is sorted into a separate pile from the rest of the scrap.
+- \[Host\] Magnet position, turbo boosts, and ignition state are saved and restored when loading a save, preventing lost turbos and removing the need to restart the ignition.
+- \[Client\] Option to disable the Cruiser's radio interference static. Disabled by default.
+
+### Bugfixes
+- \[Host&Client\] Fix radio desync between players.
+- \[Host\] Fix items left floating where the Cruiser was when reloading a save. All items will now be moved into the ship instead of just some.
+
 ## 1.2.2
 
 - Fixed null reference when syncing vehicle features. This should fix issues after reloading a save with a Cruiser in play.

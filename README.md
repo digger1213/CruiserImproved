@@ -12,12 +12,17 @@ Clients will copy the host's settings if both sides have the mod installed.
 - Ability to push destroyed Cruisers.
 - Prevent the Cruiser from sliding sideways down slopes (ie, when dropped off the magnet on Artifice).
 - Prevent the Cruiser damage sound being detected by dogs if the engine is off, preventing them from repeatedly attacking Cruisers due to the sound they cause.
-- \[Host\] Prevent anyone in the lobby other than the driver pressing the eject button on Cruisers. Disabled in the config by default.
+- Option to disable the Cruiser's radio interference static. Disabled by default.
+- \[Host\] Prevent anyone in the lobby other than the driver pressing the eject button on Cruisers. Disabled by default.
 - \[Host\] Entities pathfind around stationary Cruisers with no one seated, instead of walking straight through and causing damage.
+- \[Host\] Equipment and weapons moved into the ship from the Cruiser on save reload is sorted into a separate pile from the rest of the scrap.
+- \[Host\] Magnet position, turbo boosts, and ignition state are saved and restored when loading a save, preventing lost turbos and removing the need to restart the ignition.
 
 ### Bugfixes
 - \[Host&Client\] Fix steering wheel position not synchronizing between players.
+- \[Host&Client\] Fix radio desync between players.
 - \[Host\] Prevent the gas pedal or brake pedal from being stuck down if the player leaves the Cruiser while holding them.
+- \[Host\] Fix items left floating where the Cruiser was when reloading a save. All items will now be moved into the ship instead of just some.
 - \[Client\] Fix small entities (anything except Eyeless Dog, Kidnapper Fox, Forest Giant, Old Bird) being impossible to run over.
 - \[Client\] Fix steering wheel visually desyncing from the actual steering angle.
 - \[Client\] Fixed Baboon Hawks requiring very high speed to run over.
