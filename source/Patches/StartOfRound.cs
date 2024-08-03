@@ -5,6 +5,8 @@ using UnityEngine;
 using System.Reflection;
 using System.Reflection.Emit;
 using System;
+using CruiserImproved.Utils;
+
 using Random = UnityEngine.Random;
 
 namespace CruiserImproved.Patches;
@@ -20,7 +22,6 @@ internal class StartOfRoundPatches
         //try catch block here in case code shuffles variables and this throws (if it throws it'll break the whole loading sequence)
         try
         {
-            CruiserImproved.Log.LogMessage("SetItemPosition called with instance: " + (instance != null) + " index: " + index + " pos array: " + (positionArray != null) + " item array: " + (itemArray != null));
             Item thisItem = instance.allItemsList.itemsList[itemArray[index]];
             //move non-scrap and weapons toward the center of the ship slightly from the rest of the pile
             if (!thisItem.isScrap || thisItem.isDefensiveWeapon)
@@ -28,9 +29,9 @@ internal class StartOfRoundPatches
                 positionArray[index].z += Random.Range(-2.5f, -1.5f);
             }
         }
-        catch(System.Exception e)
+        catch(Exception e)
         {
-            CruiserImproved.Log.LogError("Error while placing Cruiser items in ship:\n" + e);
+            CruiserImproved.LogError("Exception caught placing Cruiser items in ship:\n" + e);
         }
     }
 
@@ -52,7 +53,7 @@ internal class StartOfRoundPatches
         else
         {
             index = 0;
-            CruiserImproved.Log.LogError("Could not patch LoadShipGrabbableItems bounds!");
+            CruiserImproved.LogError("Could not patch LoadShipGrabbableItems bounds!");
         }
 
         index = PatchUtils.LocateCodeSegment(index, codes, [
@@ -74,7 +75,7 @@ internal class StartOfRoundPatches
         }
         else
         {
-            CruiserImproved.Log.LogError("Could not patch LoadShipGrabbableItems sorting!");
+            CruiserImproved.LogError("Could not patch LoadShipGrabbableItems sorting!");
         }
 
         return codes;
@@ -111,7 +112,7 @@ internal class StartOfRoundPatches
         }
         catch(Exception e)
         {
-            CruiserImproved.Log.LogError("Caught error loading saved Cruiser data:\n" + e);
+            CruiserImproved.LogError("Exception caught loading saved Cruiser data:\n" + e);
         }
     }
 }

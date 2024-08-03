@@ -19,8 +19,8 @@
 	</PropertyGroup>
 	
 	<ItemGroup>
-	  <Compile Include="**/*.cs"/>
-	  <Compile Remove="Obj/**/*.cs"/>
+	  <Compile Include="**/*.cs" />
+	  <Compile Remove="Obj/**/*.cs" />
 	</ItemGroup>
 	
 	<ItemGroup>
@@ -39,7 +39,7 @@
 		<PackageReference Include="BepInEx.Core" Version="5.4.21" />
 		<PackageReference Include="BepInEx.PluginInfoProps" Version="2.1.0" />
 		<PackageReference Include="UnityEngine.Modules" Version="2022.3.9" />
-		<PackageReference Include="LCVR" Version="1.2.5" PrivateAssets="all"/>
+		<PackageReference Include="LCVR" Version="1.2.5" PrivateAssets="all" />
 		
 		<PackageReference Include="LethalCompany.GameLibs.Steam" Version="56.0.1-ngd.0" />
     </ItemGroup>

@@ -1,12 +1,8 @@
 ﻿using HarmonyLib;
-using System;
 using System.Collections.Generic;
 using Unity.Netcode;
 
 namespace CruiserImproved.Network;
-
-//using BeginSendClientRpcFunc = Func<uint, ClientRpcParams, RpcDelivery, FastBufferWriter>;
-//using EndSendClientRpcFunc = Func<uint, ClientRpcParams, RpcDelivery, FastBufferWriter>;
 
 internal class RpcSender
 {

@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using CruiserImproved.Patches;
-using HarmonyLib;
+﻿using HarmonyLib;
 
 namespace CruiserImproved.Network.Patches;
 

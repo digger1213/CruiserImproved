@@ -3,9 +3,9 @@ using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using CruiserImproved.Network;
+using CruiserImproved.Utils;
 using GameNetcodeStuff;
 using HarmonyLib;
-using MonoMod.Utils;
 using UnityEngine;
 
 namespace CruiserImproved.Patches;
@@ -39,7 +39,7 @@ internal class LandminePatches
 
         if(findIndex == -1)
         {
-            CruiserImproved.Log.LogError("Could not patch landmine knockback vehicle check!");
+            CruiserImproved.LogError("Could not patch landmine knockback vehicle check!");
             return codes;
         }
 

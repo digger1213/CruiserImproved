@@ -1,6 +1,4 @@
 ﻿using HarmonyLib;
-using System.Diagnostics;
-using Unity.Netcode;
 
 namespace CruiserImproved.Network.Patches;
 

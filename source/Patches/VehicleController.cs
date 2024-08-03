@@ -1,13 +1,12 @@
 ﻿using CruiserImproved.Network;
+using CruiserImproved.Utils;
 using GameNetcodeStuff;
 using HarmonyLib;
 using System;
-using System.Buffers;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
-using System.Runtime.CompilerServices;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.AI;
@@ -17,8 +16,6 @@ namespace CruiserImproved.Patches;
 [HarmonyPatch(typeof(VehicleController))]
 internal class VehicleControllerPatches
 {
-    static int CriticalThreshold = 2;
-
     public class VehicleControllerData
     {
         public int lastDamageReceived;
@@ -31,9 +28,11 @@ internal class VehicleControllerPatches
         public float timeLastSyncedRadio;
     }
 
+    static readonly int CriticalThreshold = 2;
+
     public static Dictionary<VehicleController, VehicleControllerData> vehicleData = new();
-    
-    private static void PruneOldData()
+
+    private static void RemoveStaleVehicleData()
     {
         List<VehicleController> vehiclesToRemove = new();
         foreach (VehicleController vehicle in vehicleData.Keys)
@@ -47,34 +46,6 @@ internal class VehicleControllerPatches
         foreach (VehicleController vehicle in vehiclesToRemove)
         {
             vehicleData.Remove(vehicle);
-        }
-    }
-
-    [HarmonyPatch("Awake")]
-    [HarmonyPostfix]
-    private static void Awake_Postfix(VehicleController __instance)
-    {
-        PruneOldData();
-
-        VehicleControllerData thisData = new();
-        vehicleData.Add(__instance, thisData);
-
-        //Move all cruiser children from MoldSpore to Triggers so weedkiller can't shrink it
-        Transform[] allChildObjects = __instance.GetComponentsInChildren<Transform>();
-        int moldSporeLayer = LayerMask.NameToLayer("MoldSpore");
-        int replaceLayer = LayerMask.NameToLayer("Triggers");
-
-        foreach (Transform transform in allChildObjects)
-        {
-            if (transform.gameObject.layer == moldSporeLayer)
-            {
-                transform.gameObject.layer = replaceLayer;
-            }
-        }
-
-        if (NetworkSync.FinishedSync)
-        {
-            SetupSyncedVehicleFeatures(__instance);
         }
     }
 
@@ -109,7 +80,7 @@ internal class VehicleControllerPatches
 
     public static void OnSync()
     {
-        PruneOldData();
+        RemoveStaleVehicleData();
 
         foreach (var elem in vehicleData)
         {
@@ -119,14 +90,14 @@ internal class VehicleControllerPatches
             }
             catch (Exception e)
             {
-                CruiserImproved.Log.LogError("Exception caught setting up synced vehicle features:\n" + e);
+                CruiserImproved.LogError("Exception caught setting up synced vehicle features:\n" + e);
             }
         }
     }
 
     public static void SendClientSyncData(ulong clientId)
     {
-        PruneOldData();
+        RemoveStaleVehicleData();
 
         foreach (var elem in vehicleData)
         {
@@ -172,6 +143,151 @@ internal class VehicleControllerPatches
         extraData.destroyCoroutine = null;
     }
 
+    [HarmonyPatch("Awake")]
+    [HarmonyPostfix]
+    private static void Awake_Postfix(VehicleController __instance)
+    {
+        RemoveStaleVehicleData();
+
+        VehicleControllerData thisData = new();
+        vehicleData.Add(__instance, thisData);
+
+        //Move all cruiser children from MoldSpore to Triggers so weedkiller can't shrink it
+        Transform[] allChildObjects = __instance.GetComponentsInChildren<Transform>();
+        int moldSporeLayer = LayerMask.NameToLayer("MoldSpore");
+        int replaceLayer = LayerMask.NameToLayer("Triggers");
+
+        foreach (Transform transform in allChildObjects)
+        {
+            if (transform.gameObject.layer == moldSporeLayer)
+            {
+                transform.gameObject.layer = replaceLayer;
+            }
+        }
+
+        if (NetworkSync.FinishedSync)
+        {
+            SetupSyncedVehicleFeatures(__instance);
+        }
+    }
+
+    [HarmonyPatch("FixedUpdate")]
+    [HarmonyPostfix]
+    static void FixedUpdate_Postfix(VehicleController __instance)
+    {
+        //Anti-hill sideslip
+        if (!NetworkSync.Config.AntiSideslip) return;
+        List<WheelCollider> wheels = [__instance.FrontLeftWheel, __instance.FrontRightWheel, __instance.BackLeftWheel, __instance.BackRightWheel];
+
+        //If at least 3 wheels are on the ground, apply a force to the Cruiser, directed up the hill slope, to counter gravity pulling it down the slope.
+        Vector3 groundNormal = Vector3.zero;
+        int groundedWheelCount = 0;
+        foreach (WheelCollider wheel in wheels)
+        {
+            if (wheel.GetGroundHit(out var hit))
+            {
+                groundNormal += hit.normal;
+                groundedWheelCount++;
+            }
+        }
+        groundNormal = groundNormal.normalized;
+        if (groundedWheelCount < 3 || Vector3.Angle(-groundNormal, Physics.gravity) > 30f) return;
+
+        Vector3 carFrontHillDirection = Vector3.ProjectOnPlane(__instance.transform.forward, groundNormal).normalized;
+        Vector3 hillGravity = -groundNormal * Physics.gravity.magnitude;
+
+        Vector3 force = hillGravity - Physics.gravity; //apply the difference between real gravity and the 'hill' downward gravity
+
+        //if we're not in park, don't apply forces in the forward or backward direction (car should still roll down hills)
+        if (__instance.gear != CarGearShift.Park)
+        {
+            force = Vector3.ProjectOnPlane(force, carFrontHillDirection);
+        }
+
+        //CruiserImproved.Log.LogMessage("Anti-slip force magnitude " + force.magnitude);
+
+        __instance.mainRigidbody.AddForce(force, ForceMode.Acceleration);
+    }
+
+    [HarmonyPatch("Update")]
+    [HarmonyPostfix]
+    static void Update_Postfix(VehicleController __instance)
+    {
+        VehicleControllerData extraData = vehicleData[__instance];
+
+        if (NetworkSync.Config.DisableRadioStatic)
+        {
+            __instance.radioSignalQuality = 3f;
+        }
+
+        //Sync radio time once per second
+        if (__instance.IsHost && (Time.realtimeSinceStartup - extraData.timeLastSyncedRadio > 1f))
+        {
+            extraData.timeLastSyncedRadio = Time.realtimeSinceStartup;
+            FastBufferWriter bufferWriter = new(16, Unity.Collections.Allocator.Temp);
+
+            bufferWriter.WriteValue(new NetworkObjectReference(__instance.NetworkObject));
+            bufferWriter.WriteValue(__instance.currentSongTime);
+            NetworkSync.SendToClients("SyncRadioTimeRpc", ref bufferWriter);
+        }
+
+        //Fix sound not playing when magneted if this cruiser was loaded in
+        if (__instance.finishedMagneting) __instance.loadedVehicleFromSave = false;
+
+        //Fix cruiser physics region not active when magneted, resulting in player sliding
+        if (__instance.magnetedToShip) __instance.physicsRegion.priority = 1;
+
+        bool networkDestroyImminent = extraData.hitsBlockedThisCrit > NetworkSync.Config.MaxCriticalHitCount && __instance.carHP == 1;
+        if (networkDestroyImminent || extraData.destroyCoroutine != null)
+        {
+            __instance.underExtremeStress = true;
+
+            //ownership got transferred mid destruction from a client, let's start the coroutine here too
+            if (__instance.IsOwner && extraData.destroyCoroutine == null && !__instance.carDestroyed)
+            {
+                float timeUntilExplosion = NetworkSync.Config.CruiserCriticalInvulnerabilityDuration - (Time.realtimeSinceStartup - extraData.timeLastCriticalDamage);
+                extraData.destroyCoroutine = __instance.StartCoroutine(DestroyAfterSeconds(__instance, timeUntilExplosion));
+            }
+        }
+
+        //Disable the nav obstacle when the cruiser is moving
+        if (NetworkSync.Config.EntitiesAvoidCruiser && extraData.navObstacle)
+        {
+            bool enableObstacle = __instance.averageVelocity.magnitude < 0.5f && !__instance.currentDriver && !__instance.currentPassenger;
+
+            extraData.navObstacle.gameObject.SetActive(enableObstacle);
+        }
+    }
+
+    [HarmonyPatch("Update")]
+    [HarmonyTranspiler]
+    static IEnumerable<CodeInstruction> Update_Transpiler(IEnumerable<CodeInstruction> instructions)
+    {
+        //Remove the code section that stops the update function from running if we're not in control of the truck, so the truck can still update the wheels
+        var codes = new List<CodeInstruction>(instructions);
+
+        int searchTargetIndex = PatchUtils.LocateCodeSegment(0, codes, [
+            new(OpCodes.Ldarg_0),
+            new(OpCodes.Ldfld, typeof(VehicleController).GetField("localPlayerInControl", BindingFlags.Instance | BindingFlags.Public)),
+            new(OpCodes.Brfalse),
+            new(OpCodes.Ldarg_0),
+            new(OpCodes.Call, typeof(NetworkBehaviour).GetMethod("get_IsOwner", BindingFlags.Instance | BindingFlags.Public | BindingFlags.GetProperty)),
+            new(OpCodes.Brtrue)
+            ]);
+
+        if (searchTargetIndex == -1)
+        {
+            CruiserImproved.LogError("Could not transpile VehicleController.Update");
+            return codes;
+        }
+
+        codes[searchTargetIndex + 3].labels.AddRange(codes[searchTargetIndex].labels); //move any labels to the instruction after the range we're removing
+
+        codes.RemoveRange(searchTargetIndex, 3);
+
+        return codes;
+    }
+
     [HarmonyPatch("DealPermanentDamage")]
     [HarmonyPrefix]
     private static void DealPermanentDamage_Prefix(VehicleController __instance, ref int damageAmount, Vector3 damagePosition)
@@ -204,7 +320,7 @@ internal class VehicleControllerPatches
         //Prevent damage less than what we last received if within I-frame duration
         if (isInvulnerable && extraData.lastDamageReceived >= damageAmount)
         {
-            CruiserImproved.Log.LogMessage($"Vehicle ignored {damageAmount} damage due to I-frames from previous damage {extraData.lastDamageReceived} ({Math.Round(timeSinceDamage, 2)}s)");
+            CruiserImproved.LogDebug($"Vehicle ignored {damageAmount} damage due to I-frames from previous damage {extraData.lastDamageReceived} ({Math.Round(timeSinceDamage, 2)}s)");
             damageAmount = 0;
             return;
         }
@@ -213,7 +329,7 @@ internal class VehicleControllerPatches
         if (isInvulnerable && extraData.lastDamageReceived > 0)
         {
             damageAmount -= extraData.lastDamageReceived;
-            CruiserImproved.Log.LogMessage($"Vehicle reduced {originalDamage} to {damageAmount} due to I-frames from previous damage {extraData.lastDamageReceived} ({Math.Round(timeSinceDamage, 2)}s)");
+            CruiserImproved.LogDebug($"Vehicle reduced {originalDamage} to {damageAmount} due to I-frames from previous damage {extraData.lastDamageReceived} ({Math.Round(timeSinceDamage, 2)}s)");
         }
 
         //Don't grant extra I-frames if we're still invulnerable from crit
@@ -253,12 +369,12 @@ internal class VehicleControllerPatches
                 string blockedCounterStr = $"({extraData.hitsBlockedThisCrit}/{NetworkSync.Config.MaxCriticalHitCount})";
                 if (activatedCritThisDamage)
                 {
-                    CruiserImproved.Log.LogMessage($"{blockedCounterStr} Critical protection triggered for {critInvulnDuration}s due to {damageAmount} vehicle damage");
+                    CruiserImproved.LogDebug($"{blockedCounterStr} Critical protection triggered for {critInvulnDuration}s due to {damageAmount} vehicle damage");
 
                 }
                 else
                 {
-                    CruiserImproved.Log.LogMessage($"{blockedCounterStr} Critical protection reduced vehicle damage from {beforeCritDamage} to {damageAmount}");
+                    CruiserImproved.LogDebug($"{blockedCounterStr} Critical protection reduced vehicle damage from {beforeCritDamage} to {damageAmount}");
                 }
             }
         }
@@ -310,90 +426,6 @@ internal class VehicleControllerPatches
         }
     }
 
-    [HarmonyPatch("FixedUpdate")]
-    [HarmonyPostfix]
-    static void FixedUpdate_Postfix(VehicleController __instance)
-    {
-        //Anti-hill sideslip
-        if (!NetworkSync.Config.AntiSideslip) return;
-        List<WheelCollider> wheels = [__instance.FrontLeftWheel, __instance.FrontRightWheel, __instance.BackLeftWheel, __instance.BackRightWheel];
-
-        //If at least 3 wheels are on the ground, apply a force to the Cruiser, directed up the hill slope, to counter gravity pulling it down the slope.
-        Vector3 groundNormal = Vector3.zero;
-        int groundedWheelCount = 0;
-        foreach(WheelCollider wheel in wheels)
-        {
-            if(wheel.GetGroundHit(out var hit))
-            {
-                groundNormal += hit.normal;
-                groundedWheelCount++;
-            }
-        }
-        groundNormal = groundNormal.normalized;
-        if (groundedWheelCount < 3 || Vector3.Angle(-groundNormal, Physics.gravity) > 30f) return;
-
-        Vector3 carFrontHillDirection = Vector3.ProjectOnPlane(__instance.transform.forward, groundNormal).normalized;
-        Vector3 hillGravity = -groundNormal * Physics.gravity.magnitude;
-
-        Vector3 force = hillGravity - Physics.gravity; //apply the difference between real gravity and the 'hill' downward gravity
-
-        //if we're not in park, don't apply forces in the forward or backward direction (car should still roll down hills)
-        if(__instance.gear != CarGearShift.Park)
-        {
-            force = Vector3.ProjectOnPlane(force, carFrontHillDirection);
-        }
-
-        //CruiserImproved.Log.LogMessage("Anti-slip force magnitude " + force.magnitude);
-
-        __instance.mainRigidbody.AddForce(force, ForceMode.Acceleration);
-    }
-
-    [HarmonyPatch("Update")]
-    [HarmonyPostfix]
-    static void Update_Postfix(VehicleController __instance)
-    {
-        VehicleControllerData extraData = vehicleData[__instance];
-
-        if (NetworkSync.Config.DisableRadioStatic)
-        {
-            __instance.radioSignalQuality = 3f;
-        }
-
-        if(__instance.IsHost && (Time.realtimeSinceStartup - extraData.timeLastSyncedRadio > 1f))
-        {
-            extraData.timeLastSyncedRadio = Time.realtimeSinceStartup;
-            FastBufferWriter bufferWriter = new(16, Unity.Collections.Allocator.Temp);
-
-            bufferWriter.WriteValue(new NetworkObjectReference(__instance.NetworkObject));
-            bufferWriter.WriteValue(__instance.currentSongTime);
-            NetworkSync.SendToClients("SyncRadioTimeRpc", ref bufferWriter);
-        }
-
-        //Fix sound not playing when magneted if this cruiser was loaded in
-        if (__instance.finishedMagneting) __instance.loadedVehicleFromSave = false;
-
-        if (__instance.magnetedToShip) __instance.physicsRegion.priority = 1;
-
-        bool networkDestroyImminent = extraData.hitsBlockedThisCrit > NetworkSync.Config.MaxCriticalHitCount && __instance.carHP == 1;
-        if (networkDestroyImminent || extraData.destroyCoroutine != null)
-        {
-            __instance.underExtremeStress = true;
-
-            //ownership got transferred mid destruction from a client, let's start the coroutine here too
-            if(__instance.IsOwner && extraData.destroyCoroutine == null && !__instance.carDestroyed)
-            {
-                float timeUntilExplosion = NetworkSync.Config.CruiserCriticalInvulnerabilityDuration - (Time.realtimeSinceStartup - extraData.timeLastCriticalDamage);
-                extraData.destroyCoroutine = __instance.StartCoroutine(DestroyAfterSeconds(__instance, timeUntilExplosion));
-            }
-        }
-        if(NetworkSync.Config.EntitiesAvoidCruiser && extraData.navObstacle)
-        {
-            bool enableObstacle = __instance.averageVelocity.magnitude < 0.5f && !__instance.currentDriver && !__instance.currentPassenger;
-
-            extraData.navObstacle.gameObject.SetActive(enableObstacle);
-        }
-    }
-
     [HarmonyPatch("AddEngineOilOnLocalClient")]
     [HarmonyPostfix]
     static void AddEngineOilOnLocalClient_Postfix(VehicleController __instance, int setCarHP)
@@ -408,35 +440,6 @@ internal class VehicleControllerPatches
             extraData.destroyCoroutine = null;
             __instance.underExtremeStress = false;
         }
-    }
-
-    [HarmonyPatch("Update")]
-    [HarmonyTranspiler]
-    static IEnumerable<CodeInstruction> Update_Transpiler(IEnumerable<CodeInstruction> instructions)
-    {
-        //Remove the code section that stops the update function from running if we're not in control of the truck, so the truck can still update the wheels
-        var codes = new List<CodeInstruction>(instructions);
-
-        int searchTargetIndex = PatchUtils.LocateCodeSegment(0, codes, [
-            new(OpCodes.Ldarg_0),
-            new(OpCodes.Ldfld, typeof(VehicleController).GetField("localPlayerInControl", BindingFlags.Instance | BindingFlags.Public)),
-            new(OpCodes.Brfalse),
-            new(OpCodes.Ldarg_0),
-            new(OpCodes.Call, typeof(NetworkBehaviour).GetMethod("get_IsOwner", BindingFlags.Instance | BindingFlags.Public | BindingFlags.GetProperty)),
-            new(OpCodes.Brtrue)
-            ]);
-
-        if(searchTargetIndex == -1)
-        {
-            CruiserImproved.Log.LogError("Could not transpile VehicleController.Update");
-            return codes;
-        }
-
-        codes[searchTargetIndex + 3].labels.AddRange(codes[searchTargetIndex].labels); //move any labels to the instruction after the range we're removing
-
-        codes.RemoveRange(searchTargetIndex, 3);
-
-        return codes;
     }
 
     //Allow player to push a destroyed vehicle
@@ -484,7 +487,7 @@ internal class VehicleControllerPatches
 
         if (currentDriver == null || isTypingChat == null || quickMenuManager == null || isMenuOpen == null || moveInputVector == null || steeringWheelTurnSpeed == null)
         {
-            CruiserImproved.Log.LogError("Could not find fields for VehicleInput transpiler!");
+            CruiserImproved.LogError("Could not find fields for VehicleInput transpiler!");
             return codes;
         }
 
@@ -492,7 +495,7 @@ internal class VehicleControllerPatches
 
         if(get_zero == null)
         {
-            CruiserImproved.Log.LogError("Could not find vector method required for VehicleInput transpiler!");
+            CruiserImproved.LogError("Could not find vector method required for VehicleInput transpiler!");
             return codes;
         }
 
@@ -504,7 +507,7 @@ internal class VehicleControllerPatches
 
         if(insertIndex == -1)
         {
-            CruiserImproved.Log.LogError("Could not find insertion point for VehicleInput transpiler!");
+            CruiserImproved.LogError("Could not find insertion point for VehicleInput transpiler!");
         }
 
         var labelMove = codes[insertIndex].labels;
@@ -568,11 +571,19 @@ internal class VehicleControllerPatches
             new(OpCodes.Ldc_I4_0),
             new(OpCodes.Ret)]) + 3;
 
-        if (indexFind == -1) { CruiserImproved.Log.LogError("PatchSmallEntityCarKill: Failed to find ret code!"); return; }
+        if (indexFind == -1)
+        {
+            CruiserImproved.LogError("PatchSmallEntityCarKill: Failed to find ret code!"); 
+            return; 
+        }
 
         int branchCopy = PatchUtils.LocateCodeSegment(indexFind, codes, [new(OpCodes.Br)]); //copy the destination label of the next branch
 
-        if (branchCopy == -1) { CruiserImproved.Log.LogError("PatchSmallEntityCarKill: Failed to find branch instruction!"); return; }
+        if (branchCopy == -1) 
+        { 
+            CruiserImproved.LogError("PatchSmallEntityCarKill: Failed to find branch instruction!"); 
+            return; 
+        }
 
         object afterCheckJumpOperand = codes[branchCopy].operand;
 
@@ -603,7 +614,7 @@ internal class VehicleControllerPatches
 
         if(insertBefore == -1)
         {
-            CruiserImproved.Log.LogError("PatchLocalEntityDamage: Failed to find HitEnemy call!");
+            CruiserImproved.LogError("PatchLocalEntityDamage: Failed to find HitEnemy call!");
             return;
         }
 
@@ -640,7 +651,7 @@ internal class VehicleControllerPatches
 
         if (targetIndex == -1)
         {
-            CruiserImproved.Log.LogError("Could not patch VehicleController.OnCollisionEnter instakill!");
+            CruiserImproved.LogError("Could not patch VehicleController.OnCollisionEnter instakill!");
             return codes;
         }
 
@@ -650,7 +661,7 @@ internal class VehicleControllerPatches
 
         if(removeEndIndex == -1)
         {
-            CruiserImproved.Log.LogError("Could not locate VehicleController.OnCollisionEnter instakill patch end point!");
+            CruiserImproved.LogError("Could not locate VehicleController.OnCollisionEnter instakill patch end point!");
             return codes;
         }
         
@@ -794,7 +805,7 @@ internal class VehicleControllerPatches
 
         if(index == -1)
         {
-            CruiserImproved.Log.LogError("Could not patch ExitPassengerSideSeat!");
+            CruiserImproved.LogError("Could not patch ExitPassengerSideSeat!");
             return codes;
         }
         codes[index].opcode = OpCodes.Ldc_I4_0;
@@ -826,7 +837,7 @@ internal class VehicleControllerPatches
 
         if (index == -1)
         {
-            CruiserImproved.Log.LogError("Failed to find code segment in PlayRandomClipAndPropertiesFromAudio");
+            CruiserImproved.LogError("Failed to find code segment in PlayRandomClipAndPropertiesFromAudio");
             return codes;
         }
 
@@ -838,7 +849,7 @@ internal class VehicleControllerPatches
 
         if(jumpIndex == -1)
         {
-            CruiserImproved.Log.LogError("Failed to find end jump segment in PlayRandomClipAndPropertiesFromAudio");
+            CruiserImproved.LogError("Failed to find end jump segment in PlayRandomClipAndPropertiesFromAudio");
             return codes;
         }
 
@@ -888,7 +899,7 @@ internal class VehicleControllerPatches
 
         if(retIndex == -1)
         {
-            CruiserImproved.Log.LogError("Failed to remove owner check from StartMagneting!");
+            CruiserImproved.LogError("Failed to remove owner check from StartMagneting!");
         }
         else
         {
@@ -904,7 +915,7 @@ internal class VehicleControllerPatches
 
         if(index == -1)
         {
-            CruiserImproved.Log.LogError("Failed to patch StartMagneting!");
+            CruiserImproved.LogError("Failed to patch StartMagneting!");
         }
 
         var jumpLabel = il.DefineLabel();
@@ -978,12 +989,5 @@ internal class VehicleControllerPatches
         if (clientId != NetworkManager.ServerClientId) return;
 
         vehicle.currentSongTime = radioTime;
-    }
-
-    [HarmonyPatch("MagnetCarClientRpc")]
-    [HarmonyPrefix]
-    static public void MagnetCarClientRpc_Prefix(VehicleController __instance)
-    {
-        CruiserImproved.Log.LogMessage("MagnetCarClientRpc called!");
     }
 }

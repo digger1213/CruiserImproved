@@ -1,19 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace CruiserImproved;
+﻿namespace CruiserImproved.Utils;
 internal static class SaveManager
 {
     static string SavePrefix = "CruiserImproved.";
     public static void Save<T>(string key, T data)
     {
-        ES3.Save(SavePrefix+key, data, GameNetworkManager.Instance.currentSaveFileName);
+        ES3.Save(SavePrefix + key, data, GameNetworkManager.Instance.currentSaveFileName);
     }
 
     public static bool TryLoad<T>(string key, out T data)
     {
-        if(!ES3.KeyExists(SavePrefix+key, GameNetworkManager.Instance.currentSaveFileName))
+        if (!ES3.KeyExists(SavePrefix + key, GameNetworkManager.Instance.currentSaveFileName))
         {
             data = default;
             return false;

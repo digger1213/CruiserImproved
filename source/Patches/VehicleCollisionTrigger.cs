@@ -27,7 +27,8 @@ internal class VehicleCollisionTriggerPatches
         //Patch hitting players standing on/in the cruiser
         if (other.CompareTag("Player") && (player = other.GetComponentInParent<PlayerControllerB>()))
         {
-            if(__instance.mainScript.physicsRegion.physicsTransform == player.physicsParent)
+            Transform physicsTransform = __instance.mainScript.physicsRegion.physicsTransform;
+            if(player.physicsParent == physicsTransform || player.overridePhysicsParent == physicsTransform)
             {
                 return false;
             }

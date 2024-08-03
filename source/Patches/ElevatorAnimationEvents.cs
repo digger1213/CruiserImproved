@@ -10,6 +10,7 @@ internal class ElevatorAnimationEventsPatches
     [HarmonyPrefix]
     static void ElevatorFullyRunning_Prefix()
     {
+        //Save players who are on the magneted cruiser from being abandoned
         PlayerControllerB localPlayer = GameNetworkManager.Instance.localPlayerController;
 
         if (localPlayer.physicsParent == null) return;

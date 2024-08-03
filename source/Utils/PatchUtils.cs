@@ -4,7 +4,7 @@ using HarmonyLib;
 using UnityEngine;
 using System;
 
-namespace CruiserImproved;
+namespace CruiserImproved.Utils;
 
 static internal class PatchUtils
 {
@@ -20,7 +20,7 @@ static internal class PatchUtils
         public OpcodeMatch(OpCode opcode, object operand)
         {
             this.opcode = opcode;
-            this.operandOrNull = operand;
+            operandOrNull = operand;
         }
     }
 
@@ -45,21 +45,21 @@ static internal class PatchUtils
         if (startIndex < 0 || startIndex >= searchSpace.Count) return -1;
 
         int searchForIndex = 0;
-        for(int searchSpaceIndex = startIndex; searchSpaceIndex < searchSpace.Count; searchSpaceIndex++)
+        for (int searchSpaceIndex = startIndex; searchSpaceIndex < searchSpace.Count; searchSpaceIndex++)
         {
             CodeInstruction check = searchSpace[searchSpaceIndex];
             OpcodeMatch currentMatch = searchFor[searchForIndex];
             bool match = check.opcode == currentMatch.opcode;
 
             //try comparing operands if we have one
-            if(match && currentMatch.operandOrNull != null)
+            if (match && currentMatch.operandOrNull != null)
             {
                 match = OperandCompare(currentMatch.operandOrNull, check.operand);
             }
-            if(match)
+            if (match)
             {
                 searchForIndex++;
-                if(searchForIndex == searchFor.Count)
+                if (searchForIndex == searchFor.Count)
                 {
                     //we found the sequence, return the index at the start of the sequence
                     return searchSpaceIndex - searchForIndex + 1;
@@ -81,7 +81,7 @@ static internal class PatchUtils
         string text = "";
         for (int i = 0; i < 32; i++)
         {
-            if (((1 << i) & bitmask) != 0)
+            if ((1 << i & bitmask) != 0)
             {
                 text = $"{text} {LayerMask.LayerToName(i)}";
             }

@@ -1,4 +1,5 @@
 ﻿using System;
+using CruiserImproved.Utils;
 using HarmonyLib;
 
 namespace CruiserImproved.Patches;
@@ -20,7 +21,7 @@ internal class GameNetworkManagerPatches
                 SaveManager.Save("AttachedVehiclePosition", vehicle.magnetTargetPosition);
                 SaveManager.Save("AttachedVehicleTurbo", vehicle.turboBoosts);
                 SaveManager.Save("AttachedVehicleIgnition", vehicle.ignitionStarted);
-                CruiserImproved.Log.LogMessage("Successfully saved cruiser data.");
+                CruiserImproved.LogMessage("Successfully saved cruiser data.");
             }
             else
             {
@@ -32,7 +33,7 @@ internal class GameNetworkManagerPatches
         }
         catch(Exception e)
         {
-            CruiserImproved.Log.LogError("Caught error saving Cruiser data:\n" + e);
+            CruiserImproved.LogError("Exception caught saving Cruiser data:\n" + e);
         }
     }
 }

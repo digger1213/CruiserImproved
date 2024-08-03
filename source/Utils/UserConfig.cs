@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.IO;
 
-namespace CruiserImproved;
+namespace CruiserImproved.Utils;
 
 internal class UserConfig
 {
@@ -86,7 +86,7 @@ internal class UserConfig
             File.Copy(oldConfigPath, config.ConfigFilePath, true);
             File.Delete(oldConfigPath);
             config.Reload();
-            CruiserImproved.Log.LogMessage("Successfuly renamed old config file.");
+            CruiserImproved.LogMessage("Successfuly renamed old config file.");
         }
     }
 
@@ -100,11 +100,11 @@ internal class UserConfig
 
         PropertyInfo orphanedEntriesProperty = AccessTools.Property(typeof(ConfigFile), "OrphanedEntries");
         var orphanedEntries = (Dictionary<ConfigDefinition, string>)orphanedEntriesProperty.GetValue(config);
-        foreach(var entry in orphanedEntries )
+        foreach (var entry in orphanedEntries)
         {
-            if(ConfigMigrations.TryGetValue(entry.Key, out var newConfig))
+            if (ConfigMigrations.TryGetValue(entry.Key, out var newConfig))
             {
-                CruiserImproved.Log.LogMessage("Migrated old config " + entry.Key + " : " + entry.Value);
+                CruiserImproved.LogMessage("Migrated old config " + entry.Key + " : " + entry.Value);
                 newConfig.SetSerializedValue(entry.Value);
             }
         }

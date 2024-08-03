@@ -25,7 +25,7 @@ internal static class NetworkSync
 
         if (NetworkManager.Singleton.IsHost)
         {
-            CruiserImproved.Log.LogMessage("Setup as host!");
+            CruiserImproved.LogMessage("Setup as host!");
             HostSyncedList = new();
             SyncedWithHost = true;
             SetupMessageHandler("ContactServerRpc", ContactServerRpc);
@@ -43,7 +43,7 @@ internal static class NetworkSync
             fastBufferWriter.WriteValue(text);
             SendToHost("ContactServerRpc", fastBufferWriter, true);
 
-            CruiserImproved.Log.LogMessage("Setup as client!");
+            CruiserImproved.LogMessage("Setup as client!");
         }
     }
 
@@ -68,7 +68,7 @@ internal static class NetworkSync
     {
         if (HostSyncedList.Remove(clientId))
         {
-            CruiserImproved.Log.LogMessage("CruiserImproved client " + clientId + " disconnected.");
+            CruiserImproved.LogMessage("CruiserImproved client " + clientId + " disconnected.");
         }
     }
 
@@ -84,7 +84,7 @@ internal static class NetworkSync
 
     static public void SendClientSyncRpcs(ulong clientId)
     {
-        CruiserImproved.Log.LogMessage($"Sent sync for client {clientId}.");
+        CruiserImproved.LogMessage($"Sent sync for client {clientId}.");
         VehicleControllerPatches.SendClientSyncData(clientId);
     }
 
@@ -93,7 +93,7 @@ internal static class NetworkSync
     {
         if (!NetworkManager.Singleton.IsHost)
         {
-            CruiserImproved.Log.LogError("SendToClients called from client!");
+            CruiserImproved.LogError("SendToClients called from client!");
             return;
         }
         NetworkManager.Singleton.CustomMessagingManager.SendNamedMessage("CruiserImproved." + name, clients, buffer);
@@ -114,15 +114,15 @@ internal static class NetworkSync
         Version clientVersion = new(clientVersionStr);
         if (clientVersion > CruiserImproved.Version)
         {
-            CruiserImproved.Log.LogWarning("Client " + clientId + " connected with newer CruiserImproved version " + clientVersion + ". We're running outdated " + CruiserImproved.Version);
+            CruiserImproved.LogWarning("Client " + clientId + " connected with newer CruiserImproved version " + clientVersion + ". We're running outdated " + CruiserImproved.Version);
         }
         else if(clientVersion < CruiserImproved.Version)
         {
-            CruiserImproved.Log.LogWarning("Client " + clientId + " connected with outdated CruiserImproved version " + clientVersion + ". We're running " + CruiserImproved.Version);
+            CruiserImproved.LogWarning("Client " + clientId + " connected with outdated CruiserImproved version " + clientVersion + ". We're running " + CruiserImproved.Version);
         }
         else
         {
-            CruiserImproved.Log.LogMessage("Client " + clientId + " connected with CruiserImproved version match " + clientVersion);
+            CruiserImproved.LogMessage("Client " + clientId + " connected with CruiserImproved version match " + clientVersion);
         }
 
         HostSyncedList.Add(clientId);
@@ -141,15 +141,15 @@ internal static class NetworkSync
 
         if (hostVersion > CruiserImproved.Version)
         {
-            CruiserImproved.Log.LogWarning("Host successfuly synced with newer CruiserImproved version " + hostVersion + ". We're running outdated " + CruiserImproved.Version);
+            CruiserImproved.LogWarning("Host successfuly synced with newer CruiserImproved version " + hostVersion + ". We're running outdated " + CruiserImproved.Version);
         }
         else if (hostVersion < CruiserImproved.Version)
         {
-            CruiserImproved.Log.LogWarning("Host successfuly synced with outdated CruiserImproved version " + hostVersion + ". We're running " + CruiserImproved.Version);
+            CruiserImproved.LogWarning("Host successfuly synced with outdated CruiserImproved version " + hostVersion + ". We're running " + CruiserImproved.Version);
         }
         else
         {
-            CruiserImproved.Log.LogMessage("Host successfuly synced with CruiserImproved version " + hostVersion);
+            CruiserImproved.LogMessage("Host successfuly synced with CruiserImproved version " + hostVersion);
         }
         FinishSync(true);
     }
@@ -163,7 +163,7 @@ internal static class NetworkSync
 
         if (!SyncedWithHost)
         {
-            CruiserImproved.Log.LogMessage("Could not sync with host CruiserImproved instance. Only client-side effects will apply.");
+            CruiserImproved.LogMessage("Could not sync with host CruiserImproved instance. Only client-side effects will apply.");
         }
         VehicleControllerPatches.OnSync();
     }

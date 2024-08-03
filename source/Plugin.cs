@@ -2,8 +2,10 @@
 using HarmonyLib;
 using BepInEx.Logging;
 using System;
+using CruiserImproved.Utils;
+using System.Diagnostics;
 
-namespace CruiserImproved; 
+namespace CruiserImproved;
 
 [BepInPlugin(MyPluginInfo.PLUGIN_GUID, MyPluginInfo.PLUGIN_NAME, MyPluginInfo.PLUGIN_VERSION)]
 [BepInDependency("io.daxcess.lcvr", BepInDependency.DependencyFlags.SoftDependency)]
@@ -11,10 +13,19 @@ internal class CruiserImproved : BaseUnityPlugin
 {
     static public Version Version = new(MyPluginInfo.PLUGIN_VERSION);
 
-    private Harmony harmony;
-
     static public CruiserImproved Instance;
-    static public ManualLogSource Log;
+
+    private Harmony harmony;
+    static private ManualLogSource Log;
+
+    public static void LogError(object data) => Log.LogError(data);
+
+    public static void LogWarning(object data) => Log.LogWarning(data);
+
+    public static void LogMessage(object data) => Log.LogMessage(data);
+
+    [Conditional("DEBUG")]
+    public static void LogDebug(object data) => Log.LogDebug(data);
 
     public void Awake()
     {
@@ -23,7 +34,5 @@ internal class CruiserImproved : BaseUnityPlugin
         harmony = new Harmony(MyPluginInfo.PLUGIN_GUID);
         UserConfig.InitConfig();
         harmony.PatchAll();
-
-        Log.LogMessage("VR compat: " + LCVRCompatibility.modEnabled);
     }
 }

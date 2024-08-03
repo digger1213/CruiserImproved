@@ -9,6 +9,7 @@ internal class BaboonBirdAIPatches
     [HarmonyPostfix]
     static public void Start_Postfix(BaboonBirdAI __instance)
     {
+        //Fix baboon hawks requiring very high speed to run over
         __instance.enemyType.SizeLimit = NavSizeLimit.NoLimit;
     }
 }
