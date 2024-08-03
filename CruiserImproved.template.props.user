@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project>
     <PropertyGroup>
-        <LethalCompanyDir>\path\to\steamapps\common\Lethal Company\</LethalCompanyDir>
         <TestProfileDir>\path\to\test\profile</TestProfileDir>
         <ShouldCopyToTestProfile>false</ShouldCopyToTestProfile>
     </PropertyGroup>

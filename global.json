@@ -1,5 +1,8 @@
 {
   "msbuild-sdks": {
     "Sigurd.Thunderstore.Sdk": "0.3.6"
+  },
+  "sdk": {
+    "version": "2.1"
   }
 }

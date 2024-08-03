@@ -17,7 +17,7 @@
 	<PropertyGroup>
 		<IsThunderstorePackable>false</IsThunderstorePackable>
 		<ThunderstoreNamespace>DiggC</ThunderstoreNamespace>
-		<ThunderstoreReadmePath>$(MSBuildProjectDirectory)\..\README.md</ThunderstoreReadmePath>
+		<ThunderstoreReadmePath>$(MSBuildProjectDirectory)\..\THUNDERSTORE.md</ThunderstoreReadmePath>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -41,5 +41,5 @@
     </ItemGroup>
 
     <!-- Import local user props -->
-    <Import Project="$(SolutionDir)CruiserImproved.props.user" Condition="$(CI) != 'true'" />
+    <Import Project="$(SolutionDir)CruiserImproved.props.user" Condition="Exists('$(SolutionDir)CruiserImproved.props.user')" />
 </Project>
