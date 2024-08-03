@@ -213,6 +213,10 @@ internal class VehicleControllerPatches
     [HarmonyPostfix]
     static void Update_Postfix(VehicleController __instance)
     {
+        if (!__instance.IsSpawned)
+        {
+            return;
+        }
         VehicleControllerData extraData = vehicleData[__instance];
 
         if (NetworkSync.Config.DisableRadioStatic)
