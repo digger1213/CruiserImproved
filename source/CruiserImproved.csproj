@@ -5,6 +5,7 @@
 		<RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
 		<AssemblyName>$(ThunderstoreNamespace).$(MSBuildProjectName)</AssemblyName>
 		<Product>$(MSBuildProjectName)</Product>
+		<EnableDefaultCompileItems>False</EnableDefaultCompileItems>
 	</PropertyGroup>
 
 	<!-- Thunderstore -->
@@ -16,10 +17,15 @@
 		<ThunderstoreIconPath>$(ProjectDir)assets\icons\icon.png</ThunderstoreIconPath>
 		<HasBepInPlugin>true</HasBepInPlugin>
 	</PropertyGroup>
+	
+	<ItemGroup>
+	  <Compile Include="**/*.cs"/>
+	  <Compile Remove="Obj/**/*.cs"/>
+	</ItemGroup>
+	
 	<ItemGroup>
 		<ThunderstoreBuildCopyPath Include="$(TargetPath);$(TargetDir)$(AssemblyName).pdb" Destination="BepInEx/plugins/$(ProjectName)/" />
 	</ItemGroup>	
-	
 	
     <ItemGroup Condition="$(CI) != 'true'">
         <Reference Include="Assembly-CSharp" Publicize="true">
