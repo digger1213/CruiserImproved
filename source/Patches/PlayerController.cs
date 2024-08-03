@@ -14,6 +14,9 @@ internal class PlayerControllerPatches
     {
         if (LCVRCompatibility.inVrSession) return;
 
+        bool cameraSettingsEnabled = NetworkSync.Config.AllowLean || NetworkSync.Config.SeatBoostScale > 0f;
+        if (!cameraSettingsEnabled) return;
+
         Vector3 cameraOffset = Vector3.zero;
         if (__instance.inVehicleAnimation)
         {
