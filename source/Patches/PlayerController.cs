@@ -12,6 +12,8 @@ internal class PlayerControllerPatches
     [HarmonyPostfix]
     public static void Update_Postfix(PlayerControllerB __instance)
     {
+        if (LCVRCompatibility.inVrSession) return;
+
         Vector3 cameraOffset = Vector3.zero;
         if (__instance.inVehicleAnimation)
         {

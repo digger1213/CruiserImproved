@@ -6,6 +6,7 @@ using System;
 namespace CruiserImproved; 
 
 [BepInPlugin(MyPluginInfo.PLUGIN_GUID, MyPluginInfo.PLUGIN_NAME, MyPluginInfo.PLUGIN_VERSION)]
+[BepInDependency("io.daxcess.lcvr", BepInDependency.DependencyFlags.SoftDependency)]
 internal class CruiserImproved : BaseUnityPlugin
 {
     static public Version Version = new(MyPluginInfo.PLUGIN_VERSION);
@@ -22,5 +23,7 @@ internal class CruiserImproved : BaseUnityPlugin
         harmony = new Harmony(MyPluginInfo.PLUGIN_GUID);
         UserConfig.InitConfig();
         harmony.PatchAll();
+
+        Log.LogMessage("VR compat: " + LCVRCompatibility.modEnabled);
     }
 }

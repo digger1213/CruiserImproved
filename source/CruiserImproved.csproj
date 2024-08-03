@@ -26,43 +26,21 @@
 	<ItemGroup>
 		<ThunderstoreBuildCopyPath Include="$(TargetPath);$(TargetDir)$(AssemblyName).pdb" Destination="BepInEx/plugins/$(ProjectName)/" />
 	</ItemGroup>	
-	
-    <ItemGroup Condition="$(CI) != 'true'">
-        <Reference Include="Assembly-CSharp" Publicize="true">
-            <HintPath>$(LethalCompanyDir)Lethal Company_Data/Managed/Assembly-CSharp.dll</HintPath>
-        </Reference>
-        <Reference Include="Assembly-CSharp-firstpass" Publicize="true">
-            <HintPath>$(LethalCompanyDir)Lethal Company_Data/Managed/Assembly-CSharp-firstpass.dll</HintPath>
-        </Reference>
-        <Reference Include="Unity.Netcode.Runtime">
-            <HintPath>$(LethalCompanyDir)Lethal Company_Data/Managed/Unity.Netcode.Runtime.dll</HintPath>
-        </Reference>
-        <Reference Include="UnityEngine">
-            <HintPath>$(LethalCompanyDir)Lethal Company_Data/Managed/UnityEngine.dll</HintPath>
-        </Reference>
-        <Reference Include="UnityEngine.CoreModule">
-            <HintPath>$(LethalCompanyDir)Lethal Company_Data/Managed/UnityEngine.CoreModule.dll</HintPath>
-        </Reference>
-        <Reference Include="Unity.InputSystem">
-            <HintPath>$(LethalCompanyDir)Lethal Company_Data/Managed/Unity.InputSystem.dll</HintPath>
-        </Reference>
-    </ItemGroup>
-
-    <ItemGroup Condition="$(CI) == 'true'">
-        <PackageReference Include="LethalCompany.GameLibs.Steam" Version="56.0.1-ngd.0" />
-    </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="BepInEx.Analyzers" Version="1.0.8">
-        <PrivateAssets>all</PrivateAssets>
-        <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-      </PackageReference>
-      <PackageReference Include="BepInEx.AssemblyPublicizer.MSBuild" Version="0.4.2">
-        <PrivateAssets>all</PrivateAssets>
-        <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-      </PackageReference>
-      <PackageReference Include="BepInEx.Core" Version="5.4.21" />
-      <PackageReference Include="BepInEx.PluginInfoProps" Version="2.1.0" />
-      <PackageReference Include="UnityEngine.Modules" Version="2022.3.9" />
+		<PackageReference Include="BepInEx.Analyzers" Version="1.0.8">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="BepInEx.AssemblyPublicizer.MSBuild" Version="0.4.2">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="BepInEx.Core" Version="5.4.21" />
+		<PackageReference Include="BepInEx.PluginInfoProps" Version="2.1.0" />
+		<PackageReference Include="UnityEngine.Modules" Version="2022.3.9" />
+		<PackageReference Include="LCVR" Version="1.2.5" PrivateAssets="all"/>
+		
+		<PackageReference Include="LethalCompany.GameLibs.Steam" Version="56.0.1-ngd.0" />
     </ItemGroup>
 </Project>
