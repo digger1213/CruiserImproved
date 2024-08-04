@@ -42,8 +42,6 @@ internal class PlayerControllerPatches
 
     public static PlayerPhysicsRegion FindPhysicsRegionOnTransform(ref Transform transform)
     {
-        CruiserImproved.LogMessage("Transform name: " + transform.name);
-
         //vanilla try get region in children first
         PlayerPhysicsRegion region = transform.GetComponentInChildren<PlayerPhysicsRegion>();
         if (region) return region;

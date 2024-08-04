@@ -76,6 +76,14 @@ internal class VehicleControllerPatches
 
             cruiserNavBlockerObject.transform.parent = vehicle.transform;
         }
+
+        if (NetworkSync.Config.HandsfreeDoors)
+        {
+            vehicle.driverSideDoorTrigger.twoHandedItemAllowed = true;
+            vehicle.passengerSideDoorTrigger.twoHandedItemAllowed = true;
+
+            vehicle.backDoorContainer.GetComponentsInChildren<InteractTrigger>().Do((trigger) => { trigger.twoHandedItemAllowed = true; });
+        }
     }
 
     public static void OnSync()
@@ -997,5 +1005,23 @@ internal class VehicleControllerPatches
         if (clientId != NetworkManager.ServerClientId) return;
 
         vehicle.currentSongTime = radioTime;
+    }
+
+    [HarmonyPatch("RemoveKeyFromIgnition")]
+    [HarmonyPostfix]
+    static public void RemoveKeyFromIgnition_Postfix(VehicleController __instance)
+    {
+        if (__instance.localPlayerInControl || __instance.currentDriver != null) return;
+
+        //standing key removal if enabled and no one's driving
+
+        if (!NetworkSync.Config.StandingKeyRemoval) return;
+
+        if (__instance.keyIgnitionCoroutine != null)
+        {
+            __instance.StopCoroutine(__instance.keyIgnitionCoroutine);
+        }
+        __instance.keyIgnitionCoroutine = __instance.StartCoroutine(__instance.RemoveKey());
+        __instance.RemoveKeyFromIgnitionServerRpc((int)GameNetworkManager.Instance.localPlayerController.playerClientId);
     }
 }

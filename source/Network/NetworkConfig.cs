@@ -28,6 +28,10 @@ internal class NetworkConfig : INetworkSerializable
     //Settings as of v1.3.0
     public bool DisableRadioStatic = false;
 
+    //Settings as of v1.4.0
+    public bool HandsfreeDoors = false;
+    public bool StandingKeyRemoval = false;
+
     //Initialize NetworkedSettings from local config
     public void CopyLocalConfig()
     {
@@ -50,6 +54,10 @@ internal class NetworkConfig : INetworkSerializable
 
         //v1.3.0
         DisableRadioStatic = UserConfig.DisableRadioStatic.Value;
+
+        //v1.4.0
+        HandsfreeDoors = UserConfig.HandsfreeDoors.Value;
+        StandingKeyRemoval = UserConfig.StandingKeyRemoval.Value;
     }
 
     public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
@@ -84,5 +92,11 @@ internal class NetworkConfig : INetworkSerializable
         if (version < new Version(1, 3, 0)) return;
 
         serializer.SerializeValue(ref DisableRadioStatic);
+
+        //v1.4.0
+        if (version < new Version(1, 4, 0)) return;
+
+        serializer.SerializeValue(ref HandsfreeDoors);
+        serializer.SerializeValue(ref StandingKeyRemoval);
     }
 }

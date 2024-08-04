@@ -31,6 +31,10 @@ internal class UserConfig
     internal static ConfigEntry<bool> SortEquipmentOnLoad;
     internal static ConfigEntry<bool> SaveCruiserValues;
 
+    //QOL
+    internal static ConfigEntry<bool> HandsfreeDoors;
+    internal static ConfigEntry<bool> StandingKeyRemoval;
+
     internal static Dictionary<ConfigDefinition, ConfigEntryBase> ConfigMigrations;
 
     internal static void InitConfig()
@@ -71,6 +75,10 @@ internal class UserConfig
         PreventPassengersEjectingDriver = config.Bind("Host-side", "Prevent Passengers Eject Driver", false, "If true, prevent anyone except the driver of the cruiser from using the eject button in your lobbies.");
         SortEquipmentOnLoad = config.Bind("Host-side", "Sort Equipment On Load", true, "If true, equipment and weapons will be separated from other scrap when items are moved out of the Cruiser on save load.\nThese items will be placed in a second pile in the center of the ship.");
         SaveCruiserValues = config.Bind("Host-side", "Save Cruiser Values", true, "If true, the Cruiser's turbo count, ignition state, and magnet position will be saved to/loaded from the save file.");
+
+        //QOL
+        HandsfreeDoors = config.Bind("Quality of Life", "Handsfree Doors", true, "If true, allow opening the Cruiser's back and side doors when holding a 2 handed item.");
+        StandingKeyRemoval = config.Bind("Quality of Life", "Standing Key Removal", true, "If true, allow the removal of the key from the ignition when not seated.");
 
         MigrateOldConfigs(config);
         config.Save();
