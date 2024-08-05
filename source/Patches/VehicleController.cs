@@ -48,6 +48,20 @@ internal class VehicleControllerPatches
     static readonly string ScanTurboSubtext = "Turbocharged";
     static readonly string ScanDetailedTurboSubtext = "{0}% Turbocharged";
 
+    static readonly string[] DestroyDisableList =
+    {
+        "HPMeter",
+        "TurboMeter",
+        "Triggers/ButtonAnimContainer",
+        "Meshes/FrontLight",
+        "Meshes/GearStickContainer",
+        "Meshes/SteeringWheelContainer",
+        "Meshes/DriverSeatContainer",
+        "Meshes/DoorLeftContainer",
+        "Meshes/DoorRightContainer",
+        "Meshes/FrontCabinLight",
+        "Meshes/CabinWindowContainer",
+    };
 
     public static Dictionary<VehicleController, VehicleControllerData> vehicleData = new();
 
@@ -566,6 +580,17 @@ internal class VehicleControllerPatches
     static void DestroyCar_Postfix(VehicleController __instance)
     {
         UpdateCruiserScanText(__instance, true);
+
+        __instance.carExhaustParticle.Stop(true, ParticleSystemStopBehavior.StopEmitting);
+
+        foreach(string name in DestroyDisableList)
+        {
+            Transform child = __instance.transform.Find(name);
+            if (child)
+            {
+                child.gameObject.SetActive(false);
+            }
+        }
 
         if (!NetworkSync.Config.AllowPushDestroyedCar) return;
 
