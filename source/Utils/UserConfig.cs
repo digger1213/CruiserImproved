@@ -27,6 +27,7 @@ internal class UserConfig
     internal static ConfigEntry<bool> SilentCollisions;
     internal static ConfigEntry<float> SeatBoostScale;
     internal static ConfigEntry<bool> DisableRadioStatic;
+    internal static ConfigEntry<bool> TurboExhaust;
     internal static ConfigEntry<ScanNodeOptions> CruiserScanNode;
 
     //Cruiser Health
@@ -63,6 +64,7 @@ internal class UserConfig
         AllowPushDestroyedCar = config.Bind("General", "Allow Pushing Destroyed Cruisers", true, "If true, allow players to push destroyed cruisers.");
         SilentCollisions = config.Bind("General", "Silent Collisions", true, "If true, entities hitting the Cruiser when it's engine is off will not make noise.\nThis means Eyeless Dogs will not get stuck in a loop attacking it, triggering noise, and attacking it again while the engine is off.");
         DisableRadioStatic = config.Bind("General", "Disable Radio Static", false, "If true, disable the radio interference static sound on the radio.");
+        TurboExhaust = config.Bind("General", "Turbo Exhaust Smoke", true, "If true, the Cruiser's exhaust will be slightly tinted blue when at least one turbo boost is stored.");
         CruiserScanNode = config.Bind("General", "Cruiser Scan Node", ScanNodeOptions.Enabled | ScanNodeOptions.VisibleThroughWalls | ScanNodeOptions.HealthEstimate | ScanNodeOptions.TurboEstimate, "Customize a scan node to easily find your Cruiser, like the scan nodes on the ship and the main entrance." +
             "\nCan display information according to values set. If multiple settings are specified for the same information, the most detailed is used.");
 

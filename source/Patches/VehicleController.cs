@@ -30,6 +30,9 @@ internal class VehicleControllerPatches
         public ScanNodeProperties scanNode;
         public int lastScanHP = -1;
         public int lastScanTurbo = -1;
+
+        public bool usingColoredExhaust = false;
+        public ParticleSystem particleSystemSwap;
     }
 
     static readonly int CriticalThreshold = 2;
@@ -64,6 +67,8 @@ internal class VehicleControllerPatches
     };
 
     public static Dictionary<VehicleController, VehicleControllerData> vehicleData = new();
+
+    static ParticleSystem.MinMaxGradient defaultExhaustGradient;
 
     private static void RemoveStaleVehicleData()
     {
@@ -118,8 +123,7 @@ internal class VehicleControllerPatches
             vehicle.backDoorContainer.GetComponentsInChildren<InteractTrigger>().Do((trigger) => { trigger.twoHandedItemAllowed = true; });
         }
 
-        CruiserImproved.LogMessage("Scan node options: " + NetworkSync.Config.CruiserScanNode + " " + (NetworkSync.Config.CruiserScanNode & ScanNodeOptions.Enabled) + " " + NetworkSync.Config.CruiserScanNode.HasFlag(ScanNodeOptions.Enabled));
-
+        //Set up scan node
         if (NetworkSync.Config.CruiserScanNode.HasFlag(ScanNodeOptions.Enabled))
         {
             GameObject cruiserScanNode = new("CruiserScanNode");
@@ -143,8 +147,25 @@ internal class VehicleControllerPatches
             cruiserScanNode.transform.localPosition = Vector3.zero;
 
             UpdateCruiserScanText(vehicle);
+        }
 
-            CruiserImproved.LogMessage("Setup cruiser scan node!");
+
+        if (NetworkSync.Config.TurboExhaust)
+        {
+            thisData.particleSystemSwap = UnityEngine.Object.Instantiate(vehicle.carExhaustParticle, vehicle.transform);
+            thisData.particleSystemSwap.name = "Turbo Exhaust";
+
+            var colorOverLifetime = thisData.particleSystemSwap.colorOverLifetime;
+
+            var colorKeys = colorOverLifetime.color.gradient.colorKeys;
+            colorKeys[0].color = new(0.17f, 0.17f, 0.3f);
+            colorKeys[0].time = 0.3f;
+            colorKeys[1].time = 0.7f;
+
+            var mmGradient = colorOverLifetime.color;
+            mmGradient.gradient.SetKeys(colorKeys, mmGradient.gradient.alphaKeys);
+
+            colorOverLifetime.color = mmGradient;
         }
     }
 
@@ -197,6 +218,26 @@ internal class VehicleControllerPatches
             else if (vehicle.carHP < ScanCriticalThreshold) scanProperties.headerText = ScanCriticalText;
             else if (vehicle.carHP < ScanDamagedThreshold) scanProperties.headerText = ScanDamagedText;
             else scanProperties.headerText = DefaultScanText;
+        }
+    }
+
+    static void UpdateExhaustColor(VehicleController vehicle)
+    {
+        var extraData = vehicleData[vehicle];
+
+        bool hasTurbos = vehicle.turboBoosts > 0;
+        
+        //swap to the turbo exhaust particles (or back)
+        if(hasTurbos != extraData.usingColoredExhaust && extraData.particleSystemSwap)
+        {
+            extraData.usingColoredExhaust = hasTurbos;
+            bool on = vehicle.carExhaustParticle.isPlaying;
+
+            vehicle.carExhaustParticle.Stop(true, ParticleSystemStopBehavior.StopEmitting);
+
+            //swap the VehicleController.carExhaustParticle
+            (extraData.particleSystemSwap, vehicle.carExhaustParticle) = (vehicle.carExhaustParticle, extraData.particleSystemSwap);
+            if(on) vehicle.carExhaustParticle.Play();
         }
     }
 
@@ -346,6 +387,8 @@ internal class VehicleControllerPatches
         VehicleControllerData extraData = vehicleData[__instance];
 
         UpdateCruiserScanText(__instance);
+
+        UpdateExhaustColor(__instance);
 
         if (NetworkSync.Config.DisableRadioStatic)
         {
