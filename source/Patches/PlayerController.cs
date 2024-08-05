@@ -83,4 +83,18 @@ internal class PlayerControllerPatches
 
         return codes;
     }
+
+    [HarmonyPatch("PlaceGrabbableObject")]
+    [HarmonyPostfix]
+    static void PlaceGrabbableObject_Postfix(GrabbableObject placeObject)
+    {
+        ScanNodeProperties scanNode = placeObject.GetComponentInChildren<ScanNodeProperties>();
+
+        //add rigidbody to the scanNode so it'll be scannable when attached to the cruiser
+        if (scanNode && !scanNode.GetComponent<Rigidbody>())
+        {
+            var rb = scanNode.gameObject.AddComponent<Rigidbody>();
+            rb.isKinematic = true;
+        }
+    }
 }

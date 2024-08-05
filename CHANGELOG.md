@@ -9,6 +9,7 @@
 ### Bugfixes
 - \[Client\] Fix items dropping through the Cruiser when standing in the back.
 - \[Client\] Fix some parts of the Cruiser like the driver seat and exhaust smoke remaining after destruction.
+- \[Client\] Fix items being unscannable when placed in the Cruiser.
 
 ### Other
 - Fixed an issue where a player could rarely be run over while driving a tilted Cruiser.

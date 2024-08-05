@@ -45,6 +45,7 @@ Clients will copy the host's settings if both sides have the mod installed.
 - \[Client\] Fix weedkiller being able to shrink the Cruiser's bounding box.
 - \[Client\] Fix items dropping through the Cruiser when standing in the back.
 - \[Client\] Fix some parts of the Cruiser like the driver seat and exhaust smoke remaining after destruction.
+- \[Client\] Fix items being unscannable when placed in the Cruiser.
 
 ### Feedback
 
