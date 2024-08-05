@@ -12,8 +12,9 @@
 - \[Client\] Fix items being unscannable when placed in the Cruiser.
 
 ### Other
-- Fixed an issue where a player could rarely be run over while driving a tilted Cruiser.
+- Fixed an issue where a player could rarely be run over while driving a tilted Cruiser that was supposed to be fixed in v1.0.3.
 - Fixed a null reference when a Cruiser was left behind or despawned.
+- Fixed Cruiser bouncing off unkillable enemies that it'd usually push in vanilla, like bees.
 
 ### Compatibility
 - Added compatibility for [LethalCompanyVR](https://thunderstore.io/c/lethal-company/p/DaXcess/LethalCompanyVR/)

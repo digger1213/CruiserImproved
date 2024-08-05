@@ -68,8 +68,6 @@ internal class VehicleControllerPatches
 
     public static Dictionary<VehicleController, VehicleControllerData> vehicleData = new();
 
-    static ParticleSystem.MinMaxGradient defaultExhaustGradient;
-
     private static void RemoveStaleVehicleData()
     {
         List<VehicleController> vehiclesToRemove = new();
@@ -495,7 +493,7 @@ internal class VehicleControllerPatches
         //Prevent damage less than what we last received if within I-frame duration
         if (isInvulnerable && extraData.lastDamageReceived >= damageAmount)
         {
-            CruiserImproved.LogDebug($"Vehicle ignored {damageAmount} damage due to I-frames from previous damage {extraData.lastDamageReceived} ({Math.Round(timeSinceDamage, 2)}s)");
+            CruiserImproved.LogInfo($"Vehicle ignored {damageAmount} damage due to I-frames from previous damage {extraData.lastDamageReceived} ({Math.Round(timeSinceDamage, 2)}s)");
             damageAmount = 0;
             return;
         }
@@ -504,7 +502,7 @@ internal class VehicleControllerPatches
         if (isInvulnerable && extraData.lastDamageReceived > 0)
         {
             damageAmount -= extraData.lastDamageReceived;
-            CruiserImproved.LogDebug($"Vehicle reduced {originalDamage} to {damageAmount} due to I-frames from previous damage {extraData.lastDamageReceived} ({Math.Round(timeSinceDamage, 2)}s)");
+            CruiserImproved.LogInfo($"Vehicle reduced {originalDamage} to {damageAmount} due to I-frames from previous damage {extraData.lastDamageReceived} ({Math.Round(timeSinceDamage, 2)}s)");
         }
 
         //Don't grant extra I-frames if we're still invulnerable from crit
@@ -544,12 +542,12 @@ internal class VehicleControllerPatches
                 string blockedCounterStr = $"({extraData.hitsBlockedThisCrit}/{NetworkSync.Config.MaxCriticalHitCount})";
                 if (activatedCritThisDamage)
                 {
-                    CruiserImproved.LogDebug($"{blockedCounterStr} Critical protection triggered for {critInvulnDuration}s due to {damageAmount} vehicle damage");
+                    CruiserImproved.LogInfo($"{blockedCounterStr} Critical protection triggered for {critInvulnDuration}s due to {damageAmount} vehicle damage");
 
                 }
                 else
                 {
-                    CruiserImproved.LogDebug($"{blockedCounterStr} Critical protection reduced vehicle damage from {beforeCritDamage} to {damageAmount}");
+                    CruiserImproved.LogInfo($"{blockedCounterStr} Critical protection reduced vehicle damage from {beforeCritDamage} to {damageAmount}");
                 }
             }
         }

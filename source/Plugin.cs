@@ -24,6 +24,9 @@ internal class CruiserImproved : BaseUnityPlugin
 
     public static void LogMessage(object data) => Log.LogMessage(data);
 
+    public static void LogInfo(object data) => Log.LogInfo(data);
+
+    [Conditional("DEBUG")]
     public static void LogDebug(object data) => Log.LogDebug(data);
 
     public void Awake()
