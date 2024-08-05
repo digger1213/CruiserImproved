@@ -1,5 +1,8 @@
 # CruiserImproved
- A clientside mod to improve the behaviour of Lethal Company's 'Company Cruiser' and fix some issues with its usage such as low visibility, high damage received from small impacts, and fix bugs.
+[![GitHub Version](https://img.shields.io/github/v/release/digger1213/CruiserImproved?include_prereleases&sort=semver&style=for-the-badge&logo=github)](https://github.com/digger1213/CruiserImproved/releases)
+[![GitHub Build](https://img.shields.io/github/actions/workflow/status/digger1213/CruiserImproved/build.yml?branch=main&style=for-the-badge)](https://github.com/digger1213/CruiserImproved/actions/workflows/build.yml)
+
+A clientside mod to improve the behaviour of Lethal Company's 'Company Cruiser' and fix some issues with its usage such as low visibility, high damage received from small impacts, and fix bugs.
 
 ### Features
 All features can be configured or disabled in the generated .cfg file in BepInEx/config.
@@ -13,6 +16,10 @@ Clients will copy the host's settings if both sides have the mod installed.
 - Prevent the Cruiser from sliding sideways down slopes (ie, when dropped off the magnet on Artifice).
 - Prevent the Cruiser damage sound being detected by dogs if the engine is off, preventing them from repeatedly attacking Cruisers due to the sound they cause.
 - Option to disable the Cruiser's radio interference static. Disabled by default.
+- Ability to open the Cruiser's doors while holding a 2-handed item.
+- Ability remove the key from the ignition while not seated.
+- Added a scan node to the Cruiser to help locate it from far away. Can be configured to show turbos and health.
+- Cruiser exhaust is tinted blue when it has stored turbo charges.
 - \[Host\] Prevent anyone in the lobby other than the driver pressing the eject button on Cruisers. Disabled by default.
 - \[Host\] Entities pathfind around stationary Cruisers with no one seated, instead of walking straight through and causing damage.
 - \[Host\] Equipment and weapons moved into the ship from the Cruiser on save reload is sorted into a separate pile from the rest of the scrap.
@@ -36,6 +43,8 @@ Clients will copy the host's settings if both sides have the mod installed.
 - \[Client\] Fix being abandoned when standing on or sitting in a magneted Cruiser while the ship is taking off.
 - \[Client\] Fix ship magnet attaching the Cruiser in the wrong position or rotation (will not stick frontfirst into the ship)
 - \[Client\] Fix weedkiller being able to shrink the Cruiser's bounding box.
+- \[Client\] Fix items dropping through the Cruiser when standing in the back.
+- \[Client\] Fix some parts of the Cruiser like the driver seat and exhaust smoke remaining after destruction.
 
 ### Feedback
 

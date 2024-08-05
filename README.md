@@ -1,6 +1,9 @@
 # CruiserImproved
-[![Thunderstore Version](https://img.shields.io/thunderstore/v/DiggC/CruiserImproved?style=for-the-badge&logo=thunderstore)![Thunderstore Downloads](https://img.shields.io/thunderstore/dt/DiggC/CruiserImproved?style=for-the-badge)](https://thunderstore.io/c/lethal-company/p/DiggC/CruiserImproved/)  
-[![GitHub Version](https://img.shields.io/github/v/release/digger1213/CruiserImproved?include_prereleases&sort=semver&style=for-the-badge&logo=github)](https://github.com/digger1213/CruiserImproved/releases) [![GitHub Build](https://img.shields.io/github/actions/workflow/status/digger1213/CruiserImproved/build.yml?branch=main&style=for-the-badge&logo=github)](https://github.com/digger1213/CruiserImproved/actions/workflows/build.yml)
+
+[![Thunderstore Version](https://img.shields.io/thunderstore/v/DiggC/CruiserImproved?style=for-the-badge&logo=thunderstore)](https://thunderstore.io/c/lethal-company/p/DiggC/CruiserImproved/)
+[![Thunderstore Downloads](https://img.shields.io/thunderstore/dt/DiggC/CruiserImproved?style=for-the-badge)](https://thunderstore.io/c/lethal-company/p/DiggC/CruiserImproved/)\
+[![GitHub Version](https://img.shields.io/github/v/release/digger1213/CruiserImproved?include_prereleases&sort=semver&style=for-the-badge&logo=github)](https://github.com/digger1213/CruiserImproved/releases)
+[![GitHub Build](https://img.shields.io/github/actions/workflow/status/digger1213/CruiserImproved/build.yml?branch=main&style=for-the-badge)](https://github.com/digger1213/CruiserImproved/actions/workflows/build.yml)
 
 A clientside [BepInEx](https://docs.bepinex.dev/) mod for Lethal Company to improve the behaviour of the 'Company Cruiser' and fix various bugs and issues with it's vanilla implementation.
 

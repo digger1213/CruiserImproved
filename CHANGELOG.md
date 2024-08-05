@@ -1,3 +1,22 @@
+## 1.4.0
+
+### Features
+- \[Client\] Ability to open the Cruiser's doors while holding a 2-handed item.
+- \[Client\] Ability remove the key from the ignition while not seated.
+- \[Client\] Added a scan node to the Cruiser to help locate it from far away. Can be configured to show turbos and health.
+- \[Client\] Cruiser exhaust is tinted blue when it has stored turbo charges.
+
+### Bugfixes
+- \[Client\] Fix items dropping through the Cruiser when standing in the back.
+- \[Client\] Fix some parts of the Cruiser like the driver seat and exhaust smoke remaining after destruction.
+
+### Other
+- Fixed an issue where a player could rarely be run over while driving a tilted Cruiser.
+- Fixed a null reference when a Cruiser was left behind or despawned.
+
+### Compatibility
+- Added compatibility for [LethalCompanyVR](https://thunderstore.io/c/lethal-company/p/DaXcess/LethalCompanyVR/)
+
 ## 1.3.0
 
 ### Features
