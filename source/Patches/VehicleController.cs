@@ -26,9 +26,28 @@ internal class VehicleControllerPatches
         public NavMeshObstacle navObstacle;
         public float lastSteeringAngle;
         public float timeLastSyncedRadio;
+
+        public ScanNodeProperties scanNode;
+        public int lastScanHP = -1;
+        public int lastScanTurbo = -1;
     }
 
     static readonly int CriticalThreshold = 2;
+
+    static readonly int ScanDamagedThreshold = 15;
+    static readonly int ScanCriticalThreshold = 5;
+
+    static readonly string DefaultScanText = "Company Cruiser";
+    static readonly string DefaultScanSubtext = "You've got work to do.";
+
+    static readonly string ScanDamagedText = "Damaged Cruiser";
+    static readonly string ScanCriticalText = "Critical Cruiser";
+    static readonly string ScanDestroyedText = "Destroyed Cruiser";
+    static readonly string ScanDetailedHealthText = "Company Cruiser ({0}%)";
+
+    static readonly string ScanTurboSubtext = "Turbocharged";
+    static readonly string ScanDetailedTurboSubtext = "{0}% Turbocharged";
+
 
     public static Dictionary<VehicleController, VehicleControllerData> vehicleData = new();
 
@@ -83,6 +102,87 @@ internal class VehicleControllerPatches
             vehicle.passengerSideDoorTrigger.twoHandedItemAllowed = true;
 
             vehicle.backDoorContainer.GetComponentsInChildren<InteractTrigger>().Do((trigger) => { trigger.twoHandedItemAllowed = true; });
+        }
+
+        CruiserImproved.LogMessage("Scan node options: " + NetworkSync.Config.CruiserScanNode + " " + (NetworkSync.Config.CruiserScanNode & ScanNodeOptions.Enabled) + " " + NetworkSync.Config.CruiserScanNode.HasFlag(ScanNodeOptions.Enabled));
+
+        if (NetworkSync.Config.CruiserScanNode.HasFlag(ScanNodeOptions.Enabled))
+        {
+            GameObject cruiserScanNode = new("CruiserScanNode");
+            cruiserScanNode.layer = LayerMask.NameToLayer("ScanNode");
+
+            //thanks unity - need a rigidbody on the scan node so it can be detected by the spherecast without being overriden by the Cruiser's rigidbody
+            var rigidbody = cruiserScanNode.AddComponent<Rigidbody>();
+            rigidbody.isKinematic = true;
+
+            var collider = cruiserScanNode.AddComponent<BoxCollider>();
+            var scanProperties = cruiserScanNode.AddComponent<ScanNodeProperties>();
+
+            scanProperties.requiresLineOfSight = !NetworkSync.Config.CruiserScanNode.HasFlag(ScanNodeOptions.VisibleThroughWalls);
+            scanProperties.maxRange = 100;
+            scanProperties.minRange = 6;
+            scanProperties.headerText = DefaultScanText;
+            scanProperties.subText = DefaultScanSubtext;
+            thisData.scanNode = scanProperties;
+
+            cruiserScanNode.transform.parent = vehicle.transform;
+            cruiserScanNode.transform.localPosition = Vector3.zero;
+
+            UpdateCruiserScanText(vehicle);
+
+            CruiserImproved.LogMessage("Setup cruiser scan node!");
+        }
+    }
+
+    public static void UpdateCruiserScanText(VehicleController vehicle, bool forceUpdate = false)
+    {
+        var extraData = vehicleData[vehicle];
+        if (extraData == null || !extraData.scanNode) return;
+
+        if (extraData.lastScanTurbo == vehicle.turboBoosts && extraData.lastScanHP == vehicle.carHP && !forceUpdate) return;
+
+        extraData.lastScanTurbo = vehicle.turboBoosts;
+        extraData.lastScanHP = vehicle.carHP;
+
+        var scanProperties = extraData.scanNode;
+
+        ScanNodeOptions flags = NetworkSync.Config.CruiserScanNode;
+
+        bool displayTurbo = (flags & (ScanNodeOptions.TurboEstimate | ScanNodeOptions.TurboPercentage)) != 0;
+        bool displayHealth = (flags & (ScanNodeOptions.HealthEstimate | ScanNodeOptions.HealthPercentage)) != 0;
+
+        bool turboDetailed = flags.HasFlag(ScanNodeOptions.TurboPercentage);
+        bool healthDetailed = flags.HasFlag(ScanNodeOptions.HealthPercentage);
+
+        if (!displayTurbo || vehicle.turboBoosts == 0)
+        {
+            scanProperties.subText = DefaultScanSubtext;
+        }
+        else if (!turboDetailed)
+        {
+            scanProperties.subText = ScanTurboSubtext;
+        }
+        else
+        {
+            int percent = vehicle.turboBoosts * 100 / 5;
+            scanProperties.subText = string.Format(ScanDetailedTurboSubtext, percent);
+        }
+
+        if (displayHealth)
+        {
+            if (vehicle.carDestroyed || vehicle.carHP <= 0)
+            {
+                scanProperties.headerText = ScanDestroyedText;
+                scanProperties.subText = "";
+            }
+            else if (healthDetailed)
+            {
+                int percent = vehicle.carHP * 100 / vehicle.baseCarHP;
+                scanProperties.headerText = string.Format(ScanDetailedHealthText, percent);
+            }
+            else if (vehicle.carHP < ScanCriticalThreshold) scanProperties.headerText = ScanCriticalText;
+            else if (vehicle.carHP < ScanDamagedThreshold) scanProperties.headerText = ScanDamagedText;
+            else scanProperties.headerText = DefaultScanText;
         }
     }
 
@@ -230,6 +330,8 @@ internal class VehicleControllerPatches
             return;
         }
         VehicleControllerData extraData = vehicleData[__instance];
+
+        UpdateCruiserScanText(__instance);
 
         if (NetworkSync.Config.DisableRadioStatic)
         {
@@ -463,6 +565,8 @@ internal class VehicleControllerPatches
     [HarmonyPostfix]
     static void DestroyCar_Postfix(VehicleController __instance)
     {
+        UpdateCruiserScanText(__instance, true);
+
         if (!NetworkSync.Config.AllowPushDestroyedCar) return;
 
         foreach(Transform child in __instance.transform)

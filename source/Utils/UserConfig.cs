@@ -3,8 +3,20 @@ using HarmonyLib;
 using System.Collections.Generic;
 using System.Reflection;
 using System.IO;
+using System;
 
 namespace CruiserImproved.Utils;
+
+[Flags]
+public enum ScanNodeOptions
+{
+    Enabled = 1 << 0,
+    VisibleThroughWalls = 1 << 1,
+    HealthEstimate = 1 << 2,
+    HealthPercentage = 1 << 3,
+    TurboEstimate = 1 << 4,
+    TurboPercentage = 1 << 5,
+}
 
 internal class UserConfig
 {
@@ -15,6 +27,7 @@ internal class UserConfig
     internal static ConfigEntry<bool> SilentCollisions;
     internal static ConfigEntry<float> SeatBoostScale;
     internal static ConfigEntry<bool> DisableRadioStatic;
+    internal static ConfigEntry<ScanNodeOptions> CruiserScanNode;
 
     //Cruiser Health
     internal static ConfigEntry<float> CruiserInvulnerabilityDuration;
@@ -50,7 +63,8 @@ internal class UserConfig
         AllowPushDestroyedCar = config.Bind("General", "Allow Pushing Destroyed Cruisers", true, "If true, allow players to push destroyed cruisers.");
         SilentCollisions = config.Bind("General", "Silent Collisions", true, "If true, entities hitting the Cruiser when it's engine is off will not make noise.\nThis means Eyeless Dogs will not get stuck in a loop attacking it, triggering noise, and attacking it again while the engine is off.");
         DisableRadioStatic = config.Bind("General", "Disable Radio Static", false, "If true, disable the radio interference static sound on the radio.");
-
+        CruiserScanNode = config.Bind("General", "Cruiser Scan Node", ScanNodeOptions.Enabled | ScanNodeOptions.VisibleThroughWalls | ScanNodeOptions.HealthEstimate | ScanNodeOptions.TurboEstimate, "Customize a scan node to easily find your Cruiser, like the scan nodes on the ship and the main entrance." +
+            "\nCan display information according to values set. If multiple settings are specified for the same information, the most detailed is used.");
 
         AcceptableValueRange<float> seatScale = new(0f, 1f);
         SeatBoostScale = config.Bind("General", "Seat Boost Scale", 1.0f, new ConfigDescription("How much to boost the seat up? Set 0 to disable.", seatScale));

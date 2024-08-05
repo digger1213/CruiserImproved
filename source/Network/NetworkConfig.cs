@@ -31,6 +31,7 @@ internal class NetworkConfig : INetworkSerializable
     //Settings as of v1.4.0
     public bool HandsfreeDoors = false;
     public bool StandingKeyRemoval = false;
+    public ScanNodeOptions CruiserScanNode = 0;
 
     //Initialize NetworkedSettings from local config
     public void CopyLocalConfig()
@@ -58,6 +59,8 @@ internal class NetworkConfig : INetworkSerializable
         //v1.4.0
         HandsfreeDoors = UserConfig.HandsfreeDoors.Value;
         StandingKeyRemoval = UserConfig.StandingKeyRemoval.Value;
+
+        CruiserScanNode = UserConfig.CruiserScanNode.Value;
     }
 
     public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
@@ -98,5 +101,6 @@ internal class NetworkConfig : INetworkSerializable
 
         serializer.SerializeValue(ref HandsfreeDoors);
         serializer.SerializeValue(ref StandingKeyRemoval);
+        serializer.SerializeValue(ref CruiserScanNode);
     }
 }
