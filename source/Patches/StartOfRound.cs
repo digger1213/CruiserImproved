@@ -53,7 +53,7 @@ internal class StartOfRoundPatches
         else
         {
             index = 0;
-            CruiserImproved.LogError("Could not patch LoadShipGrabbableItems bounds!");
+            CruiserImproved.LogWarning("Could not patch LoadShipGrabbableItems bounds!");
         }
 
         index = PatchUtils.LocateCodeSegment(index, codes, [
@@ -75,7 +75,7 @@ internal class StartOfRoundPatches
         }
         else
         {
-            CruiserImproved.LogError("Could not patch LoadShipGrabbableItems sorting!");
+            CruiserImproved.LogWarning("Could not patch LoadShipGrabbableItems sorting!");
         }
 
         return codes;

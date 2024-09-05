@@ -40,7 +40,7 @@ internal class LandminePatches
 
         if(findIndex == -1)
         {
-            CruiserImproved.LogError("Could not patch landmine knockback vehicle check!");
+            CruiserImproved.LogWarning("Could not patch landmine knockback vehicle check!");
             return codes;
         }
 

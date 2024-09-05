@@ -450,7 +450,7 @@ internal class VehicleControllerPatches
 
         if (searchTargetIndex == -1)
         {
-            CruiserImproved.LogError("Could not transpile VehicleController.Update");
+            CruiserImproved.LogWarning("Could not transpile VehicleController.Update");
             return codes;
         }
 
@@ -673,7 +673,7 @@ internal class VehicleControllerPatches
 
         if (currentDriver == null || isTypingChat == null || quickMenuManager == null || isMenuOpen == null || moveInputVector == null || steeringWheelTurnSpeed == null)
         {
-            CruiserImproved.LogError("Could not find fields for VehicleInput transpiler!");
+            CruiserImproved.LogWarning("Could not find fields for VehicleInput transpiler!");
             return codes;
         }
 
@@ -681,7 +681,7 @@ internal class VehicleControllerPatches
 
         if(get_zero == null)
         {
-            CruiserImproved.LogError("Could not find vector method required for VehicleInput transpiler!");
+            CruiserImproved.LogWarning("Could not find vector method required for VehicleInput transpiler!");
             return codes;
         }
 
@@ -693,7 +693,7 @@ internal class VehicleControllerPatches
 
         if(insertIndex == -1)
         {
-            CruiserImproved.LogError("Could not find insertion point for VehicleInput transpiler!");
+            CruiserImproved.LogWarning("Could not find insertion point for VehicleInput transpiler!");
         }
 
         var labelMove = codes[insertIndex].labels;
@@ -759,7 +759,7 @@ internal class VehicleControllerPatches
 
         if (indexFind == -1)
         {
-            CruiserImproved.LogError("PatchSmallEntityCarKill: Failed to find ret code!"); 
+            CruiserImproved.LogWarning("PatchSmallEntityCarKill: Failed to find ret code!"); 
             return; 
         }
 
@@ -767,7 +767,7 @@ internal class VehicleControllerPatches
 
         if (branchCopy == -1) 
         { 
-            CruiserImproved.LogError("PatchSmallEntityCarKill: Failed to find branch instruction!"); 
+            CruiserImproved.LogWarning("PatchSmallEntityCarKill: Failed to find branch instruction!"); 
             return; 
         }
 
@@ -800,7 +800,7 @@ internal class VehicleControllerPatches
 
         if(insertBefore == -1)
         {
-            CruiserImproved.LogError("PatchLocalEntityDamage: Failed to find HitEnemy call!");
+            CruiserImproved.LogWarning("PatchLocalEntityDamage: Failed to find HitEnemy call!");
             return;
         }
 
@@ -837,7 +837,7 @@ internal class VehicleControllerPatches
 
         if (targetIndex == -1)
         {
-            CruiserImproved.LogError("Could not patch VehicleController.OnCollisionEnter instakill!");
+            CruiserImproved.LogWarning("Could not patch VehicleController.OnCollisionEnter instakill!");
             return codes;
         }
 
@@ -847,7 +847,7 @@ internal class VehicleControllerPatches
 
         if(removeEndIndex == -1)
         {
-            CruiserImproved.LogError("Could not locate VehicleController.OnCollisionEnter instakill patch end point!");
+            CruiserImproved.LogWarning("Could not locate VehicleController.OnCollisionEnter instakill patch end point!");
             return codes;
         }
         
@@ -991,7 +991,7 @@ internal class VehicleControllerPatches
 
         if(index == -1)
         {
-            CruiserImproved.LogError("Could not patch ExitPassengerSideSeat!");
+            CruiserImproved.LogWarning("Could not patch ExitPassengerSideSeat!");
             return codes;
         }
         codes[index].opcode = OpCodes.Ldc_I4_0;
@@ -1023,7 +1023,7 @@ internal class VehicleControllerPatches
 
         if (index == -1)
         {
-            CruiserImproved.LogError("Failed to find code segment in PlayRandomClipAndPropertiesFromAudio");
+            CruiserImproved.LogWarning("Failed to find code segment in PlayRandomClipAndPropertiesFromAudio");
             return codes;
         }
 
@@ -1035,7 +1035,7 @@ internal class VehicleControllerPatches
 
         if(jumpIndex == -1)
         {
-            CruiserImproved.LogError("Failed to find end jump segment in PlayRandomClipAndPropertiesFromAudio");
+            CruiserImproved.LogWarning("Failed to find end jump segment in PlayRandomClipAndPropertiesFromAudio");
             return codes;
         }
 
@@ -1085,7 +1085,7 @@ internal class VehicleControllerPatches
 
         if(retIndex == -1)
         {
-            CruiserImproved.LogError("Failed to remove owner check from StartMagneting!");
+            CruiserImproved.LogWarning("Failed to remove owner check from StartMagneting!");
         }
         else
         {
@@ -1101,7 +1101,7 @@ internal class VehicleControllerPatches
 
         if(index == -1)
         {
-            CruiserImproved.LogError("Failed to patch StartMagneting!");
+            CruiserImproved.LogWarning("Failed to patch StartMagneting!");
         }
 
         var jumpLabel = il.DefineLabel();

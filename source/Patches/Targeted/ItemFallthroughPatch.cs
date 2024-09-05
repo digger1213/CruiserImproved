@@ -18,15 +18,15 @@ internal class ItemFallthroughPatch
     {
         if (PatchUtils.TryMethod(typeof(GrabbableObject), "GetPhysicsRegionOfDroppedObject", [typeof(PlayerControllerB), typeof(Vector3).MakeByRefType()], out var info))
         {
-            CruiserImproved.LogInfo("Performing v64 patch");
+            //v64 patch
             return info;
         }
         else if (PatchUtils.TryMethod(typeof(PlayerControllerB), "DiscardHeldObject", out info))
         {
-            CruiserImproved.LogInfo("Performing v60- patch");
+            //v62 and earlier patch
             return info;
         }
-        CruiserImproved.LogError("No valid patch found!");
+        CruiserImproved.LogWarning("No valid method for ItemFallthroughPatch found.");
         return null;
     }
 
@@ -67,10 +67,7 @@ internal class ItemFallthroughPatch
             return codes;
         }
 
-        string strcode = string.Join("\n", instructions.Select(code => code.ToString()));
-        CruiserImproved.LogWarning(strcode);
-
-        CruiserImproved.LogError("Could not patch DiscardHeldObject!");
+        CruiserImproved.LogWarning("Could not patch ItemFallthroughPatch!");
         return instructions;
     }
 }
