@@ -657,6 +657,16 @@ internal class VehicleControllerPatches
         __instance.moveInputVector = Vector2.zero;
     }
 
+    //Fix wheels accelerating while magneted
+    [HarmonyPatch("GetVehicleInput")]
+    [HarmonyPostfix]
+    static void GetVehicleInput_Postfix(VehicleController __instance)
+    {
+        if (!__instance.magnetedToShip) return;
+
+        __instance.brakePedalPressed = !__instance.drivePedalPressed;
+    }
+
     //Fix inputs still working while chat or pause menu is open        
     [HarmonyPatch("GetVehicleInput")]
     [HarmonyTranspiler]
