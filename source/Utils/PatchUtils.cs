@@ -3,8 +3,25 @@ using System.Reflection.Emit;
 using HarmonyLib;
 using UnityEngine;
 using System;
+using System.Reflection;
+using System.Xml.Linq;
 
 namespace CruiserImproved.Utils;
+
+public class NullMemberException : Exception
+{
+    private NullMemberException(string message) : base(message) { }
+
+    public static NullMemberException Method(Type type, string methodName)
+    {
+        return new NullMemberException($"Could not find method {type.Name}:{methodName}");
+    }
+
+    public static NullMemberException Field(Type type, string fieldName)
+    {
+        return new NullMemberException($"Could not find field {type.Name}.{fieldName}");
+    }
+}
 
 static internal class PatchUtils
 {
@@ -87,5 +104,39 @@ static internal class PatchUtils
             }
         }
         return text;
+    }
+
+    public static bool TryMethod(Type type, string name, out MethodInfo methodInfo)
+    {
+        return TryMethod(type, name, null, out methodInfo);
+    }
+    public static bool TryMethod(Type type, string name, Type[] parameters, out MethodInfo methodInfo)
+    {
+        methodInfo = AccessTools.Method(type, name, parameters);
+        return methodInfo != null;
+    }
+
+    public static MethodInfo Method(Type type, string name, Type[] parameters = null)
+    {
+        if (!TryMethod(type, name, parameters, out MethodInfo info))
+        {
+            throw NullMemberException.Method(type, name);
+        }
+        return info;
+    }
+
+    public static bool TryField(Type type, string name, out FieldInfo fieldInfo)
+    {
+        fieldInfo = AccessTools.Field(type, name);
+        return fieldInfo != null;
+    }
+
+    public static FieldInfo Field(Type type, string name)
+    {
+        if(!TryField(type, name, out FieldInfo info))
+        {
+            throw NullMemberException.Field(type, name);
+        }
+        return info;
     }
 }

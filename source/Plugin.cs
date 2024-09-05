@@ -16,23 +16,21 @@ internal class CruiserImproved : BaseUnityPlugin
     static public CruiserImproved Instance;
 
     private Harmony harmony;
-    static private ManualLogSource Log;
 
-    public static void LogError(object data) => Log.LogError(data);
+    public static void LogError(object data) => Instance.Logger.LogError(data);
 
-    public static void LogWarning(object data) => Log.LogWarning(data);
+    public static void LogWarning(object data) => Instance.Logger.LogWarning(data);
 
-    public static void LogMessage(object data) => Log.LogMessage(data);
+    public static void LogMessage(object data) => Instance.Logger.LogMessage(data);
 
-    public static void LogInfo(object data) => Log.LogInfo(data);
+    public static void LogInfo(object data) => Instance.Logger.LogInfo(data);
 
     [Conditional("DEBUG")]
-    public static void LogDebug(object data) => Log.LogDebug(data);
+    public static void LogDebug(object data) => Instance.Logger.LogDebug(data);
 
     public void Awake()
     {
         Instance = this;
-        Log = Logger;
         harmony = new Harmony(MyPluginInfo.PLUGIN_GUID);
         UserConfig.InitConfig();
         harmony.PatchAll();

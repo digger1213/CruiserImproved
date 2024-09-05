@@ -70,7 +70,7 @@ internal class StartOfRoundPatches
                 new(OpCodes.Ldloc_S, 9),
                 new(OpCodes.Ldloc_2),
                 new(OpCodes.Ldloc_1),
-                new(OpCodes.Call, typeof(StartOfRoundPatches).GetMethod("SetItemPosition", BindingFlags.NonPublic | BindingFlags.Static))
+                new(OpCodes.Call, PatchUtils.Method(typeof(StartOfRoundPatches), "SetItemPosition"))
                 ]);
         }
         else
