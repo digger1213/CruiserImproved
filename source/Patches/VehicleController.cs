@@ -911,6 +911,39 @@ internal class VehicleControllerPatches
         }
     }
 
+    [HarmonyPatch("SetCarEffects")]
+    [HarmonyTranspiler]
+    static IEnumerable<CodeInstruction> SetCarEffects_Transpiler(IEnumerable<CodeInstruction> instructions)
+    {
+        var codes = instructions.ToList();
+
+        //Locate front left wheel motorTorque check
+        int index = PatchUtils.LocateCodeSegment(0, codes, [
+            new(OpCodes.Ldarg_0),
+            new(OpCodes.Ldfld, PatchUtils.Field(typeof(VehicleController), "FrontLeftWheel")),
+            new(OpCodes.Callvirt, PatchUtils.Method(typeof(WheelCollider), "get_motorTorque")),
+            new(OpCodes.Ldc_R4),
+            new(OpCodes.Ble_Un),
+            ]);
+
+        if(index == -1)
+        {
+            CruiserImproved.LogWarning("Could not patch SetCarEffects!");
+            return instructions;
+        }
+
+        var jumpTo = codes[index + 4].operand; //get jump destination from Ble_un above
+
+        CruiserImproved.LogInfo("Branch destination: " + jumpTo.ToString());
+
+        //at the end of the previous if statement (airborne wheels) jump to this if statement's else block (turns off wheel skidding)
+        codes.Insert(index, new(OpCodes.Br, jumpTo));
+
+        CruiserImproved.LogMessage(string.Join("\n", codes.GetRange(index - 10, 50).Select(var => var.ToString())));
+
+        return codes;
+    }
+
     //Patch non-drivers ejecting drivers in the Cruiser
     //Since we need to know who sent the rpc and SpringDriverSeatServerRpc doesn't take rpcParams we need to patch the rpc handler directly for access to this data
     //The ulong handler id appears to be identical between versions so this patch *shouldn't* break
