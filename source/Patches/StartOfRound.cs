@@ -42,13 +42,13 @@ internal class StartOfRoundPatches
         var codes = instructions.ToList();
 
         int index = PatchUtils.LocateCodeSegment(0, codes, [
-            new(OpCodes.Ldfld, typeof(StartOfRound).GetField("shipBounds"))
+            new(OpCodes.Ldfld, PatchUtils.Field(typeof(StartOfRound), "shipBounds"))
             ]);
 
         if(index != -1)
         {
             //fix items floating by using the inner room bounds instead (shipBounds is too large and keeps items floating near ship walls)
-            codes[index].operand = typeof(StartOfRound).GetField("shipInnerRoomBounds");
+            codes[index].operand = PatchUtils.Field(typeof(StartOfRound), "shipInnerRoomBounds");
         }
         else
         {
@@ -58,8 +58,8 @@ internal class StartOfRoundPatches
 
         index = PatchUtils.LocateCodeSegment(index, codes, [
             new(OpCodes.Ldarg_0),
-            new(OpCodes.Ldfld, typeof(StartOfRound).GetField("allItemsList")),
-            new(OpCodes.Ldfld, typeof(AllItemsList).GetField("itemsList"))
+            new(OpCodes.Ldfld, PatchUtils.Field(typeof(StartOfRound), "allItemsList")),
+            new(OpCodes.Ldfld, PatchUtils.Field(typeof(AllItemsList), "itemsList"))
             ]);
 
         if(index != -1)

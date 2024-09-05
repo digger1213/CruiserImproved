@@ -441,7 +441,7 @@ internal class VehicleControllerPatches
 
         int searchTargetIndex = PatchUtils.LocateCodeSegment(0, codes, [
             new(OpCodes.Ldarg_0),
-            new(OpCodes.Ldfld, typeof(VehicleController).GetField("localPlayerInControl", BindingFlags.Instance | BindingFlags.Public)),
+            new(OpCodes.Ldfld, PatchUtils.Field(typeof(VehicleController), "localPlayerInControl")),
             new(OpCodes.Brfalse),
             new(OpCodes.Ldarg_0),
             new(OpCodes.Call, PatchUtils.Method(typeof(NetworkBehaviour), "get_IsOwner")),
@@ -664,12 +664,12 @@ internal class VehicleControllerPatches
     {
         var codes = instructions.ToList();
 
-        var currentDriver = typeof(VehicleController).GetField("currentDriver");
-        var isTypingChat = typeof(PlayerControllerB).GetField("isTypingChat");
-        var quickMenuManager = typeof(PlayerControllerB).GetField("quickMenuManager");
-        var isMenuOpen = typeof(QuickMenuManager).GetField("isMenuOpen");
-        var moveInputVector = typeof(VehicleController).GetField("moveInputVector");
-        var steeringWheelTurnSpeed = typeof(VehicleController).GetField("steeringWheelTurnSpeed");
+        var currentDriver = PatchUtils.Field(typeof(VehicleController), "currentDriver");
+        var isTypingChat = PatchUtils.Field(typeof(PlayerControllerB), "isTypingChat");
+        var quickMenuManager = PatchUtils.Field(typeof(PlayerControllerB), "quickMenuManager");
+        var isMenuOpen = PatchUtils.Field(typeof(QuickMenuManager), "isMenuOpen");
+        var moveInputVector = PatchUtils.Field(typeof(VehicleController), "moveInputVector");
+        var steeringWheelTurnSpeed = PatchUtils.Field(typeof(VehicleController), "steeringWheelTurnSpeed");
 
         if (currentDriver == null || isTypingChat == null || quickMenuManager == null || isMenuOpen == null || moveInputVector == null || steeringWheelTurnSpeed == null)
         {
@@ -826,7 +826,7 @@ internal class VehicleControllerPatches
     {
         var codes = instructions.ToList();
 
-        FieldInfo carHP = typeof(VehicleController).GetField("carHP");
+        FieldInfo carHP = PatchUtils.Field(typeof(VehicleController), "carHP");
 
         int targetIndex = PatchUtils.LocateCodeSegment(0, codes, [
             new(OpCodes.Ldarg_0),
@@ -1012,7 +1012,7 @@ internal class VehicleControllerPatches
         var codes = instructions.ToList();
 
         var getRoundManagerInstance = PatchUtils.Method(typeof(RoundManager), "get_Instance");
-        var ignitionStarted = typeof(VehicleController).GetField("ignitionStarted");
+        var ignitionStarted = PatchUtils.Field(typeof(VehicleController), "ignitionStarted");
 
         int index = PatchUtils.LocateCodeSegment(0, codes, [
             new(OpCodes.Ldarg_S, 4),
@@ -1121,7 +1121,7 @@ internal class VehicleControllerPatches
 
             //return early if no localPlayerController yet to prevent a nullref when calling the rpc
             new(OpCodes.Call, PatchUtils.Method(typeof(GameNetworkManager), "get_Instance")),
-            new(OpCodes.Ldfld, typeof(GameNetworkManager).GetField("localPlayerController")),
+            new(OpCodes.Ldfld, PatchUtils.Field(typeof(GameNetworkManager), "localPlayerController")),
             new(OpCodes.Call, typeof(UnityEngine.Object).GetMethod("op_Implicit")),
             new(OpCodes.Brtrue, jumpLabel),
             new(OpCodes.Ret)
