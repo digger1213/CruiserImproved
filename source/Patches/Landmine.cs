@@ -20,14 +20,15 @@ internal class LandminePatches
         return NetworkSync.Config.PreventMissileKnockback && instance.inVehicleAnimation;
     }
 
-    static MethodInfo get_magnitude = typeof(Vector3).GetMethod("get_magnitude", BindingFlags.Instance | BindingFlags.Public | BindingFlags.GetProperty);
+    static MethodInfo get_magnitude = PatchUtils.Method(typeof(Vector3), "get_magnitude");
     [HarmonyPatch("SpawnExplosion")]
     [HarmonyTranspiler]
+
     static IEnumerable<CodeInstruction> SpawnExplosion_Transpiler(IEnumerable<CodeInstruction> instructions)
     {
         var codes = instructions.ToList();
 
-        int findIndex = PatchUtils.LocateCodeSegment(0, codes, [
+        int findIndex = PatchUtils.LocateCodeSegment(0, codes, [ //locate the if statement checking for knockback sufficient to push player
             new(OpCodes.Ldloca_S, 16),
             new(OpCodes.Call, get_magnitude),
             new(OpCodes.Ldc_R4, 2),
@@ -39,19 +40,17 @@ internal class LandminePatches
 
         if(findIndex == -1)
         {
-            CruiserImproved.LogError("Could not patch landmine knockback vehicle check!");
+            CruiserImproved.LogWarning("Could not patch landmine knockback vehicle check!");
             return codes;
         }
 
         var jumpOperand = codes[findIndex + 3].operand;
 
-        List<CodeInstruction> newCodes = [
+        codes.InsertRange(findIndex + 4, [
             new CodeInstruction(OpCodes.Ldloc_S, 4),
-            new CodeInstruction(OpCodes.Call, typeof(LandminePatches).GetMethod("ShouldNotDealKnockback", BindingFlags.Static | BindingFlags.NonPublic)),
+            new CodeInstruction(OpCodes.Call, PatchUtils.Method(typeof(LandminePatches), "ShouldNotDealKnockback")), //add custom condition checking if player is seated
             new CodeInstruction(OpCodes.Brtrue_S, jumpOperand)
-            ];
-
-        codes.InsertRange(findIndex + 4, newCodes);
+            ]);
         return codes;
     }
 }

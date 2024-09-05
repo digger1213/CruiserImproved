@@ -1,3 +1,15 @@
+## 1.4.1
+
+Full compatibility for v64. Should still be compatible with v56.
+
+### Bugfixes
+- \[Client\] Fix wheel skidding sound effect and visuals playing while the Cruiser is airborne or magneted.
+- \[Client\] Fix Cruiser accelerating while attached to the magnet if not in park.
+
+### Other
+- Fixed an issue since v60 where Old Birds could not damage the Cruiser.
+- Fixed an issue where the Cruiser would be facing the wrong way when n ot loading a saved position.
+
 ## 1.4.0
 
 ### Features

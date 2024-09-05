@@ -46,6 +46,8 @@ Clients will copy the host's settings if both sides have the mod installed.
 - \[Client\] Fix items dropping through the Cruiser when standing in the back.
 - \[Client\] Fix some parts of the Cruiser like the driver seat and exhaust smoke remaining after destruction.
 - \[Client\] Fix items being unscannable when placed in the Cruiser.
+- \[Client\] Fix wheel skidding sound effect and visuals playing while the Cruiser is airborne or magneted.
+- \[Client\] Fix Cruiser accelerating while attached to the magnet if not in park.
 
 ### Feedback
 
@@ -55,7 +57,7 @@ Feel free to post suggestions or issues to:
 - The mod's [thread](https://discord.com/channels/1168655651455639582/1258980772996448309) in the [LC Modding discord server](https://discord.gg/XeyYqRdRGC)
 
 ### Compatibility
-Compatible with Lethal Company v56.
+Compatible with Lethal Company v64.
 
 CruiserImproved should be compatible with most mods, but it works well with:
 - [BetterVehicleControls](https://thunderstore.io/c/lethal-company/p/Dev1A3/BetterVehicleControls/)

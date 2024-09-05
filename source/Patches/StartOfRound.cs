@@ -42,24 +42,24 @@ internal class StartOfRoundPatches
         var codes = instructions.ToList();
 
         int index = PatchUtils.LocateCodeSegment(0, codes, [
-            new(OpCodes.Ldfld, typeof(StartOfRound).GetField("shipBounds"))
+            new(OpCodes.Ldfld, PatchUtils.Field(typeof(StartOfRound), "shipBounds"))
             ]);
 
         if(index != -1)
         {
             //fix items floating by using the inner room bounds instead (shipBounds is too large and keeps items floating near ship walls)
-            codes[index].operand = typeof(StartOfRound).GetField("shipInnerRoomBounds");
+            codes[index].operand = PatchUtils.Field(typeof(StartOfRound), "shipInnerRoomBounds");
         }
         else
         {
             index = 0;
-            CruiserImproved.LogError("Could not patch LoadShipGrabbableItems bounds!");
+            CruiserImproved.LogWarning("Could not patch LoadShipGrabbableItems bounds!");
         }
 
         index = PatchUtils.LocateCodeSegment(index, codes, [
             new(OpCodes.Ldarg_0),
-            new(OpCodes.Ldfld, typeof(StartOfRound).GetField("allItemsList")),
-            new(OpCodes.Ldfld, typeof(AllItemsList).GetField("itemsList"))
+            new(OpCodes.Ldfld, PatchUtils.Field(typeof(StartOfRound), "allItemsList")),
+            new(OpCodes.Ldfld, PatchUtils.Field(typeof(AllItemsList), "itemsList"))
             ]);
 
         if(index != -1)
@@ -70,12 +70,12 @@ internal class StartOfRoundPatches
                 new(OpCodes.Ldloc_S, 9),
                 new(OpCodes.Ldloc_2),
                 new(OpCodes.Ldloc_1),
-                new(OpCodes.Call, typeof(StartOfRoundPatches).GetMethod("SetItemPosition", BindingFlags.NonPublic | BindingFlags.Static))
+                new(OpCodes.Call, PatchUtils.Method(typeof(StartOfRoundPatches), "SetItemPosition"))
                 ]);
         }
         else
         {
-            CruiserImproved.LogError("Could not patch LoadShipGrabbableItems sorting!");
+            CruiserImproved.LogWarning("Could not patch LoadShipGrabbableItems sorting!");
         }
 
         return codes;
@@ -85,13 +85,16 @@ internal class StartOfRoundPatches
     [HarmonyPostfix]
     static void LoadAttachedVehicle_Postfix(StartOfRound __instance)
     {
+        if (!__instance.attachedVehicle) return;
         try
         {
-            string saveName = GameNetworkManager.Instance.currentSaveFileName;
-            if (UserConfig.SaveCruiserValues.Value && __instance.attachedVehicle)
-            {
-                var vehicle = __instance.attachedVehicle;
+            var vehicle = __instance.attachedVehicle;
 
+            vehicle.transform.rotation = Quaternion.Euler(new(0f, 90f, 0f));
+
+            string saveName = GameNetworkManager.Instance.currentSaveFileName;
+            if (UserConfig.SaveCruiserValues.Value)
+            {
                 if(SaveManager.TryLoad<Vector3>("AttachedVehicleRotation", out var rotation))
                 {
                     vehicle.transform.rotation = Quaternion.Euler(rotation);

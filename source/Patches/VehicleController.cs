@@ -441,16 +441,16 @@ internal class VehicleControllerPatches
 
         int searchTargetIndex = PatchUtils.LocateCodeSegment(0, codes, [
             new(OpCodes.Ldarg_0),
-            new(OpCodes.Ldfld, typeof(VehicleController).GetField("localPlayerInControl", BindingFlags.Instance | BindingFlags.Public)),
+            new(OpCodes.Ldfld, PatchUtils.Field(typeof(VehicleController), "localPlayerInControl")),
             new(OpCodes.Brfalse),
             new(OpCodes.Ldarg_0),
-            new(OpCodes.Call, typeof(NetworkBehaviour).GetMethod("get_IsOwner", BindingFlags.Instance | BindingFlags.Public | BindingFlags.GetProperty)),
+            new(OpCodes.Call, PatchUtils.Method(typeof(NetworkBehaviour), "get_IsOwner")),
             new(OpCodes.Brtrue)
             ]);
 
         if (searchTargetIndex == -1)
         {
-            CruiserImproved.LogError("Could not transpile VehicleController.Update");
+            CruiserImproved.LogWarning("Could not transpile VehicleController.Update");
             return codes;
         }
 
@@ -657,6 +657,16 @@ internal class VehicleControllerPatches
         __instance.moveInputVector = Vector2.zero;
     }
 
+    //Fix wheels accelerating while magneted
+    [HarmonyPatch("GetVehicleInput")]
+    [HarmonyPostfix]
+    static void GetVehicleInput_Postfix(VehicleController __instance)
+    {
+        if (!__instance.magnetedToShip) return;
+
+        __instance.brakePedalPressed = !__instance.drivePedalPressed;
+    }
+
     //Fix inputs still working while chat or pause menu is open        
     [HarmonyPatch("GetVehicleInput")]
     [HarmonyTranspiler]
@@ -664,24 +674,24 @@ internal class VehicleControllerPatches
     {
         var codes = instructions.ToList();
 
-        var currentDriver = typeof(VehicleController).GetField("currentDriver");
-        var isTypingChat = typeof(PlayerControllerB).GetField("isTypingChat");
-        var quickMenuManager = typeof(PlayerControllerB).GetField("quickMenuManager");
-        var isMenuOpen = typeof(QuickMenuManager).GetField("isMenuOpen");
-        var moveInputVector = typeof(VehicleController).GetField("moveInputVector");
-        var steeringWheelTurnSpeed = typeof(VehicleController).GetField("steeringWheelTurnSpeed");
+        var currentDriver = PatchUtils.Field(typeof(VehicleController), "currentDriver");
+        var isTypingChat = PatchUtils.Field(typeof(PlayerControllerB), "isTypingChat");
+        var quickMenuManager = PatchUtils.Field(typeof(PlayerControllerB), "quickMenuManager");
+        var isMenuOpen = PatchUtils.Field(typeof(QuickMenuManager), "isMenuOpen");
+        var moveInputVector = PatchUtils.Field(typeof(VehicleController), "moveInputVector");
+        var steeringWheelTurnSpeed = PatchUtils.Field(typeof(VehicleController), "steeringWheelTurnSpeed");
 
         if (currentDriver == null || isTypingChat == null || quickMenuManager == null || isMenuOpen == null || moveInputVector == null || steeringWheelTurnSpeed == null)
         {
-            CruiserImproved.LogError("Could not find fields for VehicleInput transpiler!");
+            CruiserImproved.LogWarning("Could not find fields for VehicleInput transpiler!");
             return codes;
         }
 
-        var get_zero = typeof(Vector2).GetMethod("get_zero", BindingFlags.Static | BindingFlags.GetProperty | BindingFlags.Public);
+        var get_zero = PatchUtils.Method(typeof(Vector2), "get_zero");
 
         if(get_zero == null)
         {
-            CruiserImproved.LogError("Could not find vector method required for VehicleInput transpiler!");
+            CruiserImproved.LogWarning("Could not find vector method required for VehicleInput transpiler!");
             return codes;
         }
 
@@ -693,7 +703,7 @@ internal class VehicleControllerPatches
 
         if(insertIndex == -1)
         {
-            CruiserImproved.LogError("Could not find insertion point for VehicleInput transpiler!");
+            CruiserImproved.LogWarning("Could not find insertion point for VehicleInput transpiler!");
         }
 
         var labelMove = codes[insertIndex].labels;
@@ -759,7 +769,7 @@ internal class VehicleControllerPatches
 
         if (indexFind == -1)
         {
-            CruiserImproved.LogError("PatchSmallEntityCarKill: Failed to find ret code!"); 
+            CruiserImproved.LogWarning("PatchSmallEntityCarKill: Failed to find ret code!"); 
             return; 
         }
 
@@ -767,7 +777,7 @@ internal class VehicleControllerPatches
 
         if (branchCopy == -1) 
         { 
-            CruiserImproved.LogError("PatchSmallEntityCarKill: Failed to find branch instruction!"); 
+            CruiserImproved.LogWarning("PatchSmallEntityCarKill: Failed to find branch instruction!"); 
             return; 
         }
 
@@ -785,10 +795,10 @@ internal class VehicleControllerPatches
     static void PatchLocalEntityDamage(List<CodeInstruction> codes) 
     {
         //Replace all instances of KillEnemy with KillEnemyOnOwnerClient
-        MethodInfo hitEnemy = typeof(EnemyAI).GetMethod("HitEnemy", BindingFlags.Instance | BindingFlags.Public);
-        MethodInfo hitEnemyOnLocalClient = typeof(EnemyAI).GetMethod("HitEnemyOnLocalClient", BindingFlags.Instance | BindingFlags.Public);
+        MethodInfo hitEnemy = PatchUtils.Method(typeof(EnemyAI), "HitEnemy");
+        MethodInfo hitEnemyOnLocalClient = PatchUtils.Method(typeof(EnemyAI), "HitEnemyOnLocalClient");
 
-        var get_zero = typeof(Vector2).GetMethod("get_zero", BindingFlags.Static | BindingFlags.GetProperty | BindingFlags.Public);
+        var get_zero = PatchUtils.Method(typeof(Vector2), "get_zero");
 
         int insertBefore = PatchUtils.LocateCodeSegment(0, codes, [
             new(OpCodes.Ldarg_0),
@@ -800,7 +810,7 @@ internal class VehicleControllerPatches
 
         if(insertBefore == -1)
         {
-            CruiserImproved.LogError("PatchLocalEntityDamage: Failed to find HitEnemy call!");
+            CruiserImproved.LogWarning("PatchLocalEntityDamage: Failed to find HitEnemy call!");
             return;
         }
 
@@ -826,7 +836,7 @@ internal class VehicleControllerPatches
     {
         var codes = instructions.ToList();
 
-        FieldInfo carHP = typeof(VehicleController).GetField("carHP");
+        FieldInfo carHP = PatchUtils.Field(typeof(VehicleController), "carHP");
 
         int targetIndex = PatchUtils.LocateCodeSegment(0, codes, [
             new(OpCodes.Ldarg_0),
@@ -837,7 +847,7 @@ internal class VehicleControllerPatches
 
         if (targetIndex == -1)
         {
-            CruiserImproved.LogError("Could not patch VehicleController.OnCollisionEnter instakill!");
+            CruiserImproved.LogWarning("Could not patch VehicleController.OnCollisionEnter instakill!");
             return codes;
         }
 
@@ -847,7 +857,7 @@ internal class VehicleControllerPatches
 
         if(removeEndIndex == -1)
         {
-            CruiserImproved.LogError("Could not locate VehicleController.OnCollisionEnter instakill patch end point!");
+            CruiserImproved.LogWarning("Could not locate VehicleController.OnCollisionEnter instakill patch end point!");
             return codes;
         }
         
@@ -909,6 +919,35 @@ internal class VehicleControllerPatches
             __instance.steeringWheelAnimFloat = vehicleData[__instance].lastSteeringAngle / 6f;
             __instance.steeringInput = vehicleData[__instance].lastSteeringAngle;
         }
+    }
+
+    [HarmonyPatch("SetCarEffects")]
+    [HarmonyTranspiler]
+    static IEnumerable<CodeInstruction> SetCarEffects_Transpiler(IEnumerable<CodeInstruction> instructions)
+    {
+        var codes = instructions.ToList();
+
+        //Locate front left wheel motorTorque check
+        int index = PatchUtils.LocateCodeSegment(0, codes, [
+            new(OpCodes.Ldarg_0),
+            new(OpCodes.Ldfld, PatchUtils.Field(typeof(VehicleController), "FrontLeftWheel")),
+            new(OpCodes.Callvirt, PatchUtils.Method(typeof(WheelCollider), "get_motorTorque")),
+            new(OpCodes.Ldc_R4),
+            new(OpCodes.Ble_Un),
+            ]);
+
+        if(index == -1)
+        {
+            CruiserImproved.LogWarning("Could not patch SetCarEffects!");
+            return instructions;
+        }
+
+        var jumpTo = codes[index + 4].operand; //get jump destination from Ble_un above
+
+        //at the end of the previous if statement (airborne wheels) jump to this if statement's else block (turns off wheel skidding)
+        codes.Insert(index, new(OpCodes.Br, jumpTo));
+
+        return codes;
     }
 
     //Patch non-drivers ejecting drivers in the Cruiser
@@ -981,7 +1020,7 @@ internal class VehicleControllerPatches
     {
         var codes = instructions.ToList();
 
-        MethodInfo canExitCar = typeof(VehicleController).GetMethod("CanExitCar");
+        MethodInfo canExitCar = PatchUtils.Method(typeof(VehicleController), "CanExitCar");
 
         //replace CanExitCar(true) with CanExitCar(false) so it properly checks the passenger side
         int index = PatchUtils.LocateCodeSegment(0, codes, [
@@ -991,7 +1030,7 @@ internal class VehicleControllerPatches
 
         if(index == -1)
         {
-            CruiserImproved.LogError("Could not patch ExitPassengerSideSeat!");
+            CruiserImproved.LogWarning("Could not patch ExitPassengerSideSeat!");
             return codes;
         }
         codes[index].opcode = OpCodes.Ldc_I4_0;
@@ -1011,8 +1050,8 @@ internal class VehicleControllerPatches
         //Prevent the cruiser from creating detectable sounds on collision if the engine is off, to prevent dogs from repeatedly attacking cruisers.
         var codes = instructions.ToList();
 
-        var getRoundManagerInstance = typeof(RoundManager).GetMethod("get_Instance", BindingFlags.Static | BindingFlags.Public | BindingFlags.GetProperty);
-        var ignitionStarted = typeof(VehicleController).GetField("ignitionStarted");
+        var getRoundManagerInstance = PatchUtils.Method(typeof(RoundManager), "get_Instance");
+        var ignitionStarted = PatchUtils.Field(typeof(VehicleController), "ignitionStarted");
 
         int index = PatchUtils.LocateCodeSegment(0, codes, [
             new(OpCodes.Ldarg_S, 4),
@@ -1023,7 +1062,7 @@ internal class VehicleControllerPatches
 
         if (index == -1)
         {
-            CruiserImproved.LogError("Failed to find code segment in PlayRandomClipAndPropertiesFromAudio");
+            CruiserImproved.LogWarning("Failed to find code segment in PlayRandomClipAndPropertiesFromAudio");
             return codes;
         }
 
@@ -1035,7 +1074,7 @@ internal class VehicleControllerPatches
 
         if(jumpIndex == -1)
         {
-            CruiserImproved.LogError("Failed to find end jump segment in PlayRandomClipAndPropertiesFromAudio");
+            CruiserImproved.LogWarning("Failed to find end jump segment in PlayRandomClipAndPropertiesFromAudio");
             return codes;
         }
 
@@ -1043,7 +1082,7 @@ internal class VehicleControllerPatches
 
         codes.InsertRange(index, [
             new(OpCodes.Ldarg_0),
-            new(OpCodes.Call, typeof(VehicleControllerPatches).GetMethod("ShouldPlayDetectableAudio", BindingFlags.Static | BindingFlags.NonPublic)),
+            new(OpCodes.Call, PatchUtils.Method(typeof(VehicleControllerPatches), "ShouldPlayDetectableAudio")),
             new(OpCodes.Brfalse_S, destinationLabel)
             ]);
 
@@ -1073,7 +1112,7 @@ internal class VehicleControllerPatches
     {
         var codes = instructions.ToList();
 
-        var getIsOwner = typeof(NetworkBehaviour).GetMethod("get_IsOwner", BindingFlags.Instance | BindingFlags.Public | BindingFlags.GetProperty);
+        var getIsOwner = PatchUtils.Method(typeof(NetworkBehaviour), "get_IsOwner");
 
         int retIndex = PatchUtils.LocateCodeSegment(0, codes, [
             //locate early return if not owner to remove it
@@ -1085,15 +1124,15 @@ internal class VehicleControllerPatches
 
         if(retIndex == -1)
         {
-            CruiserImproved.LogError("Failed to remove owner check from StartMagneting!");
+            CruiserImproved.LogWarning("Failed to remove owner check from StartMagneting!");
         }
         else
         {
             codes.RemoveRange(retIndex, 4);
         }
 
-        var collectItemsInTruck = typeof(VehicleController).GetMethod("CollectItemsInTruck", BindingFlags.NonPublic | BindingFlags.Instance);
-        var fixMagnet = typeof(VehicleControllerPatches).GetMethod("FixMagnet", BindingFlags.NonPublic | BindingFlags.Static);
+        var collectItemsInTruck = PatchUtils.Method(typeof(VehicleController), "CollectItemsInTruck");
+        var fixMagnet = PatchUtils.Method(typeof(VehicleControllerPatches), "FixMagnet");
 
         int index = PatchUtils.LocateCodeSegment(0, codes, [
             new(OpCodes.Call, collectItemsInTruck)
@@ -1101,7 +1140,7 @@ internal class VehicleControllerPatches
 
         if(index == -1)
         {
-            CruiserImproved.LogError("Failed to patch StartMagneting!");
+            CruiserImproved.LogWarning("Failed to patch StartMagneting!");
         }
 
         var jumpLabel = il.DefineLabel();
@@ -1120,8 +1159,8 @@ internal class VehicleControllerPatches
             new(OpCodes.Ret),
 
             //return early if no localPlayerController yet to prevent a nullref when calling the rpc
-            new(OpCodes.Call, typeof(GameNetworkManager).GetMethod("get_Instance")),
-            new(OpCodes.Ldfld, typeof(GameNetworkManager).GetField("localPlayerController")),
+            new(OpCodes.Call, PatchUtils.Method(typeof(GameNetworkManager), "get_Instance")),
+            new(OpCodes.Ldfld, PatchUtils.Field(typeof(GameNetworkManager), "localPlayerController")),
             new(OpCodes.Call, typeof(UnityEngine.Object).GetMethod("op_Implicit")),
             new(OpCodes.Brtrue, jumpLabel),
             new(OpCodes.Ret)

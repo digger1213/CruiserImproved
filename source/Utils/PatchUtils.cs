@@ -3,8 +3,31 @@ using System.Reflection.Emit;
 using HarmonyLib;
 using UnityEngine;
 using System;
+using System.Reflection;
+using System.Xml.Linq;
+using System.Linq;
 
 namespace CruiserImproved.Utils;
+
+public class NullMemberException : Exception
+{
+    private NullMemberException(string message) : base(message) { }
+
+    public static NullMemberException Method(Type type, string methodName, Type[] parameters = null, Type[] generics = null)
+    {
+        var paramStr = "";
+        var genericStr = "";
+        if(parameters != null && parameters.Length > 0) paramStr = string.Join(", ", parameters.Select(param => param.ToString()));
+        if(generics != null && generics.Length > 0) genericStr = "<" + string.Join(", ", generics.Select(param => param.ToString())) + ">";
+
+        return new NullMemberException($"Could not find method {type.Name}:{genericStr}{methodName}({paramStr})");
+    }
+
+    public static NullMemberException Field(Type type, string fieldName)
+    {
+        return new NullMemberException($"Could not find field {type.Name}.{fieldName}");
+    }
+}
 
 static internal class PatchUtils
 {
@@ -87,5 +110,56 @@ static internal class PatchUtils
             }
         }
         return text;
+    }
+
+    public static bool TryMethod(Type type, string name, out MethodInfo methodInfo)
+    {
+        return TryMethod(type, name, null, null, out methodInfo);
+    }
+    public static bool TryMethod(Type type, string name, Type[] parameters, out MethodInfo methodInfo)
+    {
+        return TryMethod(type, name, parameters, null, out methodInfo);
+    }
+
+    public static bool TryMethod(Type type, string name, Type[] parameters, Type[] generics, out MethodInfo methodInfo)
+    {
+        if (parameters == null && generics == null) methodInfo = type.GetMethod(name, AccessTools.all);
+        else
+        {
+            if (generics == null) generics = Type.EmptyTypes;
+            if (parameters == null) parameters = Type.EmptyTypes;
+            methodInfo = type.GetMethod(name, generics.Length, AccessTools.all, null, parameters, null);
+
+            if(generics.Length > 0)
+            {
+                methodInfo = methodInfo.MakeGenericMethod(generics);
+            }
+        }
+
+        return methodInfo != null;
+    }
+
+    public static MethodInfo Method(Type type, string name, Type[] parameters = null, Type[] generics = null)
+    {
+        if (!TryMethod(type, name, parameters, generics, out MethodInfo info))
+        {
+            throw NullMemberException.Method(type, name, parameters, generics);
+        }
+        return info;
+    }
+
+    public static bool TryField(Type type, string name, out FieldInfo fieldInfo)
+    {
+        fieldInfo = AccessTools.Field(type, name);
+        return fieldInfo != null;
+    }
+
+    public static FieldInfo Field(Type type, string name)
+    {
+        if(!TryField(type, name, out FieldInfo info))
+        {
+            throw NullMemberException.Field(type, name);
+        }
+        return info;
     }
 }

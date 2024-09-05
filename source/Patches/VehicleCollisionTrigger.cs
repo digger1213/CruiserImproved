@@ -60,8 +60,8 @@ internal class VehicleCollisionTriggerPatches
                 return false;
             }
 
-            //Prevent hitting and bouncing off unkillable entities (bees, ghost girl, earth leviathan). This matches vanilla behaviour with those entities and makes more sense
-            if (!enemyAI.mainScript.enemyType.canDie) return false;
+            //Prevent hitting and bouncing off unkillable small entities (bees, ghost girl, earth leviathan). This matches vanilla behaviour with those entities and makes more sense
+            if (!enemyAI.mainScript.enemyType.canDie && enemyAI.mainScript.enemyType.SizeLimit == NavSizeLimit.NoLimit) return false;
 
             return true;
         }
