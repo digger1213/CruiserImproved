@@ -85,13 +85,16 @@ internal class StartOfRoundPatches
     [HarmonyPostfix]
     static void LoadAttachedVehicle_Postfix(StartOfRound __instance)
     {
+        if (!__instance.attachedVehicle) return;
         try
         {
-            string saveName = GameNetworkManager.Instance.currentSaveFileName;
-            if (UserConfig.SaveCruiserValues.Value && __instance.attachedVehicle)
-            {
-                var vehicle = __instance.attachedVehicle;
+            var vehicle = __instance.attachedVehicle;
 
+            vehicle.transform.rotation = Quaternion.Euler(new(0f, 90f, 0f));
+
+            string saveName = GameNetworkManager.Instance.currentSaveFileName;
+            if (UserConfig.SaveCruiserValues.Value)
+            {
                 if(SaveManager.TryLoad<Vector3>("AttachedVehicleRotation", out var rotation))
                 {
                     vehicle.transform.rotation = Quaternion.Euler(rotation);

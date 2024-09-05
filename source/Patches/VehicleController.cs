@@ -944,12 +944,8 @@ internal class VehicleControllerPatches
 
         var jumpTo = codes[index + 4].operand; //get jump destination from Ble_un above
 
-        CruiserImproved.LogInfo("Branch destination: " + jumpTo.ToString());
-
         //at the end of the previous if statement (airborne wheels) jump to this if statement's else block (turns off wheel skidding)
         codes.Insert(index, new(OpCodes.Br, jumpTo));
-
-        CruiserImproved.LogMessage(string.Join("\n", codes.GetRange(index - 10, 50).Select(var => var.ToString())));
 
         return codes;
     }

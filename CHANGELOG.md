@@ -8,6 +8,7 @@ Full compatibility for v64. Should still be compatible with v56.
 
 ### Other
 - Fixed an issue since v60 where Old Birds could not damage the Cruiser.
+- Fixed an issue where the Cruiser would be facing the wrong way when n ot loading a saved position.
 
 ## 1.4.0
 
