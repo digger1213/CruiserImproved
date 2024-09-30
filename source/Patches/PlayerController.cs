@@ -1,4 +1,12 @@
 ﻿using CruiserImproved.Network;
+using CruiserImproved.Utils;
+using GameNetcodeStuff;
+using HarmonyLib;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection.Emit;
+using System.Reflection;
+using UnityEngine;
 
 namespace CruiserImproved.Patches;
 
@@ -22,10 +30,10 @@ internal class PlayerControllerPatches
             Vector3 lookFlat = __instance.gameplayCamera.transform.localRotation * Vector3.forward;
             lookFlat.y = 0;
             float angleToBack = Vector3.Angle(lookFlat, Vector3.back);
-            if (angleToBack < 70 && NetworkSync.Config.AllowLean)
+            if(angleToBack < 70 && NetworkSync.Config.AllowLean)
             {
                 //If we're looking backwards, offset the camera to the side ('leaning')
-                cameraOffset.x = Mathf.Sign(lookFlat.x) * ((70f - angleToBack) / 70f);
+                cameraOffset.x = Mathf.Sign(lookFlat.x) * ((70f - angleToBack)/70f);
             }
 
             __instance.gameplayCamera.transform.localPosition = cameraOffset;
