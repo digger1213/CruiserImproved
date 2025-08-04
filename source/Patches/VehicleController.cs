@@ -41,7 +41,7 @@ internal class VehicleControllerPatches
 
         public float lastTyreStress;
         public bool lastTyreStressPlaying;
-	public float timeSinceTyreSkidSync
+	public float timeSinceTyreSkidSync;
     }
 
     static readonly int CriticalThreshold = 2;
