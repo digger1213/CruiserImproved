@@ -1025,7 +1025,7 @@ internal class VehicleControllerPatches
         // Sync the tyre skidding effects 
         if (__instance.IsOwner)
         {
-            if ((Mathf.Abs(__instance.skiddingAudio.volume - vehicleData[__instance].lastTyreStress) > 0.02f) || (__instance.skiddingAudio.isPlaying != vehicleData[__instance].lastTyreStressPlaying))
+            if ((Time.realtimeSinceStartup - vehicleData[__instance].timeSinceTyreSkidSync) && (__instance.skiddingAudio.volume != vehicleData[__instance].lastTyreStress)) || (__instance.skiddingAudio.isPlaying != vehicleData[__instance].lastTyreStressPlaying))
             {
                 FastBufferWriter bufferWriter = new(16, Unity.Collections.Allocator.Temp);
 
