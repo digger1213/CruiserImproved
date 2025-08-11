@@ -1255,12 +1255,9 @@ internal class VehicleControllerPatches
         eulerAngles.x = Mathf.Clamp(x, -20f, 20f);
         instance.magnetTargetRotation = Quaternion.Euler(eulerAngles);
 		
-        if (instance.vehicleID == 0)
-        {
-            Vector3 offset = new(0f, -0.5f, -instance.boundsCollider.size.x * 0.5f * instance.boundsCollider.transform.lossyScale.x);
-            Vector3 localPos = StartOfRound.Instance.magnetPoint.position + offset;
-            instance.magnetTargetPosition = StartOfRound.Instance.elevatorTransform.InverseTransformPoint(localPos);
-        }
+        Vector3 offset = new(0f, -0.5f, -instance.boundsCollider.size.x * 0.5f * instance.boundsCollider.transform.lossyScale.x);
+        Vector3 localPos = StartOfRound.Instance.magnetPoint.position + offset;
+        instance.magnetTargetPosition = StartOfRound.Instance.elevatorTransform.InverseTransformPoint(localPos);
 		
         return eulerAngles;
     }
