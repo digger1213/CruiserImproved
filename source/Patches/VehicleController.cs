@@ -1247,20 +1247,21 @@ internal class VehicleControllerPatches
 
     //Method to override StartMagneting's target angle and position. Returns eulerAngles, sets magnetTargetPosition and magnetTargetRotation fields.
     static Vector3 FixMagnet(VehicleController instance)
-    {       
-		// don't attempt to modify non-vanilla Cruiser
-		if (instance.VehicleID != 0) return;
+    {
         Vector3 eulerAngles = instance.transform.eulerAngles;
         eulerAngles.y = Mathf.Round((eulerAngles.y + 90f) / 180f) * 180f - 90f;
         eulerAngles.z = Mathf.Round(eulerAngles.z / 90f) * 90f;
         float x = Mathf.Repeat(eulerAngles.x + UnityEngine.Random.Range(-5f, 5f) + 180, 360) - 180;
         eulerAngles.x = Mathf.Clamp(x, -20f, 20f);
         instance.magnetTargetRotation = Quaternion.Euler(eulerAngles);
-
-        Vector3 offset = new(0f, -0.5f, -instance.boundsCollider.size.x * 0.5f * instance.boundsCollider.transform.lossyScale.x);
-        Vector3 localPos = StartOfRound.Instance.magnetPoint.position + offset;
-        instance.magnetTargetPosition = StartOfRound.Instance.elevatorTransform.InverseTransformPoint(localPos);
-
+		
+        if (instance.vehicleID == 0)
+        {
+            Vector3 offset = new(0f, -0.5f, -instance.boundsCollider.size.x * 0.5f * instance.boundsCollider.transform.lossyScale.x);
+            Vector3 localPos = StartOfRound.Instance.magnetPoint.position + offset;
+            instance.magnetTargetPosition = StartOfRound.Instance.elevatorTransform.InverseTransformPoint(localPos);
+        }
+		
         return eulerAngles;
     }
 
