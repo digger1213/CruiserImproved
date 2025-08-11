@@ -2,6 +2,7 @@
 
 	<PropertyGroup>
 		<TargetFramework>netstandard2.1</TargetFramework>
+        <LangVersion>default</LangVersion>
 		<RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
 		<AssemblyName>$(ThunderstoreNamespace).$(MSBuildProjectName)</AssemblyName>
 		<Product>$(MSBuildProjectName)</Product>
