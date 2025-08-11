@@ -17,7 +17,7 @@ internal class PlayerControllerPatches
     [HarmonyPostfix]
     public static void Update_Postfix(PlayerControllerB __instance)
     {
-        if (LCVRCompatibility.inVrSession) return;
+        //if (LCVRCompatibility.inVrSession) return;
 
         if (__instance != GameNetworkManager.Instance.localPlayerController) return;
 
