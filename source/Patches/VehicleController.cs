@@ -1041,7 +1041,7 @@ internal class VehicleControllerPatches
 
         // Play the skidding effects on clients sides
         float stressAmount = vehicleData[__instance].lastTyreStress;
-        bool tyreStressing = vehicleData[__instance].lastTyreStressPlaying && stressAmount > 0.3f;
+        bool tyreStressing = vehicleData[__instance].lastTyreStressPlaying && stressAmount > 0.3f && __instance.gear == CarGearShift.Drive && __instance.ignitionStarted;
         bool tyreSparksActive = (tyreStressing && __instance.averageVelocity.magnitude > 8f);
         __instance.SetVehicleAudioProperties(__instance.skiddingAudio, tyreStressing, 0f, stressAmount, 3f, true, 1f);
 
