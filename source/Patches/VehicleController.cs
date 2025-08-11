@@ -39,9 +39,9 @@ internal class VehicleControllerPatches
         public bool usingColoredExhaust = false;
         public ParticleSystem particleSystemSwap;
 
+		public float timeSinceTyreSkidSync;
         public float lastTyreStress;
         public bool lastTyreStressPlaying;
-	public float timeSinceTyreSkidSync;
     }
 
     static readonly int CriticalThreshold = 2;
@@ -1028,7 +1028,7 @@ internal class VehicleControllerPatches
         {
             if (((Time.realtimeSinceStartup - vehicleData[__instance].timeSinceTyreSkidSync) > 0.1f && __instance.skiddingAudio.volume != vehicleData[__instance].lastTyreStress) || (__instance.skiddingAudio.isPlaying != vehicleData[__instance].lastTyreStressPlaying))
             {
-		vehicleData[__instance].timeSinceTyreSkidSync = Time.realtimeSinceStartup;    
+		        vehicleData[__instance].timeSinceTyreSkidSync = Time.realtimeSinceStartup;    
                 FastBufferWriter bufferWriter = new(16, Unity.Collections.Allocator.Temp);
 
                 bufferWriter.WriteValue(new NetworkObjectReference(__instance.NetworkObject));
@@ -1039,7 +1039,7 @@ internal class VehicleControllerPatches
             return;
         }
 
-	// Play the skidding effects on clients sides
+	    // Play the skidding effects on clients sides
         float stressAmount = vehicleData[__instance].lastTyreStress;
         bool tyreStressing = vehicleData[__instance].lastTyreStressPlaying;
         bool tyreSparksActive = (tyreStressing && __instance.averageVelocity.magnitude > 8f);
@@ -1247,7 +1247,9 @@ internal class VehicleControllerPatches
 
     //Method to override StartMagneting's target angle and position. Returns eulerAngles, sets magnetTargetPosition and magnetTargetRotation fields.
     static Vector3 FixMagnet(VehicleController instance)
-    {        
+    {       
+		// don't attempt to modify non-vanilla Cruiser
+		if (instance.VehicleID != 0) return;
         Vector3 eulerAngles = instance.transform.eulerAngles;
         eulerAngles.y = Mathf.Round((eulerAngles.y + 90f) / 180f) * 180f - 90f;
         eulerAngles.z = Mathf.Round(eulerAngles.z / 90f) * 90f;
