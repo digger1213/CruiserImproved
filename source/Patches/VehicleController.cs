@@ -39,6 +39,7 @@ internal class VehicleControllerPatches
         public bool usingColoredExhaust = false;
         public ParticleSystem particleSystemSwap;
 
+		public float timeSinceTyreSkidSync;
         public float lastTyreStress;
         public bool lastTyreStressPlaying;
     }
@@ -1025,8 +1026,9 @@ internal class VehicleControllerPatches
         // Sync the tyre skidding effects 
         if (__instance.IsOwner)
         {
-            if ((Mathf.Abs(__instance.skiddingAudio.volume - vehicleData[__instance].lastTyreStress) > 0.02f) || (__instance.skiddingAudio.isPlaying != vehicleData[__instance].lastTyreStressPlaying))
+            if (((Time.realtimeSinceStartup - vehicleData[__instance].timeSinceTyreSkidSync) > 0.1f && __instance.skiddingAudio.volume != vehicleData[__instance].lastTyreStress) || (__instance.skiddingAudio.isPlaying != vehicleData[__instance].lastTyreStressPlaying))
             {
+		        vehicleData[__instance].timeSinceTyreSkidSync = Time.realtimeSinceStartup;    
                 FastBufferWriter bufferWriter = new(16, Unity.Collections.Allocator.Temp);
 
                 bufferWriter.WriteValue(new NetworkObjectReference(__instance.NetworkObject));
@@ -1037,9 +1039,9 @@ internal class VehicleControllerPatches
             return;
         }
 
-	// Play the skidding effects on clients sides
+        // Play the skidding effects on clients sides
         float stressAmount = vehicleData[__instance].lastTyreStress;
-        bool tyreStressing = vehicleData[__instance].lastTyreStressPlaying;
+        bool tyreStressing = vehicleData[__instance].lastTyreStressPlaying && stressAmount > 0.3f && __instance.gear == CarGearShift.Drive && __instance.ignitionStarted;
         bool tyreSparksActive = (tyreStressing && __instance.averageVelocity.magnitude > 8f);
         __instance.SetVehicleAudioProperties(__instance.skiddingAudio, tyreStressing, 0f, stressAmount, 3f, true, 1f);
 
@@ -1245,7 +1247,7 @@ internal class VehicleControllerPatches
 
     //Method to override StartMagneting's target angle and position. Returns eulerAngles, sets magnetTargetPosition and magnetTargetRotation fields.
     static Vector3 FixMagnet(VehicleController instance)
-    {        
+    {
         Vector3 eulerAngles = instance.transform.eulerAngles;
         eulerAngles.y = Mathf.Round((eulerAngles.y + 90f) / 180f) * 180f - 90f;
         eulerAngles.z = Mathf.Round(eulerAngles.z / 90f) * 90f;
@@ -1253,10 +1255,13 @@ internal class VehicleControllerPatches
         eulerAngles.x = Mathf.Clamp(x, -20f, 20f);
         instance.magnetTargetRotation = Quaternion.Euler(eulerAngles);
 
-        Vector3 offset = new(0f, -0.5f, -instance.boundsCollider.size.x * 0.5f * instance.boundsCollider.transform.lossyScale.x);
-        Vector3 localPos = StartOfRound.Instance.magnetPoint.position + offset;
-        instance.magnetTargetPosition = StartOfRound.Instance.elevatorTransform.InverseTransformPoint(localPos);
-
+		if (instance.vehicleID == 0)
+		{
+            Vector3 offset = new(0f, -0.5f, -instance.boundsCollider.size.x * 0.5f * instance.boundsCollider.transform.lossyScale.x);
+            Vector3 localPos = StartOfRound.Instance.magnetPoint.position + offset;
+            instance.magnetTargetPosition = StartOfRound.Instance.elevatorTransform.InverseTransformPoint(localPos);
+		}
+		
         return eulerAngles;
     }
 
