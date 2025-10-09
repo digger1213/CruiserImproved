@@ -66,6 +66,4 @@ Compatible with Lethal Company v72.
 
 CruiserImproved should be compatible with most mods, but it works well with:
 - [BetterVehicleControls](https://thunderstore.io/c/lethal-company/p/Dev1A3/BetterVehicleControls/)
-
-### The below listed mod(s) are currently not compatible with CruiserImproved, this will be looked into.
 - [LethalCompanyVR](https://thunderstore.io/c/lethal-company/p/DaXcess/LethalCompanyVR/)
