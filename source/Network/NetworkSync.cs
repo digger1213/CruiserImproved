@@ -52,6 +52,7 @@ internal static class NetworkSync
         //no need to clean these up as NetworkManager's CustomMessageHandler gets destroyed when not in a lobby
 
         SetupMessageHandler("SyncSteeringRpc", VehicleControllerPatches.SyncSteeringRpc);
+        SetupMessageHandler("SyncMotorTorqueRpc", VehicleControllerPatches.SyncMotorTorqueRpc);
         SetupMessageHandler("SyncRadioTimeRpc", VehicleControllerPatches.SyncRadioTimeRpc);
         SetupMessageHandler("ToggleCabLightRpc", VehicleControllerPatches.ToggleCabLightRpc);
         SetupMessageHandler("SyncTyreStressRpc", VehicleControllerPatches.SyncTyreStressRpc);
