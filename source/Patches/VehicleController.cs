@@ -76,6 +76,7 @@ internal class VehicleControllerPatches
     };
 
     static readonly string CopyButton = "Triggers/ChangeChannel (3)";
+    static readonly string CopyVRButton = "Triggers/CarButton";
 
     public static Dictionary<VehicleController, VehicleControllerData> vehicleData = new();
 
@@ -190,7 +191,36 @@ internal class VehicleControllerPatches
 
         if (NetworkSync.Config.CabinLightToggle)
         {
-            Transform child = vehicle.transform.Find(CopyButton);
+            if (!LCVRCompatibility.inVrSession)
+            {
+                Transform child = vehicle.transform.Find(CopyButton);
+                Transform cabLightToggle = GameObject.Instantiate(child, child.parent);
+
+                cabLightToggle.name = "CabLightToggle";
+                cabLightToggle.transform.localPosition = new(-0.045f, 1.1f, 2.06f);
+                cabLightToggle.transform.localEulerAngles = new(315f, 0f, 0f);
+                cabLightToggle.transform.localScale = new(0.55f, 0.1f, 0.04f);
+
+                InteractTrigger trigger = cabLightToggle.GetComponent<InteractTrigger>();
+                trigger.hoverTip = "Switch light: [LMB]";
+                trigger.onInteract = new();
+                trigger.onInteract.AddListener((PlayerControllerB player) => { InteractCabLight(vehicle, player); });
+                return;
+            }
+            Transform child = null;
+            foreach (Transform t in vehicle.GetComponentsInChildren<Transform>(true))
+            {
+                if (t.name == "CarButton")
+                {
+                    var trigger = t.GetComponent<InteractTrigger>();
+                    if (trigger != null && trigger.hoverTip == "Switch headlights: [LMB]")
+                    {
+                        child = t;
+                        break;
+                    }
+                }
+            }
+            if (child == null) return;
             Transform cabLightToggle = GameObject.Instantiate(child, child.parent);
 
             cabLightToggle.name = "CabLightToggle";
