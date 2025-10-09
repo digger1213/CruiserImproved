@@ -1,4 +1,4 @@
-﻿using CruiserImproved.Network;
+using CruiserImproved.Network;
 using CruiserImproved.Utils;
 using GameNetcodeStuff;
 using HarmonyLib;
@@ -110,7 +110,7 @@ internal class VehicleControllerPatches
 
         //don't modify non-vanilla cruiser
         if (PublicVehicleData.VehicleID != 0) return;
-	    
+
         //Allow player to turn further backward for the lean mechanic
         if (NetworkSync.Config.AllowLean)
         {
@@ -188,7 +188,7 @@ internal class VehicleControllerPatches
             colorOverLifetime.color = mmGradient;
         }
 
-        if(NetworkSync.Config.CabinLightToggle)
+        if (NetworkSync.Config.CabinLightToggle)
         {
             Transform child = vehicle.transform.Find(CopyButton);
             Transform cabLightToggle = GameObject.Instantiate(child, child.parent);
@@ -262,9 +262,9 @@ internal class VehicleControllerPatches
         var extraData = vehicleData[vehicle];
 
         bool hasTurbos = vehicle.turboBoosts > 0;
-        
+
         //swap to the turbo exhaust particles (or back)
-        if(hasTurbos != extraData.usingColoredExhaust && extraData.particleSystemSwap)
+        if (hasTurbos != extraData.usingColoredExhaust && extraData.particleSystemSwap)
         {
             extraData.usingColoredExhaust = hasTurbos;
             bool on = vehicle.carExhaustParticle.isPlaying;
@@ -273,7 +273,7 @@ internal class VehicleControllerPatches
 
             //swap the VehicleController.carExhaustParticle
             (extraData.particleSystemSwap, vehicle.carExhaustParticle) = (vehicle.carExhaustParticle, extraData.particleSystemSwap);
-            if(on) vehicle.carExhaustParticle.Play();
+            if (on) vehicle.carExhaustParticle.Play();
         }
     }
 
@@ -301,10 +301,10 @@ internal class VehicleControllerPatches
         foreach (var elem in vehicleData)
         {
             VehicleController vehicle = elem.Key;
-            if(vehicle.turboBoosts > 0)
+            if (vehicle.turboBoosts > 0)
             {
                 //Call AddTurboBoostClientRpc(0, vehicle.turboBoosts);
-                RpcSender.SendClientRpc(vehicle, 4268487771U, [clientId], (ref FastBufferWriter fastBufferWriter) => 
+                RpcSender.SendClientRpc(vehicle, 4268487771U, [clientId], (ref FastBufferWriter fastBufferWriter) =>
                 {
                     BytePacker.WriteValueBitPacked(fastBufferWriter, 0);
                     BytePacker.WriteValueBitPacked(fastBufferWriter, vehicle.turboBoosts);
@@ -364,13 +364,13 @@ internal class VehicleControllerPatches
             }
         }
 
-	//Don't modify non vanilla cruiser
-	if (PublicVehicleData.VehicleID == 0)
-	{
+        //Don't modify non vanilla cruiser
+        if (PublicVehicleData.VehicleID == 0)
+        {
             //Fix items dropping through the back of the cruiser
             Transform itemDropCollider = __instance.physicsRegion.itemDropCollider.transform;
-            itemDropCollider.localScale = new Vector3(itemDropCollider.localScale.x, itemDropCollider.localScale.y, 5f);	
-	}
+            itemDropCollider.localScale = new Vector3(itemDropCollider.localScale.x, itemDropCollider.localScale.y, 5f);
+        }
 
         if (NetworkSync.FinishedSync)
         {
@@ -415,7 +415,7 @@ internal class VehicleControllerPatches
 
         __instance.mainRigidbody.AddForce(force, ForceMode.Acceleration);
 
-	if (!__instance.magnetedToShip)
+        if (!__instance.magnetedToShip)
         {
             return;
         }
@@ -480,7 +480,7 @@ internal class VehicleControllerPatches
             extraData.navObstacle.gameObject.SetActive(enableObstacle);
         }
 
-	if (__instance.IsOwner) return;
+        if (__instance.IsOwner) return;
         List<WheelCollider> wheels = [__instance.FrontLeftWheel, __instance.FrontRightWheel, __instance.BackLeftWheel, __instance.BackRightWheel];
 
         foreach (WheelCollider wheel in wheels)
@@ -665,7 +665,7 @@ internal class VehicleControllerPatches
 
         VehicleControllerData extraData = vehicleData[__instance];
 
-        if(extraData.destroyCoroutine != null)
+        if (extraData.destroyCoroutine != null)
         {
             __instance.StopCoroutine(extraData.destroyCoroutine);
             extraData.destroyCoroutine = null;
@@ -678,14 +678,14 @@ internal class VehicleControllerPatches
     [HarmonyPostfix]
     static void DestroyCar_Postfix(VehicleController __instance)
     {
-	//don't modify non-vanilla cruiser
+        //don't modify non-vanilla cruiser
         if (PublicVehicleData.VehicleID != 0) return;
-	    
+
         UpdateCruiserScanText(__instance, true);
 
         __instance.carExhaustParticle.Stop(true, ParticleSystemStopBehavior.StopEmitting);
 
-        foreach(string name in DestroyDisableList)
+        foreach (string name in DestroyDisableList)
         {
             Transform child = __instance.transform.Find(name);
             if (child)
@@ -696,9 +696,9 @@ internal class VehicleControllerPatches
 
         if (!NetworkSync.Config.AllowPushDestroyedCar) return;
 
-        foreach(Transform child in __instance.transform)
+        foreach (Transform child in __instance.transform)
         {
-            if(child.name == "PushTrigger")
+            if (child.name == "PushTrigger")
             {
                 child.GetComponent<InteractTrigger>().interactable = true;
                 break;
@@ -750,7 +750,7 @@ internal class VehicleControllerPatches
 
         var get_zero = PatchUtils.Method(typeof(Vector2), "get_zero");
 
-        if(get_zero == null)
+        if (get_zero == null)
         {
             CruiserImproved.LogWarning("Could not find vector method required for VehicleInput transpiler!");
             return codes;
@@ -762,7 +762,7 @@ internal class VehicleControllerPatches
             new(OpCodes.Stloc_0)
             ]);
 
-        if(insertIndex == -1)
+        if (insertIndex == -1)
         {
             CruiserImproved.LogWarning("Could not find insertion point for VehicleInput transpiler!");
         }
@@ -830,16 +830,16 @@ internal class VehicleControllerPatches
 
         if (indexFind == -1)
         {
-            CruiserImproved.LogWarning("PatchSmallEntityCarKill: Failed to find ret code!"); 
-            return; 
+            CruiserImproved.LogWarning("PatchSmallEntityCarKill: Failed to find ret code!");
+            return;
         }
 
         int branchCopy = PatchUtils.LocateCodeSegment(indexFind, codes, [new(OpCodes.Br)]); //copy the destination label of the next branch
 
-        if (branchCopy == -1) 
-        { 
-            CruiserImproved.LogWarning("PatchSmallEntityCarKill: Failed to find branch instruction!"); 
-            return; 
+        if (branchCopy == -1)
+        {
+            CruiserImproved.LogWarning("PatchSmallEntityCarKill: Failed to find branch instruction!");
+            return;
         }
 
         object afterCheckJumpOperand = codes[branchCopy].operand;
@@ -853,7 +853,7 @@ internal class VehicleControllerPatches
     }
 
     //Fix slow impacts not actually damaging entities
-    static void PatchLocalEntityDamage(List<CodeInstruction> codes) 
+    static void PatchLocalEntityDamage(List<CodeInstruction> codes)
     {
         //Replace all instances of KillEnemy with KillEnemyOnOwnerClient
         MethodInfo hitEnemy = PatchUtils.Method(typeof(EnemyAI), "HitEnemy");
@@ -869,7 +869,7 @@ internal class VehicleControllerPatches
             new(OpCodes.Callvirt, hitEnemy)
             ]);
 
-        if(insertBefore == -1)
+        if (insertBefore == -1)
         {
             CruiserImproved.LogWarning("PatchLocalEntityDamage: Failed to find HitEnemy call!");
             return;
@@ -916,12 +916,12 @@ internal class VehicleControllerPatches
             new(OpCodes.Ldloca_S, 4)
             ]);
 
-        if(removeEndIndex == -1)
+        if (removeEndIndex == -1)
         {
             CruiserImproved.LogWarning("Could not locate VehicleController.OnCollisionEnter instakill patch end point!");
             return codes;
         }
-        
+
         //Replace the 'less than 3 health, destroy car' code with 'deal carHP-1 damage or 2 damage, whichever is larger'. This has identical outcome to vanilla but allows DealPermanentDamage prefix to run first for I-frames
         codes.RemoveRange(targetIndex, removeEndIndex - targetIndex);
         codes.InsertRange(targetIndex, [
@@ -1053,7 +1053,7 @@ internal class VehicleControllerPatches
         {
             __instance.tireSparks.Stop(true, ParticleSystemStopBehavior.StopEmitting);
         }
-    }	
+    }
 
     [HarmonyPatch("SetCarEffects")]
     [HarmonyTranspiler]
@@ -1070,7 +1070,7 @@ internal class VehicleControllerPatches
             new(OpCodes.Ble_Un),
             ]);
 
-        if(index == -1)
+        if (index == -1)
         {
             CruiserImproved.LogWarning("Could not patch SetCarEffects!");
             return instructions;
@@ -1184,7 +1184,7 @@ internal class VehicleControllerPatches
             new(OpCodes.Call, canExitCar)
             ]);
 
-        if(index == -1)
+        if (index == -1)
         {
             CruiserImproved.LogWarning("Could not patch ExitPassengerSideSeat!");
             return codes;
@@ -1228,7 +1228,7 @@ internal class VehicleControllerPatches
             new(OpCodes.Bne_Un),
             ]);
 
-        if(jumpIndex == -1)
+        if (jumpIndex == -1)
         {
             CruiserImproved.LogWarning("Failed to find end jump segment in PlayRandomClipAndPropertiesFromAudio");
             return codes;
@@ -1281,7 +1281,7 @@ internal class VehicleControllerPatches
             new(OpCodes.Ret)
             ]);
 
-        if(retIndex == -1)
+        if (retIndex == -1)
         {
             CruiserImproved.LogWarning("Failed to remove owner check from StartMagneting!");
         }
@@ -1297,7 +1297,7 @@ internal class VehicleControllerPatches
             new(OpCodes.Call, collectItemsInTruck)
             ]);
 
-        if(index == -1)
+        if (index == -1)
         {
             CruiserImproved.LogWarning("Failed to patch StartMagneting!");
         }
@@ -1346,7 +1346,7 @@ internal class VehicleControllerPatches
     [HarmonyPostfix]
     static void SetRadioOnLocalClient_Postfix(VehicleController __instance, bool on, bool setClip)
     {
-        if(on && setClip)
+        if (on && setClip)
         {
             SetRadioTime(__instance);
         }
