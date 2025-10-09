@@ -414,6 +414,18 @@ internal class VehicleControllerPatches
             //Fix items dropping through the back of the cruiser
             Transform itemDropCollider = __instance.physicsRegion.itemDropCollider.transform;
             itemDropCollider.localScale = new Vector3(itemDropCollider.localScale.x, itemDropCollider.localScale.y, 5f);
+
+			JointSpring suspensionSpring = new JointSpring
+            {
+                spring = 2970f,
+                damper = 500f,
+                targetPosition = __instance.FrontLeftWheel.suspensionSpring.targetPosition,
+            };
+
+            __instance.FrontLeftWheel.suspensionSpring = suspensionSpring;
+            __instance.FrontRightWheel.suspensionSpring = suspensionSpring;
+            __instance.BackLeftWheel.suspensionSpring = suspensionSpring;
+            __instance.BackRightWheel.suspensionSpring = suspensionSpring;
         }
 
         if (NetworkSync.FinishedSync)
