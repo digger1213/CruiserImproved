@@ -1,3 +1,9 @@
+## 1.5.3
+
+### Compatibility
+
+- CruiserImproved is now compatible with LCVR.
+
 ## 1.5.2
 
 ### Bugfixes
