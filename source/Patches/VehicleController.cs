@@ -207,7 +207,7 @@ internal class VehicleControllerPatches
                 trigger.onInteract.AddListener((PlayerControllerB player) => { InteractCabLight(vehicle, player); });
                 return;
             }
-            Transform vrChild = null;
+            Transform vrChild = null!;
             foreach (Transform i in vehicle.GetComponentsInChildren<Transform>(true))
             {
                 if (i.name == "CarButton")
