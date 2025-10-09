@@ -1046,23 +1046,29 @@ internal class VehicleControllerPatches
     static void SetCarEffects_Prefix(VehicleController __instance, ref float setSteering)
     {
         //Fix the steering wheel desync bug
-        setSteering = 0f;
-        if (__instance.localPlayerInControl)
+        if (NetworkSync.SyncedWithHost)
         {
-            __instance.steeringWheelAnimFloat = __instance.steeringInput / 6f;
-            if (Mathf.Abs(__instance.steeringInput - vehicleData[__instance].lastSteeringAngle) > 0.02f)
+            if (__instance.localPlayerInControl)
             {
-                FastBufferWriter bufferWriter = new(16, Unity.Collections.Allocator.Temp);
+                if (Mathf.Abs(__instance.steeringInput - vehicleData[__instance].lastSteeringAngle) > 0.02f)
+                {
+                    FastBufferWriter bufferWriter = new(16, Unity.Collections.Allocator.Temp);
 
-                bufferWriter.WriteValue(new NetworkObjectReference(__instance.NetworkObject));
-                bufferWriter.WriteValue(__instance.steeringInput);
-                NetworkSync.SendToHost("SyncSteeringRpc", bufferWriter);
+                    bufferWriter.WriteValue(new NetworkObjectReference(__instance.NetworkObject));
+                    bufferWriter.WriteValue(__instance.steeringInput);
+                    NetworkSync.SendToHost("SyncSteeringRpc", bufferWriter);
+                }
+            }
+            else
+            {
+                __instance.steeringWheelAnimFloat = vehicleData[__instance].lastSteeringAngle / 6f;
+                __instance.steeringInput = vehicleData[__instance].lastSteeringAngle;
             }
         }
-        else
+        if (__instance.localPlayerInControl)
         {
-            __instance.steeringWheelAnimFloat = vehicleData[__instance].lastSteeringAngle / 6f;
-            __instance.steeringInput = vehicleData[__instance].lastSteeringAngle;
+            setSteering = 0f;
+            __instance.steeringWheelAnimFloat = __instance.steeringInput / 6f;
         }
     }
 
