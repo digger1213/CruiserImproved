@@ -207,35 +207,35 @@ internal class VehicleControllerPatches
                 trigger.onInteract.AddListener((PlayerControllerB player) => { InteractCabLight(vehicle, player); });
                 return;
             }
-            Transform child = null;
+            Transform vrChild = null;
             foreach (Transform i in vehicle.GetComponentsInChildren<Transform>(true))
             {
                 if (i.name == "CarButton")
                 {
-                    var trigger = i.GetComponent<InteractTrigger>();
-                    if (trigger != null && trigger.hoverTip == "Switch headlights: [LMB]")
+                    var findTrigger = i.GetComponent<InteractTrigger>();
+                    if (findTrigger != null && findTrigger.hoverTip == "Switch headlights: [LMB]")
                     {
-                        child = i;
+                        vrChild = i;
                         break;
                     }
                 }
             }
-            if (child == null) return;
-            Transform cabLightToggle = GameObject.Instantiate(child, child.parent);
+            if (vrChild == null) return;
+            Transform vrCabLightToggle = GameObject.Instantiate(vrChild, vrChild.parent);
 
-            cabLightToggle.name = "CabLightToggle";
-            cabLightToggle.transform.localPosition = new(-0.045f, 1.1f, 2.06f);
-            cabLightToggle.transform.localEulerAngles = new(315f, 0f, 0f);
-            cabLightToggle.transform.localScale = new(0.55f, 0.1f, 0.04f);
+            vrCabLightToggle.name = "CabLightToggle";
+            vrCabLightToggle.transform.localPosition = new(-0.045f, 1.1f, 2.06f);
+            vrCabLightToggle.transform.localEulerAngles = new(315f, 0f, 0f);
+            vrCabLightToggle.transform.localScale = new(0.55f, 0.1f, 0.04f);
 
-            InteractTrigger trigger = cabLightToggle.GetComponent<InteractTrigger>();
-            trigger.hoverTip = "Switch light: [LMB]";
-            trigger.onInteract = new();
-            trigger.onInteract.AddListener((PlayerControllerB player) => { InteractCabLight(vehicle, player); });
+            InteractTrigger vrTrigger = vrCabLightToggle.GetComponent<InteractTrigger>();
+            vrTrigger.hoverTip = "Switch light: [LMB]";
+            vrTrigger.onInteract = new();
+            vrTrigger.onInteract.AddListener((PlayerControllerB player) => { InteractCabLight(vehicle, player); });
 
             // VR stuff
-            var cabLightInteract = Object.Instantiate(LCVR.AssetManager.Interactable, child);
-            cabLightInteract.AddComponent<CarButton>();
+            var cabLightInteract = UnityEngine.Object.Instantiate(LCVR.Assets.AssetManager.Interactable, vrChild);
+            cabLightInteract.AddComponent<LCVR.Physics.Interactions.Car.CarButton>();
         }
     }
 
