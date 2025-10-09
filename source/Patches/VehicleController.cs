@@ -76,6 +76,7 @@ internal class VehicleControllerPatches
     };
 
     static readonly string CopyButton = "Triggers/ChangeChannel (3)";
+    static readonly string CopyVRButton = "Triggers/CarButton";
 
     public static Dictionary<VehicleController, VehicleControllerData> vehicleData = new();
 
@@ -190,7 +191,36 @@ internal class VehicleControllerPatches
 
         if (NetworkSync.Config.CabinLightToggle)
         {
-            Transform child = vehicle.transform.Find(CopyButton);
+            if (!LCVRCompatibility.inVrSession)
+            {
+                Transform child = vehicle.transform.Find(CopyButton);
+                Transform cabLightToggle = GameObject.Instantiate(child, child.parent);
+
+                cabLightToggle.name = "CabLightToggle";
+                cabLightToggle.transform.localPosition = new(-0.045f, 1.1f, 2.06f);
+                cabLightToggle.transform.localEulerAngles = new(315f, 0f, 0f);
+                cabLightToggle.transform.localScale = new(0.55f, 0.1f, 0.04f);
+
+                InteractTrigger trigger = cabLightToggle.GetComponent<InteractTrigger>();
+                trigger.hoverTip = "Switch light: [LMB]";
+                trigger.onInteract = new();
+                trigger.onInteract.AddListener((PlayerControllerB player) => { InteractCabLight(vehicle, player); });
+                return;
+            }
+            Transform child = null;
+            foreach (Transform i in vehicle.GetComponentsInChildren<Transform>(true))
+            {
+                if (i.name == "CarButton")
+                {
+                    var trigger = i.GetComponent<InteractTrigger>();
+                    if (trigger != null && trigger.hoverTip == "Switch headlights: [LMB]")
+                    {
+                        child = i;
+                        break;
+                    }
+                }
+            }
+            if (child == null) return;
             Transform cabLightToggle = GameObject.Instantiate(child, child.parent);
 
             cabLightToggle.name = "CabLightToggle";
@@ -202,6 +232,10 @@ internal class VehicleControllerPatches
             trigger.hoverTip = "Switch light: [LMB]";
             trigger.onInteract = new();
             trigger.onInteract.AddListener((PlayerControllerB player) => { InteractCabLight(vehicle, player); });
+
+            // VR stuff
+            var cabLightInteract = Object.Instantiate(LCVR.AssetManager.Interactable, child);
+            cabLightInteract.AddComponent<CarButton>();
         }
     }
 
@@ -1026,7 +1060,9 @@ internal class VehicleControllerPatches
         // Sync the tyre skidding effects 
         if (__instance.IsOwner)
         {
-            if (((Time.realtimeSinceStartup - vehicleData[__instance].timeSinceTyreSkidSync) > 0.1f && __instance.skiddingAudio.volume != vehicleData[__instance].lastTyreStress) || (__instance.skiddingAudio.isPlaying != vehicleData[__instance].lastTyreStressPlaying))
+            if (((Time.realtimeSinceStartup - vehicleData[__instance].timeSinceTyreSkidSync) > 0.1f && 
+				 __instance.skiddingAudio.volume != vehicleData[__instance].lastTyreStress) || 
+				(__instance.skiddingAudio.isPlaying != vehicleData[__instance].lastTyreStressPlaying))
             {
 		        vehicleData[__instance].timeSinceTyreSkidSync = Time.realtimeSinceStartup;    
                 FastBufferWriter bufferWriter = new(16, Unity.Collections.Allocator.Temp);
@@ -1041,7 +1077,9 @@ internal class VehicleControllerPatches
 
         // Play the skidding effects on clients sides
         float stressAmount = vehicleData[__instance].lastTyreStress;
-        bool tyreStressing = vehicleData[__instance].lastTyreStressPlaying && stressAmount > 0.3f && __instance.gear == CarGearShift.Drive && __instance.ignitionStarted;
+        bool tyreStressing = vehicleData[__instance].lastTyreStressPlaying && 
+			stressAmount > 0.3f && __instance.gear == CarGearShift.Drive && 
+			__instance.ignitionStarted;
         bool tyreSparksActive = (tyreStressing && __instance.averageVelocity.magnitude > 8f);
         __instance.SetVehicleAudioProperties(__instance.skiddingAudio, tyreStressing, 0f, stressAmount, 3f, true, 1f);
 
