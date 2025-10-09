@@ -41,5 +41,6 @@
 		<PackageReference Include="UnityEngine.Modules" Version="2022.3.9" />
 	    <PackageReference Include="LethalCompany.GameLibs.Steam" Version="70.0.0-ngd.0" />
 	    <PackageReference Include="LCVR" Publicize="true" Version="1.4.0" PrivateAssets="all" />
+        <PackageReference Include="Mimics" Version="2.4.1" />
     </ItemGroup>
 </Project>
