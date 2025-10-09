@@ -1,4 +1,3 @@
-using CruiserImproved.Compatibility;
 using CruiserImproved.Network;
 using CruiserImproved.Utils;
 using GameNetcodeStuff;
