@@ -1,3 +1,4 @@
+using CruiserImproved.Compatibility;
 using CruiserImproved.Network;
 using CruiserImproved.Utils;
 using GameNetcodeStuff;
@@ -39,7 +40,8 @@ internal class VehicleControllerPatches
         public bool usingColoredExhaust = false;
         public ParticleSystem particleSystemSwap;
 
-		public float timeSinceTyreSkidSync;
+        public List<WheelCollider> wheels = [];
+        public float timeSinceTyreSkidSync;
         public float lastTyreStress;
         public bool lastTyreStressPlaying;
     }
@@ -107,6 +109,8 @@ internal class VehicleControllerPatches
     static void SetupSyncedVehicleFeatures(VehicleController vehicle)
     {
         VehicleControllerData thisData = vehicleData[vehicle];
+        vehicleData[vehicle].wheels = [vehicle.FrontLeftWheel, vehicle.FrontRightWheel,
+            vehicle.BackLeftWheel, vehicle.BackRightWheel];
 
         //don't modify non-vanilla cruiser
         if (PublicVehicleData.VehicleID != 0) return;
@@ -413,15 +417,15 @@ internal class VehicleControllerPatches
             SetupSyncedVehicleFeatures(__instance);
         }
 
-		//don't modify non-vanilla cruiser
+        //don't modify non-vanilla cruiser
         if (PublicVehicleData.VehicleID != 0) return;
 
-        foreach (var wheel in vehicle.otherWheels)
+        foreach (var wheel in __instance.otherWheels)
         {
             if (wheel != null)
                 wheel.enabled = false;
         }
-        vehicle.otherWheels = [];
+        __instance.otherWheels = [];
     }
 
     [HarmonyPatch("FixedUpdate")]
@@ -430,12 +434,11 @@ internal class VehicleControllerPatches
     {
         //Anti-hill sideslip
         if (!NetworkSync.Config.AntiSideslip) return;
-        List<WheelCollider> wheels = [__instance.FrontLeftWheel, __instance.FrontRightWheel, __instance.BackLeftWheel, __instance.BackRightWheel];
 
         //If at least 3 wheels are on the ground, apply a force to the Cruiser, directed up the hill slope, to counter gravity pulling it down the slope.
         Vector3 groundNormal = Vector3.zero;
         int groundedWheelCount = 0;
-        foreach (WheelCollider wheel in wheels)
+        foreach (WheelCollider wheel in vehicleData[__instance].wheels)
         {
             if (wheel.GetGroundHit(out var hit))
             {
@@ -1072,11 +1075,11 @@ internal class VehicleControllerPatches
         // Sync the tyre skidding effects 
         if (__instance.IsOwner)
         {
-            if (((Time.realtimeSinceStartup - vehicleData[__instance].timeSinceTyreSkidSync) > 0.1f && 
-				 __instance.skiddingAudio.volume != vehicleData[__instance].lastTyreStress) || 
-				(__instance.skiddingAudio.isPlaying != vehicleData[__instance].lastTyreStressPlaying))
+            if ((Time.realtimeSinceStartup - vehicleData[__instance].timeSinceTyreSkidSync) > 0.05f && 
+                (__instance.skiddingAudio.volume != vehicleData[__instance].lastTyreStress) || 
+                (__instance.skiddingAudio.isPlaying != vehicleData[__instance].lastTyreStressPlaying))
             {
-		        vehicleData[__instance].timeSinceTyreSkidSync = Time.realtimeSinceStartup;    
+                vehicleData[__instance].timeSinceTyreSkidSync = Time.realtimeSinceStartup;
                 FastBufferWriter bufferWriter = new(16, Unity.Collections.Allocator.Temp);
 
                 bufferWriter.WriteValue(new NetworkObjectReference(__instance.NetworkObject));
@@ -1089,9 +1092,9 @@ internal class VehicleControllerPatches
 
         // Play the skidding effects on clients sides
         float stressAmount = vehicleData[__instance].lastTyreStress;
-        bool tyreStressing = vehicleData[__instance].lastTyreStressPlaying && 
-			stressAmount > 0.3f && __instance.gear == CarGearShift.Drive && 
-			__instance.ignitionStarted;
+        bool tyreStressing = vehicleData[__instance].lastTyreStressPlaying &&
+            stressAmount > 0.3f && __instance.gear == CarGearShift.Drive &&
+            __instance.ignitionStarted;
         bool tyreSparksActive = (tyreStressing && __instance.averageVelocity.magnitude > 8f);
         __instance.SetVehicleAudioProperties(__instance.skiddingAudio, tyreStressing, 0f, stressAmount, 3f, true, 1f);
 
@@ -1305,13 +1308,13 @@ internal class VehicleControllerPatches
         eulerAngles.x = Mathf.Clamp(x, -20f, 20f);
         instance.magnetTargetRotation = Quaternion.Euler(eulerAngles);
 
-		if (instance.vehicleID == 0)
-		{
+        if (instance.vehicleID == 0)
+        {
             Vector3 offset = new(0f, -0.5f, -instance.boundsCollider.size.x * 0.5f * instance.boundsCollider.transform.lossyScale.x);
             Vector3 localPos = StartOfRound.Instance.magnetPoint.position + offset;
             instance.magnetTargetPosition = StartOfRound.Instance.elevatorTransform.InverseTransformPoint(localPos);
-		}
-		
+        }
+
         return eulerAngles;
     }
 
