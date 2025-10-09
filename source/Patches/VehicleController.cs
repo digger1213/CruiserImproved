@@ -208,14 +208,14 @@ internal class VehicleControllerPatches
                 return;
             }
             Transform child = null;
-            foreach (Transform t in vehicle.GetComponentsInChildren<Transform>(true))
+            foreach (Transform i in vehicle.GetComponentsInChildren<Transform>(true))
             {
-                if (t.name == "CarButton")
+                if (i.name == "CarButton")
                 {
-                    var trigger = t.GetComponent<InteractTrigger>();
+                    var trigger = i.GetComponent<InteractTrigger>();
                     if (trigger != null && trigger.hoverTip == "Switch headlights: [LMB]")
                     {
-                        child = t;
+                        child = i;
                         break;
                     }
                 }
@@ -232,6 +232,10 @@ internal class VehicleControllerPatches
             trigger.hoverTip = "Switch light: [LMB]";
             trigger.onInteract = new();
             trigger.onInteract.AddListener((PlayerControllerB player) => { InteractCabLight(vehicle, player); });
+
+            // VR stuff
+            var cabLightInteract = Object.Instantiate(LCVR.AssetManager.Interactable, child);
+            cabLightInteract.AddComponent<CarButton>();
         }
     }
 
