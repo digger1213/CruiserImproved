@@ -1,3 +1,4 @@
+using CruiserImproved.Compatibility;
 using CruiserImproved.Network;
 using CruiserImproved.Utils;
 using GameNetcodeStuff;
@@ -43,6 +44,10 @@ internal class VehicleControllerPatches
         public float timeSinceTyreSkidSync;
         public float lastTyreStress;
         public bool lastTyreStressPlaying;
+
+        public float timeSinceTorqueSync;
+        public float lastMotorTorque;
+        public float lastBrakeTorque;
     }
 
     static readonly int CriticalThreshold = 2;
@@ -529,12 +534,12 @@ internal class VehicleControllerPatches
         }
 
         if (__instance.IsOwner) return;
-        List<WheelCollider> wheels = [__instance.FrontLeftWheel, __instance.FrontRightWheel, __instance.BackLeftWheel, __instance.BackRightWheel];
 
-        foreach (WheelCollider wheel in wheels)
+        foreach (WheelCollider wheel in vehicleData[__instance].wheels)
         {
-            wheel.motorTorque = 0f;
-            wheel.brakeTorque = __instance.gear == CarGearShift.Park ? 2000f : 0f;
+            wheel.motorTorque = vehicleData[__instance].lastMotorTorque;
+            wheel.brakeTorque = __instance.gear == CarGearShift.Park ? 2000f : 
+                vehicleData[__instance].lastBrakeTorque;
         }
     }
 
@@ -1040,14 +1045,38 @@ internal class VehicleControllerPatches
         vehicleData[vehicle].lastTyreStressPlaying = stressed;
     }
 
+    static public void SyncMotorTorqueRpc(ulong clientId, FastBufferReader reader)
+    {
+        reader.ReadNetworkSerializable(out NetworkObjectReference cruiserRef);
+        reader.ReadValue(out float motor);
+        reader.ReadValue(out float brake);
+        if (!cruiserRef.TryGet(out NetworkObject cruiserNetObj)) return;
+        if (!cruiserNetObj.TryGetComponent(out VehicleController vehicle)) return;
+
+        if (NetworkManager.Singleton.IsHost)
+        {
+            FastBufferWriter bufferWriter = new(16, Unity.Collections.Allocator.Temp);
+
+            bufferWriter.WriteValue(cruiserRef);
+            bufferWriter.WriteValue(motor);
+            bufferWriter.WriteValue(brake);
+            NetworkSync.SendToClients("SyncTyreStressRpc", ref bufferWriter);
+        }
+
+        vehicleData[vehicle].lastMotorTorque = motor;
+        vehicleData[vehicle].lastBrakeTorque = brake;
+    }
+
     [HarmonyPatch("SetCarEffects")]
     [HarmonyPrefix]
     static void SetCarEffects_Prefix(VehicleController __instance, ref float setSteering)
     {
         //Fix the steering wheel desync bug
-        if (NetworkSync.SyncedWithHost)
+        if (__instance.localPlayerInControl)
         {
-            if (__instance.localPlayerInControl)
+            setSteering = 0f;
+            __instance.steeringWheelAnimFloat = __instance.steeringInput / 6f;
+            if (NetworkSync.SyncedWithHost)
             {
                 if (Mathf.Abs(__instance.steeringInput - vehicleData[__instance].lastSteeringAngle) > 0.02f)
                 {
@@ -1058,16 +1087,14 @@ internal class VehicleControllerPatches
                     NetworkSync.SendToHost("SyncSteeringRpc", bufferWriter);
                 }
             }
-            else
+        }
+        else
+        {
+            if (NetworkSync.SyncedWithHost)
             {
                 __instance.steeringWheelAnimFloat = vehicleData[__instance].lastSteeringAngle / 6f;
                 __instance.steeringInput = vehicleData[__instance].lastSteeringAngle;
             }
-        }
-        if (__instance.localPlayerInControl)
-        {
-            setSteering = 0f;
-            __instance.steeringWheelAnimFloat = __instance.steeringInput / 6f;
         }
     }
 
@@ -1091,6 +1118,19 @@ internal class VehicleControllerPatches
                 bufferWriter.WriteValue(__instance.skiddingAudio.volume);
                 bufferWriter.WriteValue(__instance.skiddingAudio.isPlaying);
                 NetworkSync.SendToHost("SyncTyreStressRpc", bufferWriter);
+            }
+
+            if ((Time.realtimeSinceStartup - vehicleData[__instance].timeSinceTorqueSync) > 0.04f &&
+                (__instance.FrontLeftWheel.motorTorque != vehicleData[__instance].lastMotorTorque) ||
+                (__instance.FrontLeftWheel.brakeTorque != vehicleData[__instance].lastBrakeTorque))
+            {
+                vehicleData[__instance].timeSinceTyreSkidSync = Time.realtimeSinceStartup;
+                FastBufferWriter bufferWriter = new(16, Unity.Collections.Allocator.Temp);
+
+                bufferWriter.WriteValue(new NetworkObjectReference(__instance.NetworkObject));
+                bufferWriter.WriteValue(__instance.FrontLeftWheel.motorTorque);
+                bufferWriter.WriteValue(__instance.FrontLeftWheel.brakeTorque);
+                NetworkSync.SendToHost("SyncMotorTorqueRpc", bufferWriter);
             }
             return;
         }
