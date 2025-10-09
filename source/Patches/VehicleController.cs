@@ -76,7 +76,6 @@ internal class VehicleControllerPatches
     };
 
     static readonly string CopyButton = "Triggers/ChangeChannel (3)";
-    static readonly string CopyVRButton = "Triggers/CarButton";
 
     public static Dictionary<VehicleController, VehicleControllerData> vehicleData = new();
 
