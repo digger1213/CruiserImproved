@@ -412,6 +412,16 @@ internal class VehicleControllerPatches
         {
             SetupSyncedVehicleFeatures(__instance);
         }
+
+		//don't modify non-vanilla cruiser
+        if (PublicVehicleData.VehicleID != 0) return;
+
+        foreach (var wheel in vehicle.otherWheels)
+        {
+            if (wheel != null)
+                wheel.enabled = false;
+        }
+        vehicle.otherWheels = [];
     }
 
     [HarmonyPatch("FixedUpdate")]
