@@ -721,6 +721,13 @@ internal class VehicleControllerPatches
             extraData.lastDamageReceived = amount;
         }
     }
+	
+    [HarmonyPatch("SetPassengerInCar")]
+    [HarmonyPostfix]
+    static void SetPassengerInCar_Postfix(VehicleController __instance, PlayerControllerB player)
+    {
+        if (__instance.localPlayerInPassengerSeat) __instance.SetVehicleCollisionForPlayer(false, GameNetworkManager.Instance.localPlayerController);
+	}
 
     [HarmonyPatch("AddEngineOilOnLocalClient")]
     [HarmonyPostfix]
@@ -882,7 +889,7 @@ internal class VehicleControllerPatches
         return true;
     }
 
-    //Fix small entities (ie everything except Eyeless Dogs, Kidnapper Foxes, Forest Giants and Radmechs) not taking dying when run over
+    //Fix small entities (ie everything except Eyeless Dogs, Kidnapper Foxes, Forest Giants and Radmechs) not taking damage/dying when run over
     static void PatchSmallEntityCarKill(List<CodeInstruction> codes)
     {
         //locate the if statement responsible for returning when hitting small entities
@@ -1136,7 +1143,7 @@ internal class VehicleControllerPatches
                 (__instance.FrontLeftWheel.motorTorque != vehicleData[__instance].lastMotorTorque) ||
                 (__instance.FrontLeftWheel.brakeTorque != vehicleData[__instance].lastBrakeTorque))
             {
-                vehicleData[__instance].timeSinceTyreSkidSync = Time.realtimeSinceStartup;
+                vehicleData[__instance].timeSinceTorqueSync = Time.realtimeSinceStartup;
                 FastBufferWriter bufferWriter = new(16, Unity.Collections.Allocator.Temp);
 
                 bufferWriter.WriteValue(new NetworkObjectReference(__instance.NetworkObject));
