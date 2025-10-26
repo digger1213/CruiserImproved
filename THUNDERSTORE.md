@@ -33,7 +33,7 @@ Clients will copy the host's settings if both sides have the mod installed.
 - \[Host\] Prevent the gas pedal or brake pedal from being stuck down if the player leaves the Cruiser while holding them.
 - \[Host\] Fix items left floating where the Cruiser was when reloading a save. All items will now be moved into the ship instead of just some.
 - \[Client\] Fix issues with materials (broken windshield, headlight on/off material) not being applied to lower-level-of-detail models.
-- \[Client\] Fix issues with wheels not using collider rotation, which resulted in gimbal lock & unnatural behaviour
+- \[Client\] Fix visual issues with driven wheels not rotating as intended.
 - \[Client\] Fix small entities (anything except Eyeless Dog, Kidnapper Fox, Forest Giant, Old Bird) being impossible to run over.
 - \[Client\] Fix steering wheel visually desyncing from the actual steering angle.
 - \[Client\] Fixed Baboon Hawks requiring very high speed to run over.
