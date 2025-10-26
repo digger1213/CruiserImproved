@@ -721,6 +721,13 @@ internal class VehicleControllerPatches
             extraData.lastDamageReceived = amount;
         }
     }
+	
+    [HarmonyPatch("SetPassengerInCar")]
+    [HarmonyPostfix]
+    static void SetPassengerInCar_Postfix(VehicleController __instance, PlayerControllerB player)
+    {
+        if (__instance.localPlayerInPassengerSeat) __instance.SetVehicleCollisionForPlayer(false, GameNetworkManager.Instance.localPlayerController);
+	}
 
     [HarmonyPatch("AddEngineOilOnLocalClient")]
     [HarmonyPostfix]
@@ -882,7 +889,7 @@ internal class VehicleControllerPatches
         return true;
     }
 
-    //Fix small entities (ie everything except Eyeless Dogs, Kidnapper Foxes, Forest Giants and Radmechs) not taking dying when run over
+    //Fix small entities (ie everything except Eyeless Dogs, Kidnapper Foxes, Forest Giants and Radmechs) not taking damage/dying when run over
     static void PatchSmallEntityCarKill(List<CodeInstruction> codes)
     {
         //locate the if statement responsible for returning when hitting small entities
