@@ -2,6 +2,8 @@ using LCVR.Managers;
 using LCVR.Player;
 using System.Runtime.CompilerServices;
 
+namespace CruiserImproved.Compatibility;
+
 internal static class LCVRCompatibility
 {
     public static string modGUID = "io.daxcess.lcvr";
