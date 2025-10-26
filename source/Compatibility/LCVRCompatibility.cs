@@ -1,5 +1,3 @@
-namespace CruiserImproved.Compatibility;
-
 using LCVR.Managers;
 using LCVR.Player;
 using System.Runtime.CompilerServices;
