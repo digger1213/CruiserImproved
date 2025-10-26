@@ -415,7 +415,7 @@ internal class VehicleControllerPatches
             Transform itemDropCollider = __instance.physicsRegion.itemDropCollider.transform;
             itemDropCollider.localScale = new Vector3(itemDropCollider.localScale.x, itemDropCollider.localScale.y, 5f);
 
-			JointSpring suspensionSpring = new JointSpring
+            JointSpring suspensionSpring = new JointSpring
             {
                 spring = 2970f,
                 damper = 500f,
@@ -550,7 +550,7 @@ internal class VehicleControllerPatches
         foreach (WheelCollider wheel in vehicleData[__instance].wheels)
         {
             wheel.motorTorque = vehicleData[__instance].lastMotorTorque;
-            wheel.brakeTorque = __instance.gear == CarGearShift.Park ? 2000f : 
+            wheel.brakeTorque = __instance.gear == CarGearShift.Park ? 2000f :
                 vehicleData[__instance].lastBrakeTorque;
         }
     }
@@ -1119,8 +1119,8 @@ internal class VehicleControllerPatches
         // Sync the tyre skidding effects 
         if (__instance.IsOwner)
         {
-            if ((Time.realtimeSinceStartup - vehicleData[__instance].timeSinceTyreSkidSync) > 0.05f && 
-                (__instance.skiddingAudio.volume != vehicleData[__instance].lastTyreStress) || 
+            if ((Time.realtimeSinceStartup - vehicleData[__instance].timeSinceTyreSkidSync) > 0.05f &&
+                (__instance.skiddingAudio.volume != vehicleData[__instance].lastTyreStress) ||
                 (__instance.skiddingAudio.isPlaying != vehicleData[__instance].lastTyreStressPlaying))
             {
                 vehicleData[__instance].timeSinceTyreSkidSync = Time.realtimeSinceStartup;
