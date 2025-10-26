@@ -1136,7 +1136,7 @@ internal class VehicleControllerPatches
                 (__instance.FrontLeftWheel.motorTorque != vehicleData[__instance].lastMotorTorque) ||
                 (__instance.FrontLeftWheel.brakeTorque != vehicleData[__instance].lastBrakeTorque))
             {
-                vehicleData[__instance].timeSinceTyreSkidSync = Time.realtimeSinceStartup;
+                vehicleData[__instance].timeSinceTorqueSync = Time.realtimeSinceStartup;
                 FastBufferWriter bufferWriter = new(16, Unity.Collections.Allocator.Temp);
 
                 bufferWriter.WriteValue(new NetworkObjectReference(__instance.NetworkObject));
