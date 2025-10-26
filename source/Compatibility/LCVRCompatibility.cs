@@ -1,4 +1,4 @@
-﻿namespace CruiserImproved;
+namespace CruiserImproved.Compatibility;
 
 using LCVR.Managers;
 using LCVR.Player;
