@@ -1,5 +1,6 @@
 ﻿using CruiserImproved.Network;
 using CruiserImproved.Utils;
+using CruiserImproved.Compatibility;
 using GameNetcodeStuff;
 using HarmonyLib;
 using System.Collections.Generic;
@@ -36,10 +37,10 @@ internal class PlayerControllerPatches
             Vector3 lookFlat = __instance.gameplayCamera.transform.localRotation * Vector3.forward;
             lookFlat.y = 0;
             float angleToBack = Vector3.Angle(lookFlat, Vector3.back);
-            if(angleToBack < 70 && NetworkSync.Config.AllowLean)
+            if (angleToBack < 70 && NetworkSync.Config.AllowLean)
             {
                 //If we're looking backwards, offset the camera to the side ('leaning')
-                cameraOffset.x = Mathf.Sign(lookFlat.x) * ((70f - angleToBack)/70f);
+                cameraOffset.x = Mathf.Sign(lookFlat.x) * ((70f - angleToBack) / 70f);
             }
             __instance.gameplayCamera.transform.localPosition = cameraOffset;
         }
@@ -80,7 +81,7 @@ internal class PlayerControllerPatches
             new(OpCodes.Beq),
             ]);
 
-        if(insertIndex == -1)
+        if (insertIndex == -1)
         {
             CruiserImproved.LogWarning("Could not transpile SetHoverTipAndCurrentInteractTrigger!");
             return codes;

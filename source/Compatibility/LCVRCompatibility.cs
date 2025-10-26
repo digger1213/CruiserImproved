@@ -1,8 +1,8 @@
-﻿namespace CruiserImproved;
-
 using LCVR.Managers;
 using LCVR.Player;
 using System.Runtime.CompilerServices;
+
+namespace CruiserImproved.Compatibility;
 
 internal static class LCVRCompatibility
 {
@@ -12,7 +12,7 @@ internal static class LCVRCompatibility
     {
         get
         {
-            if(_enabled == null)
+            if (_enabled == null)
             {
                 _enabled = BepInEx.Bootstrap.Chainloader.PluginInfos.ContainsKey(modGUID);
             }
@@ -35,5 +35,5 @@ internal static class LCVRCompatibility
         return VRSession.InVR;
     }
 
-   private static bool? _enabled;
+    private static bool? _enabled;
 }

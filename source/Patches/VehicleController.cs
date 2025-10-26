@@ -1,5 +1,6 @@
 using CruiserImproved.Network;
 using CruiserImproved.Utils;
+using CruiserImproved.Compatibility;
 using GameNetcodeStuff;
 using HarmonyLib;
 using System;
@@ -39,9 +40,14 @@ internal class VehicleControllerPatches
         public bool usingColoredExhaust = false;
         public ParticleSystem particleSystemSwap;
 
-		public float timeSinceTyreSkidSync;
+        public List<WheelCollider> wheels = [];
+        public float timeSinceTyreSkidSync;
         public float lastTyreStress;
         public bool lastTyreStressPlaying;
+
+        public float timeSinceTorqueSync;
+        public float lastMotorTorque;
+        public float lastBrakeTorque;
     }
 
     static readonly int CriticalThreshold = 2;
@@ -107,6 +113,8 @@ internal class VehicleControllerPatches
     static void SetupSyncedVehicleFeatures(VehicleController vehicle)
     {
         VehicleControllerData thisData = vehicleData[vehicle];
+        vehicleData[vehicle].wheels = [vehicle.FrontLeftWheel, vehicle.FrontRightWheel,
+            vehicle.BackLeftWheel, vehicle.BackRightWheel];
 
         //don't modify non-vanilla cruiser
         if (PublicVehicleData.VehicleID != 0) return;
@@ -406,12 +414,34 @@ internal class VehicleControllerPatches
             //Fix items dropping through the back of the cruiser
             Transform itemDropCollider = __instance.physicsRegion.itemDropCollider.transform;
             itemDropCollider.localScale = new Vector3(itemDropCollider.localScale.x, itemDropCollider.localScale.y, 5f);
+
+            JointSpring suspensionSpring = new JointSpring
+            {
+                spring = 2970f,
+                damper = 500f,
+                targetPosition = __instance.FrontLeftWheel.suspensionSpring.targetPosition,
+            };
+
+            __instance.FrontLeftWheel.suspensionSpring = suspensionSpring;
+            __instance.FrontRightWheel.suspensionSpring = suspensionSpring;
+            __instance.BackLeftWheel.suspensionSpring = suspensionSpring;
+            __instance.BackRightWheel.suspensionSpring = suspensionSpring;
         }
 
         if (NetworkSync.FinishedSync)
         {
             SetupSyncedVehicleFeatures(__instance);
         }
+
+        //don't modify non-vanilla cruiser
+        if (PublicVehicleData.VehicleID != 0) return;
+
+        foreach (var wheel in __instance.otherWheels)
+        {
+            if (wheel != null)
+                wheel.enabled = false;
+        }
+        __instance.otherWheels = [];
     }
 
     [HarmonyPatch("FixedUpdate")]
@@ -420,12 +450,11 @@ internal class VehicleControllerPatches
     {
         //Anti-hill sideslip
         if (!NetworkSync.Config.AntiSideslip) return;
-        List<WheelCollider> wheels = [__instance.FrontLeftWheel, __instance.FrontRightWheel, __instance.BackLeftWheel, __instance.BackRightWheel];
 
         //If at least 3 wheels are on the ground, apply a force to the Cruiser, directed up the hill slope, to counter gravity pulling it down the slope.
         Vector3 groundNormal = Vector3.zero;
         int groundedWheelCount = 0;
-        foreach (WheelCollider wheel in wheels)
+        foreach (WheelCollider wheel in vehicleData[__instance].wheels)
         {
             if (wheel.GetGroundHit(out var hit))
             {
@@ -517,12 +546,12 @@ internal class VehicleControllerPatches
         }
 
         if (__instance.IsOwner) return;
-        List<WheelCollider> wheels = [__instance.FrontLeftWheel, __instance.FrontRightWheel, __instance.BackLeftWheel, __instance.BackRightWheel];
 
-        foreach (WheelCollider wheel in wheels)
+        foreach (WheelCollider wheel in vehicleData[__instance].wheels)
         {
-            wheel.motorTorque = 0f;
-            wheel.brakeTorque = __instance.gear == CarGearShift.Park ? 2000f : 0f;
+            wheel.motorTorque = vehicleData[__instance].lastMotorTorque;
+            wheel.brakeTorque = __instance.gear == CarGearShift.Park ? 2000f :
+                vehicleData[__instance].lastBrakeTorque;
         }
     }
 
@@ -1028,28 +1057,56 @@ internal class VehicleControllerPatches
         vehicleData[vehicle].lastTyreStressPlaying = stressed;
     }
 
+    static public void SyncMotorTorqueRpc(ulong clientId, FastBufferReader reader)
+    {
+        reader.ReadNetworkSerializable(out NetworkObjectReference cruiserRef);
+        reader.ReadValue(out float motor);
+        reader.ReadValue(out float brake);
+        if (!cruiserRef.TryGet(out NetworkObject cruiserNetObj)) return;
+        if (!cruiserNetObj.TryGetComponent(out VehicleController vehicle)) return;
+
+        if (NetworkManager.Singleton.IsHost)
+        {
+            FastBufferWriter bufferWriter = new(16, Unity.Collections.Allocator.Temp);
+
+            bufferWriter.WriteValue(cruiserRef);
+            bufferWriter.WriteValue(motor);
+            bufferWriter.WriteValue(brake);
+            NetworkSync.SendToClients("SyncTyreStressRpc", ref bufferWriter);
+        }
+
+        vehicleData[vehicle].lastMotorTorque = motor;
+        vehicleData[vehicle].lastBrakeTorque = brake;
+    }
+
     [HarmonyPatch("SetCarEffects")]
     [HarmonyPrefix]
     static void SetCarEffects_Prefix(VehicleController __instance, ref float setSteering)
     {
         //Fix the steering wheel desync bug
-        setSteering = 0f;
         if (__instance.localPlayerInControl)
         {
+            setSteering = 0f;
             __instance.steeringWheelAnimFloat = __instance.steeringInput / 6f;
-            if (Mathf.Abs(__instance.steeringInput - vehicleData[__instance].lastSteeringAngle) > 0.02f)
+            if (NetworkSync.SyncedWithHost)
             {
-                FastBufferWriter bufferWriter = new(16, Unity.Collections.Allocator.Temp);
+                if (Mathf.Abs(__instance.steeringInput - vehicleData[__instance].lastSteeringAngle) > 0.02f)
+                {
+                    FastBufferWriter bufferWriter = new(16, Unity.Collections.Allocator.Temp);
 
-                bufferWriter.WriteValue(new NetworkObjectReference(__instance.NetworkObject));
-                bufferWriter.WriteValue(__instance.steeringInput);
-                NetworkSync.SendToHost("SyncSteeringRpc", bufferWriter);
+                    bufferWriter.WriteValue(new NetworkObjectReference(__instance.NetworkObject));
+                    bufferWriter.WriteValue(__instance.steeringInput);
+                    NetworkSync.SendToHost("SyncSteeringRpc", bufferWriter);
+                }
             }
         }
         else
         {
-            __instance.steeringWheelAnimFloat = vehicleData[__instance].lastSteeringAngle / 6f;
-            __instance.steeringInput = vehicleData[__instance].lastSteeringAngle;
+            if (NetworkSync.SyncedWithHost)
+            {
+                __instance.steeringWheelAnimFloat = vehicleData[__instance].lastSteeringAngle / 6f;
+                __instance.steeringInput = vehicleData[__instance].lastSteeringAngle;
+            }
         }
     }
 
@@ -1062,11 +1119,11 @@ internal class VehicleControllerPatches
         // Sync the tyre skidding effects 
         if (__instance.IsOwner)
         {
-            if (((Time.realtimeSinceStartup - vehicleData[__instance].timeSinceTyreSkidSync) > 0.1f && 
-				 __instance.skiddingAudio.volume != vehicleData[__instance].lastTyreStress) || 
-				(__instance.skiddingAudio.isPlaying != vehicleData[__instance].lastTyreStressPlaying))
+            if ((Time.realtimeSinceStartup - vehicleData[__instance].timeSinceTyreSkidSync) > 0.05f &&
+                (__instance.skiddingAudio.volume != vehicleData[__instance].lastTyreStress) ||
+                (__instance.skiddingAudio.isPlaying != vehicleData[__instance].lastTyreStressPlaying))
             {
-		        vehicleData[__instance].timeSinceTyreSkidSync = Time.realtimeSinceStartup;    
+                vehicleData[__instance].timeSinceTyreSkidSync = Time.realtimeSinceStartup;
                 FastBufferWriter bufferWriter = new(16, Unity.Collections.Allocator.Temp);
 
                 bufferWriter.WriteValue(new NetworkObjectReference(__instance.NetworkObject));
@@ -1074,14 +1131,27 @@ internal class VehicleControllerPatches
                 bufferWriter.WriteValue(__instance.skiddingAudio.isPlaying);
                 NetworkSync.SendToHost("SyncTyreStressRpc", bufferWriter);
             }
+
+            if ((Time.realtimeSinceStartup - vehicleData[__instance].timeSinceTorqueSync) > 0.04f &&
+                (__instance.FrontLeftWheel.motorTorque != vehicleData[__instance].lastMotorTorque) ||
+                (__instance.FrontLeftWheel.brakeTorque != vehicleData[__instance].lastBrakeTorque))
+            {
+                vehicleData[__instance].timeSinceTyreSkidSync = Time.realtimeSinceStartup;
+                FastBufferWriter bufferWriter = new(16, Unity.Collections.Allocator.Temp);
+
+                bufferWriter.WriteValue(new NetworkObjectReference(__instance.NetworkObject));
+                bufferWriter.WriteValue(__instance.FrontLeftWheel.motorTorque);
+                bufferWriter.WriteValue(__instance.FrontLeftWheel.brakeTorque);
+                NetworkSync.SendToHost("SyncMotorTorqueRpc", bufferWriter);
+            }
             return;
         }
 
         // Play the skidding effects on clients sides
         float stressAmount = vehicleData[__instance].lastTyreStress;
-        bool tyreStressing = vehicleData[__instance].lastTyreStressPlaying && 
-			stressAmount > 0.3f && __instance.gear == CarGearShift.Drive && 
-			__instance.ignitionStarted;
+        bool tyreStressing = vehicleData[__instance].lastTyreStressPlaying &&
+            stressAmount > 0.3f && __instance.gear == CarGearShift.Drive &&
+            __instance.ignitionStarted;
         bool tyreSparksActive = (tyreStressing && __instance.averageVelocity.magnitude > 8f);
         __instance.SetVehicleAudioProperties(__instance.skiddingAudio, tyreStressing, 0f, stressAmount, 3f, true, 1f);
 
@@ -1295,13 +1365,13 @@ internal class VehicleControllerPatches
         eulerAngles.x = Mathf.Clamp(x, -20f, 20f);
         instance.magnetTargetRotation = Quaternion.Euler(eulerAngles);
 
-		if (instance.vehicleID == 0)
-		{
+        if (instance.vehicleID == 0)
+        {
             Vector3 offset = new(0f, -0.5f, -instance.boundsCollider.size.x * 0.5f * instance.boundsCollider.transform.lossyScale.x);
             Vector3 localPos = StartOfRound.Instance.magnetPoint.position + offset;
             instance.magnetTargetPosition = StartOfRound.Instance.elevatorTransform.InverseTransformPoint(localPos);
-		}
-		
+        }
+
         return eulerAngles;
     }
 
