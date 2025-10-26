@@ -1,5 +1,6 @@
 using CruiserImproved.Network;
 using CruiserImproved.Utils;
+using CruiserImproved.Compatibility;
 using GameNetcodeStuff;
 using HarmonyLib;
 using System;
