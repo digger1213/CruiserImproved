@@ -196,45 +196,15 @@ internal class VehicleControllerPatches
             colorOverLifetime.color = mmGradient;
         }
 
-        if (NetworkSync.Config.CabinLightToggle)
+        if (!LCVRCompatibility.inVrSession && NetworkSync.Config.CabinLightToggle)
         {
-            Transform child = null!;
             Transform cabLightToggle = null!;
             InteractTrigger trigger = null!;
-
-            if (!LCVRCompatibility.inVrSession)
-            {
-                child = vehicle.transform.Find(CopyButton);
-                cabLightToggle = GameObject.Instantiate(child, child.parent);
-
-                cabLightToggle.name = "CabLightToggle";
-                cabLightToggle.transform.localPosition = new(-0.045f, 1.1f, 2.06f);
-                cabLightToggle.transform.localEulerAngles = new(315f, 0f, 0f);
-                cabLightToggle.transform.localScale = new(0.55f, 0.1f, 0.04f);
-
-                trigger = cabLightToggle.GetComponent<InteractTrigger>();
-                trigger.hoverTip = "Switch light: [LMB]";
-                trigger.onInteract = new();
-                trigger.onInteract.AddListener((PlayerControllerB player) => { InteractCabLight(vehicle, player); });
-                return;
-            }
-            // VR stuff
-            foreach (Transform i in vehicle.GetComponentsInChildren<Transform>(true))
-            {
-                if (i.name == "CarButton")
-                {
-                    var findTrigger = i.GetComponent<InteractTrigger>();
-                    if (findTrigger != null && findTrigger.hoverTip == "Switch headlights: [LMB]")
-                    {
-                        child = i;
-                        break;
-                    }
-                }
-            }
-            if (child == null) return;
+            Transform child = vehicle.transform.Find(CopyButton);
+			
             cabLightToggle = GameObject.Instantiate(child, child.parent);
 
-            cabLightToggle.name = "CarButton";
+            cabLightToggle.name = "CabLightToggle";
             cabLightToggle.transform.localPosition = new(-0.045f, 1.1f, 2.06f);
             cabLightToggle.transform.localEulerAngles = new(315f, 0f, 0f);
             cabLightToggle.transform.localScale = new(0.55f, 0.1f, 0.04f);
@@ -243,9 +213,6 @@ internal class VehicleControllerPatches
             trigger.hoverTip = "Switch light: [LMB]";
             trigger.onInteract = new();
             trigger.onInteract.AddListener((PlayerControllerB player) => { InteractCabLight(vehicle, player); });
-
-            var cabLightInteract = UnityEngine.Object.Instantiate(LCVR.Assets.AssetManager.Interactable, child);
-            cabLightInteract.AddComponent<LCVR.Physics.Interactions.Car.CarButton>();
         }
     }
 

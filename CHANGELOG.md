@@ -2,7 +2,11 @@
 
 ### Compatibility
 
-- CruiserImproved is now compatible with LCVR.
+- CruiserImproved should now be compatible with LCVR (?) Untested, any issues let me know. - Scandal)
+
+### Bugfixes
+
+- \[Host&Client\] Fixed driven wheel torques not being synced.
 
 ## 1.5.2
 
