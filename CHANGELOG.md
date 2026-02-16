@@ -2,7 +2,7 @@
 
 ### Compatibility
 
-- CruiserImproved is now compatible with LCVR.
+- CruiserImproved should now be compatible with LCVR (?) Untested, any issues let me know. - Scandal)
 
 ### Bugfixes
 
