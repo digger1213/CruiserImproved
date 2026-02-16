@@ -200,8 +200,9 @@ internal class VehicleControllerPatches
         {
             Transform cabLightToggle = null!;
             InteractTrigger trigger = null!;
-
-            cabLightToggle = GameObject.Instantiate(vehicle.transform.Find(CopyButton), child.parent);
+            Transform child = vehicle.transform.Find(CopyButton);
+			
+            cabLightToggle = GameObject.Instantiate(child, child.parent);
 
             cabLightToggle.name = "CabLightToggle";
             cabLightToggle.transform.localPosition = new(-0.045f, 1.1f, 2.06f);
