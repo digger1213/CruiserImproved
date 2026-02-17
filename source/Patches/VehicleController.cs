@@ -898,7 +898,7 @@ internal class VehicleControllerPatches
         MethodInfo hitEnemy = PatchUtils.Method(typeof(EnemyAI), "HitEnemy");
         MethodInfo hitEnemyOnLocalClient = PatchUtils.Method(typeof(EnemyAI), "HitEnemyOnLocalClient");
 
-        var get_zero = PatchUtils.Method(typeof(Vector2), "get_zero");
+        var get_zero = PatchUtils.Method(typeof(Vector3), "get_zero");
 
         int insertBefore = PatchUtils.LocateCodeSegment(0, codes, [
             new(OpCodes.Ldarg_0),
