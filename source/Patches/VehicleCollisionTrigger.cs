@@ -12,7 +12,7 @@ internal class VehicleCollisionTriggerPatches
     [HarmonyPrefix]
     static bool OnTriggerEnter_Prefix(VehicleCollisionTrigger __instance, Collider other)
     {
-        if (PublicVehicleData.VehicleID != 0)
+        if (__instance.mainScript.vehicleID != 0)
         {
             return true;
         }
