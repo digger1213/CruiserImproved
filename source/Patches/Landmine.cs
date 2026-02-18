@@ -17,7 +17,8 @@ internal class LandminePatches
     //Injected method, return true if a hit should not deal knockback
     static bool ShouldNotDealKnockback(PlayerControllerB instance)
     {
-        return NetworkSync.Config.PreventMissileKnockback && instance.inVehicleAnimation;
+        bool validCruiser = instance.inVehicleAnimation && instance.currentTriggerInAnimationWith && instance.currentTriggerInAnimationWith.overridePlayerParent;
+        return NetworkSync.Config.PreventMissileKnockback && validCruiser && instance.currentTriggerInAnimationWith.overridePlayerParent.TryGetComponent<VehicleController>(out var controller) && controller.vehicleID == 0;
     }
 
     static MethodInfo get_magnitude = PatchUtils.Method(typeof(Vector3), "get_magnitude");

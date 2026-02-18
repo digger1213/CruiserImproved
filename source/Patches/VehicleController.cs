@@ -14,11 +14,6 @@ using UnityEngine.AI;
 
 namespace CruiserImproved.Patches;
 
-public class PublicVehicleData
-{
-    public static int VehicleID;
-}
-
 [HarmonyPatch(typeof(VehicleController))]
 internal class VehicleControllerPatches
 {
@@ -85,14 +80,6 @@ internal class VehicleControllerPatches
 
     public static Dictionary<VehicleController, VehicleControllerData> vehicleData = new();
 
-    [HarmonyPatch("Awake")]
-    [HarmonyPostfix]
-    static void Awake_IDCheck_Postfix(VehicleController __instance)
-    {
-        PublicVehicleData.VehicleID = __instance.vehicleID;
-        CruiserImproved.LogInfo($"Setting Vehicle ID on Awake: {PublicVehicleData.VehicleID}");
-    }
-
     private static void RemoveStaleVehicleData()
     {
         List<VehicleController> vehiclesToRemove = new();
@@ -117,7 +104,7 @@ internal class VehicleControllerPatches
             vehicle.BackLeftWheel, vehicle.BackRightWheel];
 
         //don't modify non-vanilla cruiser
-        if (PublicVehicleData.VehicleID != 0) return;
+        if (vehicle.vehicleID != 0) return;
 
         //Allow player to turn further backward for the lean mechanic
         if (NetworkSync.Config.AllowLean)
@@ -376,7 +363,7 @@ internal class VehicleControllerPatches
         }
 
         //Don't modify non vanilla cruiser
-        if (PublicVehicleData.VehicleID == 0)
+        if (__instance.vehicleID == 0)
         {
             //Fix items dropping through the back of the cruiser
             Transform itemDropCollider = __instance.physicsRegion.itemDropCollider.transform;
@@ -401,7 +388,7 @@ internal class VehicleControllerPatches
         }
 
         //don't modify non-vanilla cruiser
-        if (PublicVehicleData.VehicleID != 0) return;
+        if (__instance.vehicleID != 0) return;
 
         foreach (var wheel in __instance.otherWheels)
         {
@@ -693,7 +680,7 @@ internal class VehicleControllerPatches
     [HarmonyPostfix]
     static void SetPassengerInCar_Postfix(VehicleController __instance, PlayerControllerB player)
     {
-        if (__instance.localPlayerInPassengerSeat) __instance.SetVehicleCollisionForPlayer(false, GameNetworkManager.Instance.localPlayerController);
+        __instance.SetVehicleCollisionForPlayer(false, player);
 	}
 
     [HarmonyPatch("AddEngineOilOnLocalClient")]
@@ -718,7 +705,7 @@ internal class VehicleControllerPatches
     static void DestroyCar_Postfix(VehicleController __instance)
     {
         //don't modify non-vanilla cruiser
-        if (PublicVehicleData.VehicleID != 0) return;
+        if (__instance.vehicleID != 0) return;
 
         UpdateCruiserScanText(__instance, true);
 
@@ -892,9 +879,9 @@ internal class VehicleControllerPatches
     }
 
     //Fix slow impacts not actually damaging entities
-    static void PatchLocalEntityDamage(List<CodeInstruction> codes)
+    static void PatchLocalEntitySmallDamage(List<CodeInstruction> codes)
     {
-        //Replace all instances of KillEnemy with KillEnemyOnOwnerClient
+        //Replace all instances of HitEnemy with HitEnemyOnLocalClient
         MethodInfo hitEnemy = PatchUtils.Method(typeof(EnemyAI), "HitEnemy");
         MethodInfo hitEnemyOnLocalClient = PatchUtils.Method(typeof(EnemyAI), "HitEnemyOnLocalClient");
 
@@ -918,6 +905,33 @@ internal class VehicleControllerPatches
         codes.Insert(insertBefore, new(OpCodes.Call, get_zero));
     }
 
+    //Fix fast impacts not actually damaging entities
+    static void PatchLocalEntityLargeDamage(List<CodeInstruction> codes)
+    {
+        //Replace all instances of HitEnemy with HitEnemyOnLocalClient
+        MethodInfo hitEnemy = PatchUtils.Method(typeof(EnemyAI), "HitEnemy");
+        MethodInfo hitEnemyOnLocalClient = PatchUtils.Method(typeof(EnemyAI), "HitEnemyOnLocalClient");
+
+        var get_zero = PatchUtils.Method(typeof(Vector3), "get_zero");
+
+        int insertBefore = PatchUtils.LocateCodeSegment(0, codes, [
+            new(OpCodes.Ldc_I4_S),
+            new(OpCodes.Ldloc_3),
+            new(OpCodes.Ldc_I4_0),
+            new(OpCodes.Ldc_I4_M1),
+            new(OpCodes.Callvirt, hitEnemy)
+            ]);
+
+        if (insertBefore == -1)
+        {
+            CruiserImproved.LogWarning("PatchLocalEntityDamage: Failed to find HitEnemy call!");
+            return;
+        }
+
+        codes[insertBefore + 4].operand = hitEnemyOnLocalClient;
+        codes.Insert(insertBefore + 1, new CodeInstruction(OpCodes.Call, get_zero));
+    }
+
     [HarmonyPatch("CarReactToObstacle")]
     [HarmonyTranspiler]
     static IEnumerable<CodeInstruction> CarReactToObstacle_Transpiler(IEnumerable<CodeInstruction> instructions)
@@ -925,9 +939,22 @@ internal class VehicleControllerPatches
         var codes = instructions.ToList();
 
         PatchSmallEntityCarKill(codes);
-        PatchLocalEntityDamage(codes);
+        PatchLocalEntitySmallDamage(codes);
+        PatchLocalEntityLargeDamage(codes);
 
         return codes;
+    }
+
+	//Fix ignition parameters not being set properly, probably best to do them on the rev car RPC
+    [HarmonyPatch("RevCarClientRpc")]
+    [HarmonyPrefix]
+    private static void RevCarClientRpc_Prefix(VehicleController __instance, int driverId)
+    {
+        if ((int)GameNetworkManager.Instance.localPlayerController.playerClientId == driverId)
+            return;
+
+        __instance.keyIsInIgnition = true;
+        __instance.SetFrontCabinLightOn(__instance.keyIsInIgnition);
     }
 
     [HarmonyPatch("OnCollisionEnter")]
