@@ -102,7 +102,7 @@ internal class StartOfRoundPatches
     static void LoadAttachedVehicle_Postfix(StartOfRound __instance)
     {
         //Check for a saved vanilla Cruiser
-        if (!__instance.attachedVehicle || PublicVehicleData.VehicleID != 0) return;
+        if (!__instance.attachedVehicle || __instance.attachedVehicle.vehicleID != 0) return;
         try
         {
             var vehicle = __instance.attachedVehicle;
