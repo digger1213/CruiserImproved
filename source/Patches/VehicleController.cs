@@ -14,11 +14,6 @@ using UnityEngine.AI;
 
 namespace CruiserImproved.Patches;
 
-public class PublicVehicleData
-{
-    public static int VehicleID;
-}
-
 [HarmonyPatch(typeof(VehicleController))]
 internal class VehicleControllerPatches
 {
@@ -85,14 +80,6 @@ internal class VehicleControllerPatches
 
     public static Dictionary<VehicleController, VehicleControllerData> vehicleData = new();
 
-    [HarmonyPatch("Awake")]
-    [HarmonyPostfix]
-    static void Awake_IDCheck_Postfix(VehicleController __instance)
-    {
-        PublicVehicleData.VehicleID = __instance.vehicleID;
-        CruiserImproved.LogInfo($"Setting Vehicle ID on Awake: {PublicVehicleData.VehicleID}");
-    }
-
     private static void RemoveStaleVehicleData()
     {
         List<VehicleController> vehiclesToRemove = new();
@@ -117,7 +104,7 @@ internal class VehicleControllerPatches
             vehicle.BackLeftWheel, vehicle.BackRightWheel];
 
         //don't modify non-vanilla cruiser
-        if (PublicVehicleData.VehicleID != 0) return;
+        if (vehicle.vehicleID != 0) return;
 
         //Allow player to turn further backward for the lean mechanic
         if (NetworkSync.Config.AllowLean)
@@ -376,7 +363,7 @@ internal class VehicleControllerPatches
         }
 
         //Don't modify non vanilla cruiser
-        if (PublicVehicleData.VehicleID == 0)
+        if (__instance.vehicleID == 0)
         {
             //Fix items dropping through the back of the cruiser
             Transform itemDropCollider = __instance.physicsRegion.itemDropCollider.transform;
@@ -401,7 +388,7 @@ internal class VehicleControllerPatches
         }
 
         //don't modify non-vanilla cruiser
-        if (PublicVehicleData.VehicleID != 0) return;
+        if (__instance.vehicleID != 0) return;
 
         foreach (var wheel in __instance.otherWheels)
         {
@@ -718,7 +705,7 @@ internal class VehicleControllerPatches
     static void DestroyCar_Postfix(VehicleController __instance)
     {
         //don't modify non-vanilla cruiser
-        if (PublicVehicleData.VehicleID != 0) return;
+        if (__instance.vehicleID != 0) return;
 
         UpdateCruiserScanText(__instance, true);
 
