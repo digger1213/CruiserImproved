@@ -1508,6 +1508,7 @@ internal class VehicleControllerPatches
     [HarmonyPrefix]
     static public bool SetIgnition_Prefix(VehicleController __instance, bool started)
     {
+        if (!started && __instance.carExhaustParticle.isEmitting) __instance.carExhaustParticle.Stop(true, ParticleSystemStopBehavior.StopEmitting);
         return started != __instance.ignitionStarted;
     }
 
