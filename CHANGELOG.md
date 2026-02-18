@@ -7,6 +7,7 @@
 ### Bugfixes
 
 - \[Host&Client\] Fixed driven wheel torques not being synced.
+- \[Client] Fixed an issue with ignition parameters not being set properly on clients.
 
 ## 1.5.2
 
