@@ -1,4 +1,4 @@
-## 1.5.3
+## 1.5.4
 
 ## Hotfix
 - \[Client] Fixed passenger seat collisions
