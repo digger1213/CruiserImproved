@@ -677,9 +677,12 @@ internal class VehicleControllerPatches
     }
 	
     [HarmonyPatch("SetPassengerInCar")]
-    [HarmonyPostfix]
-    static void SetPassengerInCar_Postfix(VehicleController __instance, PlayerControllerB player)
+    [HarmonyPrefix]
+    static void SetPassengerInCar_Prefix(VehicleController __instance, PlayerControllerB player)
     {
+		if (__instance == null || player == null)
+				return;
+
         __instance.SetVehicleCollisionForPlayer(false, player);
 	}
 
