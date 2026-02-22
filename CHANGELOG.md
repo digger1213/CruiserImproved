@@ -1,5 +1,10 @@
 ## 1.5.3
 
+## Hotfix
+- \[Client] Fixed passenger seat collisions
+
+## 1.5.3
+
 ### Compatibility
 
 - CruiserImproved should now be compatible with LCVR (?) Untested, any issues let me know. - Scandal)
@@ -8,6 +13,7 @@
 
 - \[Host&Client\] Fixed driven wheel torques not being synced.
 - \[Client] Fixed an issue with ignition parameters not being set properly on clients.
+- \[Client] Fixed an issue where high speed impacts would potentially desynch enemy health.
 
 ## 1.5.2
 
