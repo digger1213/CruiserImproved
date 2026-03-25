@@ -368,34 +368,38 @@ internal class VehicleControllerPatches
             //Fix items dropping through the back of the cruiser
             Transform itemDropCollider = __instance.physicsRegion.itemDropCollider.transform;
             itemDropCollider.localScale = new Vector3(itemDropCollider.localScale.x, itemDropCollider.localScale.y, 5f);
+            float targetPos = __instance.FrontLeftWheel.suspensionSpring.targetPosition;
 
+            foreach (var wheel in __instance.otherWheels)
+            {
+                if (wheel != null)
+                    wheel.enabled = false;
+            }
+            __instance.otherWheels = [];
+
+            // fix the suspension spring values
             JointSpring suspensionSpring = new JointSpring
             {
-                spring = 2970f,
-                damper = 500f,
-                targetPosition = __instance.FrontLeftWheel.suspensionSpring.targetPosition,
+                spring = 5500f,
+                damper = 750f,
+                targetPosition = targetPos,
             };
-
             __instance.FrontLeftWheel.suspensionSpring = suspensionSpring;
             __instance.FrontRightWheel.suspensionSpring = suspensionSpring;
             __instance.BackLeftWheel.suspensionSpring = suspensionSpring;
             __instance.BackRightWheel.suspensionSpring = suspensionSpring;
+
+            // better stability
+            __instance.FrontLeftWheel.forceAppPointDistance = 0.56f;
+            __instance.FrontRightWheel.forceAppPointDistance = 0.56f;
+            __instance.BackLeftWheel.forceAppPointDistance = 0.56f;
+            __instance.BackRightWheel.forceAppPointDistance = 0.56f;
         }
 
         if (NetworkSync.FinishedSync)
         {
             SetupSyncedVehicleFeatures(__instance);
         }
-
-        //don't modify non-vanilla cruiser
-        if (__instance.vehicleID != 0) return;
-
-        foreach (var wheel in __instance.otherWheels)
-        {
-            if (wheel != null)
-                wheel.enabled = false;
-        }
-        __instance.otherWheels = [];
     }
 
     [HarmonyPatch("FixedUpdate")]
@@ -677,8 +681,8 @@ internal class VehicleControllerPatches
     }
 	
     [HarmonyPatch("SetPassengerInCar")]
-    [HarmonyPrefix]
-    static void SetPassengerInCar_Prefix(VehicleController __instance, PlayerControllerB player)
+    [HarmonyPostfix]
+    static void SetPassengerInCar_Postfix(VehicleController __instance, PlayerControllerB player)
     {
 		if (__instance == null || player == null)
 				return;
@@ -1119,24 +1123,23 @@ internal class VehicleControllerPatches
     static void SetCarEffects_Postfix(VehicleController __instance, float setSteering)
     {
         if (!NetworkSync.SyncedWithHost) return;
-
         // Sync the tyre skidding effects 
         if (__instance.IsOwner)
         {
-            if ((Time.realtimeSinceStartup - vehicleData[__instance].timeSinceTyreSkidSync) > 0.05f &&
-                (__instance.skiddingAudio.volume != vehicleData[__instance].lastTyreStress) ||
-                (__instance.skiddingAudio.isPlaying != vehicleData[__instance].lastTyreStressPlaying))
-            {
-                vehicleData[__instance].timeSinceTyreSkidSync = Time.realtimeSinceStartup;
-                FastBufferWriter bufferWriter = new(16, Unity.Collections.Allocator.Temp);
+            //if ((Time.realtimeSinceStartup - vehicleData[__instance].timeSinceTyreSkidSync) > 0.05f &&
+            //    (__instance.skiddingAudio.volume != vehicleData[__instance].lastTyreStress) ||
+            //    (__instance.skiddingAudio.isPlaying != vehicleData[__instance].lastTyreStressPlaying))
+            //{
+            //    vehicleData[__instance].timeSinceTyreSkidSync = Time.realtimeSinceStartup;
+            //    FastBufferWriter bufferWriter = new(16, Unity.Collections.Allocator.Temp);
 
-                bufferWriter.WriteValue(new NetworkObjectReference(__instance.NetworkObject));
-                bufferWriter.WriteValue(__instance.skiddingAudio.volume);
-                bufferWriter.WriteValue(__instance.skiddingAudio.isPlaying);
-                NetworkSync.SendToHost("SyncTyreStressRpc", bufferWriter);
-            }
+            //    bufferWriter.WriteValue(new NetworkObjectReference(__instance.NetworkObject));
+            //    bufferWriter.WriteValue(__instance.skiddingAudio.volume);
+            //    bufferWriter.WriteValue(__instance.skiddingAudio.isPlaying);
+            //    NetworkSync.SendToHost("SyncTyreStressRpc", bufferWriter);
+            //}
 
-            if ((Time.realtimeSinceStartup - vehicleData[__instance].timeSinceTorqueSync) > 0.04f &&
+            if ((Time.realtimeSinceStartup - vehicleData[__instance].timeSinceTorqueSync) > 0.12f &&
                 (__instance.FrontLeftWheel.motorTorque != vehicleData[__instance].lastMotorTorque) ||
                 (__instance.FrontLeftWheel.brakeTorque != vehicleData[__instance].lastBrakeTorque))
             {
@@ -1152,21 +1155,21 @@ internal class VehicleControllerPatches
         }
 
         // Play the skidding effects on clients sides
-        float stressAmount = vehicleData[__instance].lastTyreStress;
-        bool tyreStressing = vehicleData[__instance].lastTyreStressPlaying &&
-            stressAmount > 0.3f && __instance.gear == CarGearShift.Drive &&
-            __instance.ignitionStarted;
-        bool tyreSparksActive = (tyreStressing && __instance.averageVelocity.magnitude > 8f);
-        __instance.SetVehicleAudioProperties(__instance.skiddingAudio, tyreStressing, 0f, stressAmount, 3f, true, 1f);
+        //float stressAmount = vehicleData[__instance].lastTyreStress;
+        //bool tyreStressing = vehicleData[__instance].lastTyreStressPlaying &&
+        //    stressAmount > 0.3f && __instance.gear == CarGearShift.Drive &&
+        //    __instance.ignitionStarted;
+        //bool tyreSparksActive = (tyreStressing && __instance.averageVelocity.magnitude > 8f);
+        //__instance.SetVehicleAudioProperties(__instance.skiddingAudio, tyreStressing, 0f, stressAmount, 3f, true, 1f);
 
-        if (tyreSparksActive && !__instance.tireSparks.isPlaying)
-        {
-            __instance.tireSparks.Play(true);
-        }
-        else if (!tyreStressing && __instance.tireSparks.isPlaying)
-        {
-            __instance.tireSparks.Stop(true, ParticleSystemStopBehavior.StopEmitting);
-        }
+        //if (tyreSparksActive && !__instance.tireSparks.isPlaying)
+        //{
+        //    __instance.tireSparks.Play(true);
+        //}
+        //else if (!tyreStressing && __instance.tireSparks.isPlaying)
+        //{
+        //    __instance.tireSparks.Stop(true, ParticleSystemStopBehavior.StopEmitting);
+        //}
     }
 
     [HarmonyPatch("SetCarEffects")]
