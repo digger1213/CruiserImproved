@@ -1,3 +1,8 @@
+## 1.5.5
+
+## Bugfixes/Hotfix
+- \[Client] Fixed suspension parameters that were introduced in 1.5.3 (should feel as close to vanilla without being horribly unstable)
+
 ## 1.5.4
 
 ## Hotfix
