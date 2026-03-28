@@ -420,15 +420,15 @@ internal class VehicleControllerPatches
             }
         }
         groundNormal = groundNormal.normalized;
-        if (groundedWheelCount < 3 || Vector3.Angle(-groundNormal, Physics.gravity) > 30f) return;
 
         Vector3 carFrontHillDirection = Vector3.ProjectOnPlane(__instance.transform.forward, groundNormal).normalized;
         Vector3 hillGravity = -groundNormal * Physics.gravity.magnitude;
 
         Vector3 force = hillGravity - Physics.gravity; //apply the difference between real gravity and the 'hill' downward gravity
 
-        //if we're not in park, don't apply forces in the forward or backward direction (car should still roll down hills)
-        if (__instance.gear != CarGearShift.Park)
+        //if we're not in park, or past a tipping point (or less than 3 wheels grounded) don't apply forces in the forward or backward direction (car should still roll down hills)
+        if (__instance.gear != CarGearShift.Park ||
+			groundedWheelCount < 3 || Vector3.Angle(-groundNormal, Physics.gravity) > 30f)
         {
             force = Vector3.ProjectOnPlane(force, carFrontHillDirection);
         }
