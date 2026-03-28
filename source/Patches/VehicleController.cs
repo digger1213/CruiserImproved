@@ -36,9 +36,6 @@ internal class VehicleControllerPatches
         public ParticleSystem particleSystemSwap;
 
         public List<WheelCollider> wheels = [];
-        public float timeSinceTyreSkidSync;
-        public float lastTyreStress;
-        public bool lastTyreStressPlaying;
 
         public float timeSinceTorqueSync;
         public float lastMotorTorque;
@@ -1042,28 +1039,6 @@ internal class VehicleControllerPatches
         vehicleData[vehicle].lastSteeringAngle = angle;
     }
 
-    static public void SyncTyreStressRpc(ulong clientId, FastBufferReader reader)
-    {
-        reader.ReadNetworkSerializable(out NetworkObjectReference cruiserRef);
-        reader.ReadValue(out float stress);
-        reader.ReadValue(out bool stressed);
-        if (!cruiserRef.TryGet(out NetworkObject cruiserNetObj)) return;
-        if (!cruiserNetObj.TryGetComponent(out VehicleController vehicle)) return;
-
-        if (NetworkManager.Singleton.IsHost)
-        {
-            FastBufferWriter bufferWriter = new(16, Unity.Collections.Allocator.Temp);
-
-            bufferWriter.WriteValue(cruiserRef);
-            bufferWriter.WriteValue(stress);
-            bufferWriter.WriteValue(stressed);
-            NetworkSync.SendToClients("SyncTyreStressRpc", ref bufferWriter);
-        }
-
-        vehicleData[vehicle].lastTyreStress = stress;
-        vehicleData[vehicle].lastTyreStressPlaying = stressed;
-    }
-
     static public void SyncMotorTorqueRpc(ulong clientId, FastBufferReader reader)
     {
         reader.ReadNetworkSerializable(out NetworkObjectReference cruiserRef);
@@ -1125,19 +1100,6 @@ internal class VehicleControllerPatches
         // Sync the tyre skidding effects 
         if (__instance.IsOwner)
         {
-            //if ((Time.realtimeSinceStartup - vehicleData[__instance].timeSinceTyreSkidSync) > 0.05f &&
-            //    (__instance.skiddingAudio.volume != vehicleData[__instance].lastTyreStress) ||
-            //    (__instance.skiddingAudio.isPlaying != vehicleData[__instance].lastTyreStressPlaying))
-            //{
-            //    vehicleData[__instance].timeSinceTyreSkidSync = Time.realtimeSinceStartup;
-            //    FastBufferWriter bufferWriter = new(16, Unity.Collections.Allocator.Temp);
-
-            //    bufferWriter.WriteValue(new NetworkObjectReference(__instance.NetworkObject));
-            //    bufferWriter.WriteValue(__instance.skiddingAudio.volume);
-            //    bufferWriter.WriteValue(__instance.skiddingAudio.isPlaying);
-            //    NetworkSync.SendToHost("SyncTyreStressRpc", bufferWriter);
-            //}
-
             if ((Time.realtimeSinceStartup - vehicleData[__instance].timeSinceTorqueSync) > 0.12f &&
                 (__instance.FrontLeftWheel.motorTorque != vehicleData[__instance].lastMotorTorque) ||
                 (__instance.FrontLeftWheel.brakeTorque != vehicleData[__instance].lastBrakeTorque))
@@ -1152,23 +1114,6 @@ internal class VehicleControllerPatches
             }
             return;
         }
-
-        // Play the skidding effects on clients sides
-        //float stressAmount = vehicleData[__instance].lastTyreStress;
-        //bool tyreStressing = vehicleData[__instance].lastTyreStressPlaying &&
-        //    stressAmount > 0.3f && __instance.gear == CarGearShift.Drive &&
-        //    __instance.ignitionStarted;
-        //bool tyreSparksActive = (tyreStressing && __instance.averageVelocity.magnitude > 8f);
-        //__instance.SetVehicleAudioProperties(__instance.skiddingAudio, tyreStressing, 0f, stressAmount, 3f, true, 1f);
-
-        //if (tyreSparksActive && !__instance.tireSparks.isPlaying)
-        //{
-        //    __instance.tireSparks.Play(true);
-        //}
-        //else if (!tyreStressing && __instance.tireSparks.isPlaying)
-        //{
-        //    __instance.tireSparks.Stop(true, ParticleSystemStopBehavior.StopEmitting);
-        //}
     }
 
     [HarmonyPatch("SetCarEffects")]
