@@ -72,7 +72,7 @@ internal class UserConfig
         CabinLightToggle = config.Bind("General", "Cabin Light Toggle", true, "If true, allow toggling the cabin light by interacting with it.\nThe light state will be synced with other CruiserImproved users.");
 
         AcceptableValueRange<float> seatScale = new(0f, 1f);
-        SeatBoostScale = config.Bind("General", "Seat Boost Scale", 1.0f, new ConfigDescription("How much to boost the seat up? Set 0 to disable.", seatScale));
+        SeatBoostScale = config.Bind("General", "Seat Boost Scale", 0.5f, new ConfigDescription("How much to boost the seat up? Set 0 to disable.", seatScale));
 
         //Cruiser Health
         AcceptableValueRange<float> invulnerableDuration = new(0f, 2f);
