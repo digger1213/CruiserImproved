@@ -1,4 +1,4 @@
-﻿using HarmonyLib;
+using HarmonyLib;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -14,41 +14,20 @@ namespace CruiserImproved.Patches;
 [HarmonyPatch(typeof(StartOfRound))]
 internal class StartOfRoundPatches
 {
-    private static Coroutine setItemPositionCoroutine = null!;
-
-    private static IEnumerator SetItemPositionAfterDelay(int index, Vector3[] positionArray, int[] itemArray)
-    {
-        CruiserImproved.LogMessage($"Current frame: 1");
-        yield return null!;
-        CruiserImproved.LogMessage($"Current frame: 2");
-        yield return null!;
-        CruiserImproved.LogMessage($"Current frame: 3, waiting for end of frame");
-        yield return new WaitForEndOfFrame();
-        CruiserImproved.LogMessage($"End of frame delay, attempting to set position of items");
-        try
-        {
-            Item thisItem = StartOfRound.Instance.allItemsList.itemsList[itemArray[index]];
-            //move non-scrap and weapons toward the center of the ship slightly from the rest of the pile
-            if (!thisItem.isScrap || thisItem.isDefensiveWeapon)
-            {
-                positionArray[index].z += Random.Range(-2.5f, -1.5f);
-            }
-            setItemPositionCoroutine = null!;
-        }
-        catch (Exception e)
-        {
-            CruiserImproved.LogError("Exception caught placing Cruiser items in ship:\n" + e);
-            setItemPositionCoroutine = null!;
-        }
-    }
-
     //injected sorting method
     static void SetItemPosition(StartOfRound instance, int index, Vector3[] positionArray, int[] itemArray)
     {
-        if (!UserConfig.SortEquipmentOnLoad.Value) return;
+        if (!UserConfig.SortEquipmentOnLoad.Value)
+            return;
 
-        if (setItemPositionCoroutine == null)
-            setItemPositionCoroutine = instance.StartCoroutine(SetItemPositionAfterDelay(index, positionArray, itemArray));
+        if (instance.shipInnerRoomBounds.bounds.Contains(positionArray[index]))
+            return;
+
+        Item thisItem = StartOfRound.Instance.allItemsList.itemsList[itemArray[index]];
+        if (!thisItem.isScrap || thisItem.isDefensiveWeapon)
+        {
+            positionArray[index].z += Random.Range(-2.5f, -1.5f);
+        }
     }
 
     [HarmonyPatch("LoadShipGrabbableItems")]
