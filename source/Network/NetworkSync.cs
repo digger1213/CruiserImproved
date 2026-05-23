@@ -55,7 +55,6 @@ internal static class NetworkSync
         SetupMessageHandler("SyncMotorTorqueRpc", VehicleControllerPatches.SyncMotorTorqueRpc);
         SetupMessageHandler("SyncRadioTimeRpc", VehicleControllerPatches.SyncRadioTimeRpc);
         SetupMessageHandler("ToggleCabLightRpc", VehicleControllerPatches.ToggleCabLightRpc);
-        SetupMessageHandler("SyncTyreStressRpc", VehicleControllerPatches.SyncTyreStressRpc);
     }
 
     static public void Cleanup()
