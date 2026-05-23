@@ -411,7 +411,7 @@ internal class VehicleControllerPatches
         }
         groundNormal = groundNormal.normalized;
 
-	    if (!groundedWheelCount < 3 || Vector3.Angle(-groundNormal, Physics.gravity) > 30f)
+	    if (groundedWheelCount < 3 || Vector3.Angle(-groundNormal, Physics.gravity) > 30f)
             return;
 
         Vector3 carFrontHillDirection = Vector3.ProjectOnPlane(__instance.transform.forward, groundNormal).normalized;
