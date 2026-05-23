@@ -1,18 +1,28 @@
+## 1.5.6
+
+## Bugfixes
+- \[Host] Fixed sort-equipment-on-load not working.
+- \[Host] Fixed radio not making audible alerts. (thanks to [Buttery Stancakes](https://github.com/ButteryStancakes))
+- \[Client] Fixed a null-ref on VehicleCollisionTrigger. (thanks to [Buttery Stancakes](https://github.com/ButteryStancakes))
+- \[Client] Added more Vehicle-ID checks to prevent messing with custom vehicles.
+- \[Client] Fixed player steering wheel turning animation being reversed. (thanks to [Buttery Stancakes](https://github.com/ButteryStancakes))
+- \[Client] Fixed a targeted transpiler error introduced in [v80+].
+
 ## 1.5.5
 
 ## Bugfixes/Hotfix
-- \[Client] Fixed suspension parameters that were introduced in 1.5.3 (should feel as close to vanilla without being horribly unstable)
+- \[Client] Reverted suspension parameters that were introduced in 1.5.3.
 
 ## 1.5.4
 
 ## Hotfix
-- \[Client] Fixed passenger seat collisions
+- \[Client] Fixed passenger seat collisions.
 
 ## 1.5.3
 
 ### Compatibility
 
-- CruiserImproved should now be compatible with LCVR (?) Untested, any issues let me know. - Scandal)
+- CruiserImproved should now be compatible with LCVR (?) (Untested, any issues let me know. - Scandal)
 
 ### Bugfixes
 
