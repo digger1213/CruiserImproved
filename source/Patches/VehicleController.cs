@@ -36,10 +36,8 @@ internal class VehicleControllerPatches
         public ParticleSystem particleSystemSwap;
 
         public List<WheelCollider> wheels = [];
-        public float timeSinceTyreSkidSync;
-        public float lastTyreStress;
-        public bool lastTyreStressPlaying;
 
+        public float radioPingTimestamp;
         public float timeSinceTorqueSync;
         public float lastMotorTorque;
         public float lastBrakeTorque;
@@ -99,12 +97,12 @@ internal class VehicleControllerPatches
 
     static void SetupSyncedVehicleFeatures(VehicleController vehicle)
     {
+	 //don't modify non-vanilla cruiser
+        if (vehicle.vehicleID != 0) return;
+		
         VehicleControllerData thisData = vehicleData[vehicle];
         vehicleData[vehicle].wheels = [vehicle.FrontLeftWheel, vehicle.FrontRightWheel,
             vehicle.BackLeftWheel, vehicle.BackRightWheel];
-
-        //don't modify non-vanilla cruiser
-        if (vehicle.vehicleID != 0) return;
 
         //Allow player to turn further backward for the lean mechanic
         if (NetworkSync.Config.AllowLean)
@@ -344,6 +342,8 @@ internal class VehicleControllerPatches
     [HarmonyPostfix]
     private static void Awake_Postfix(VehicleController __instance)
     {
+        if (__instance.vehicleID != 0) return;
+
         RemoveStaleVehicleData();
 
         VehicleControllerData thisData = new();
@@ -362,38 +362,9 @@ internal class VehicleControllerPatches
             }
         }
 
-        //Don't modify non vanilla cruiser
-        if (__instance.vehicleID == 0)
-        {
-            //Fix items dropping through the back of the cruiser
-            Transform itemDropCollider = __instance.physicsRegion.itemDropCollider.transform;
-            itemDropCollider.localScale = new Vector3(itemDropCollider.localScale.x, itemDropCollider.localScale.y, 5f);
-
-            foreach (var wheel in __instance.otherWheels)
-            {
-                if (wheel != null)
-                    wheel.enabled = false;
-            }
-            __instance.otherWheels = [];
-
-            // fix the suspension spring values
-            JointSpring suspensionSpring = new JointSpring
-            {
-                spring = 5500f,
-                damper = 750f,
-                targetPosition = 0.88f,
-            };
-            __instance.FrontLeftWheel.suspensionSpring = suspensionSpring;
-            __instance.FrontRightWheel.suspensionSpring = suspensionSpring;
-            __instance.BackLeftWheel.suspensionSpring = suspensionSpring;
-            __instance.BackRightWheel.suspensionSpring = suspensionSpring;
-
-            // better stability
-            __instance.FrontLeftWheel.forceAppPointDistance = 0.56f;
-            __instance.FrontRightWheel.forceAppPointDistance = 0.56f;
-            __instance.BackLeftWheel.forceAppPointDistance = 0.56f;
-            __instance.BackRightWheel.forceAppPointDistance = 0.56f;
-        }
+        //Fix items dropping through the back of the cruiser
+        Transform itemDropCollider = __instance.physicsRegion.itemDropCollider.transform;
+        itemDropCollider.localScale = new Vector3(itemDropCollider.localScale.x, itemDropCollider.localScale.y, 5f);
 
         if (NetworkSync.FinishedSync)
         {
@@ -401,10 +372,23 @@ internal class VehicleControllerPatches
         }
     }
 
+    [HarmonyPatch("SetRadioValues")]
+    [HarmonyPostfix]
+    static void VehicleController_Post_SetRadioValues(VehicleController __instance)
+    {
+        if (__instance.IsServer && __instance.radioAudio.isPlaying && Time.realtimeSinceStartup > vehicleData[__instance].radioPingTimestamp)
+        {
+            vehicleData[__instance].radioPingTimestamp = Time.realtimeSinceStartup + 1f;
+            RoundManager.Instance.PlayAudibleNoise(__instance.radioAudio.transform.position, 16f, Mathf.Min((__instance.radioAudio.volume + __instance.radioInterference.volume) * 0.5f, 0.9f), 0, false, 2692);
+        }
+    }
+
     [HarmonyPatch("FixedUpdate")]
     [HarmonyPostfix]
     static void FixedUpdate_Postfix(VehicleController __instance)
     {
+        if (__instance.vehicleID != 0) return;
+
         //Anti-hill sideslip
         if (!NetworkSync.Config.AntiSideslip) return;
 
@@ -420,15 +404,14 @@ internal class VehicleControllerPatches
             }
         }
         groundNormal = groundNormal.normalized;
-        if (groundedWheelCount < 3 || Vector3.Angle(-groundNormal, Physics.gravity) > 30f) return;
 
         Vector3 carFrontHillDirection = Vector3.ProjectOnPlane(__instance.transform.forward, groundNormal).normalized;
         Vector3 hillGravity = -groundNormal * Physics.gravity.magnitude;
 
         Vector3 force = hillGravity - Physics.gravity; //apply the difference between real gravity and the 'hill' downward gravity
 
-        //if we're not in park, don't apply forces in the forward or backward direction (car should still roll down hills)
-        if (__instance.gear != CarGearShift.Park)
+        //if we're not in park, or past a tipping point (or less than 3 wheels grounded) don't apply forces in the forward or backward direction (car should still roll down hills)
+        if (__instance.gear != CarGearShift.Park || groundedWheelCount < 3 || Vector3.Angle(-groundNormal, Physics.gravity) > 30f)
         {
             force = Vector3.ProjectOnPlane(force, carFrontHillDirection);
         }
@@ -445,6 +428,52 @@ internal class VehicleControllerPatches
         __instance.syncedRotation = __instance.transform.rotation;
     }
 
+    [HarmonyPatch("CancelTryIgnitionClientRpc")]
+    [HarmonyPostfix]
+    static void CancelTryIgnitionClientRpc_Postfix(VehicleController __instance, int driverId)
+    {
+        if (__instance.vehicleID != 0)
+            return;
+
+        if ((int)GameNetworkManager.Instance.localPlayerController.playerClientId != driverId)
+        {
+            __instance.keyIgnitionCoroutine = null;
+            __instance.keyIsInDriverHand = false;
+        }
+    }
+
+    public static float GetAnimationSpeed(VehicleController vehicleController)
+    {
+        if (vehicleController.vehicleID == 0)
+            return -2f;
+
+        return 2f;
+    }
+
+    [HarmonyPatch("SetCarEffects")]
+    [HarmonyTranspiler]
+    private static IEnumerable<CodeInstruction> VehicleController_Trans_SetCarEffects(IEnumerable<CodeInstruction> instructions)
+    {
+        List<CodeInstruction> codes = instructions.ToList();
+
+        FieldInfo playerBodyAnimator = AccessTools.Field(typeof(PlayerControllerB), nameof(PlayerControllerB.playerBodyAnimator));
+        MethodInfo getFloat = AccessTools.Method(typeof(Animator), nameof(Animator.GetFloat), [typeof(string)]);
+        for (int i = 4; i < codes.Count; i++)
+        {
+            if (codes[i].opcode == OpCodes.Ldc_R4 && (float)codes[i].operand == 2f && codes[i - 2].opcode == OpCodes.Callvirt && codes[i - 2].operand as MethodInfo == getFloat && codes[i - 3].opcode == OpCodes.Ldstr && (string)codes[i - 3].operand == "animationSpeed" && codes[i - 4].opcode == OpCodes.Ldfld && (FieldInfo)codes[i - 4].operand == playerBodyAnimator)
+            {
+                codes[i].opcode = OpCodes.Call;
+                codes[i].operand = AccessTools.Method(typeof(VehicleControllerPatches), nameof(GetAnimationSpeed));
+                codes.Insert(i, new(OpCodes.Ldarg_0));
+                CruiserImproved.LogDebug($"Transpiler (Vehicles): Dynamic animation speed");
+                return codes;
+            }
+        }
+
+        CruiserImproved.LogWarning($"Vehicles animation speed transpiler failed");
+        return instructions;
+    }
+
     [HarmonyPatch("Update")]
     [HarmonyPostfix]
     static void Update_Postfix(VehicleController __instance)
@@ -453,6 +482,8 @@ internal class VehicleControllerPatches
         {
             return;
         }
+        if (__instance.vehicleID != 0) return;
+
         VehicleControllerData extraData = vehicleData[__instance];
 
         UpdateCruiserScanText(__instance);
@@ -498,7 +529,6 @@ internal class VehicleControllerPatches
         if (NetworkSync.Config.EntitiesAvoidCruiser && extraData.navObstacle)
         {
             bool enableObstacle = __instance.averageVelocity.magnitude < 0.5f && !__instance.currentDriver && !__instance.currentPassenger;
-
             extraData.navObstacle.gameObject.SetActive(enableObstacle);
         }
 
@@ -545,6 +575,7 @@ internal class VehicleControllerPatches
     [HarmonyPrefix]
     private static void DealPermanentDamage_Prefix(VehicleController __instance, ref int damageAmount, Vector3 damagePosition)
     {
+        if (__instance.vehicleID != 0) return;
         if (StartOfRound.Instance.testRoom == null && StartOfRound.Instance.inShipPhase)
         {
             return;
@@ -637,6 +668,8 @@ internal class VehicleControllerPatches
     [HarmonyPostfix]
     static void DealDamageClientRpc_Postfix(VehicleController __instance, int amount, int sentByClient)
     {
+        if (__instance.vehicleID != 0) return;
+
         //Keep track of damage sent by other clients and update local invincibility stats in case of ownership switch
         if ((int)GameNetworkManager.Instance.localPlayerController.playerClientId == sentByClient)
         {
@@ -693,6 +726,8 @@ internal class VehicleControllerPatches
     [HarmonyPostfix]
     static void AddEngineOilOnLocalClient_Postfix(VehicleController __instance, int setCarHP)
     {
+        if (__instance.vehicleID != 0) return;
+
         if (setCarHP <= 1) return;
 
         VehicleControllerData extraData = vehicleData[__instance];
@@ -744,6 +779,8 @@ internal class VehicleControllerPatches
     [HarmonyPrefix]
     static void GetVehicleInput_Prefix(VehicleController __instance)
     {
+        if (__instance.vehicleID != 0) return;
+
         if (__instance.localPlayerInControl) return;
         __instance.drivePedalPressed = false;
         __instance.brakePedalPressed = false;
@@ -755,6 +792,8 @@ internal class VehicleControllerPatches
     [HarmonyPostfix]
     static void GetVehicleInput_Postfix(VehicleController __instance)
     {
+        if (__instance.vehicleID != 0) return;
+
         if (!__instance.magnetedToShip) return;
 
         __instance.brakePedalPressed = !__instance.drivePedalPressed;
@@ -841,6 +880,8 @@ internal class VehicleControllerPatches
     [HarmonyPrefix]
     static bool DoTurboBoost_Prefix(VehicleController __instance)
     {
+        if (__instance.vehicleID != 0) return true;
+
         //Prevent turbo or car jumping if chat is open or player is paused
         if (__instance.localPlayerInControl && __instance.currentDriver)
         {
@@ -944,7 +985,7 @@ internal class VehicleControllerPatches
     {
         var codes = instructions.ToList();
 
-        PatchSmallEntityCarKill(codes);
+        //PatchSmallEntityCarKill(codes);
         PatchLocalEntitySmallDamage(codes);
         PatchLocalEntityLargeDamage(codes);
 
@@ -956,6 +997,8 @@ internal class VehicleControllerPatches
     [HarmonyPrefix]
     private static void RevCarClientRpc_Prefix(VehicleController __instance, int driverId)
     {
+        if (__instance.vehicleID != 0) return;
+
         if ((int)GameNetworkManager.Instance.localPlayerController.playerClientId == driverId)
             return;
 
@@ -1014,11 +1057,9 @@ internal class VehicleControllerPatches
     [HarmonyPostfix]
     private static void MatchWheelMeshToCollider_Postfix(VehicleController __instance, MeshRenderer wheelMesh, WheelCollider wheelCollider)
     {
-        Vector3 position;
+        if (__instance.vehicleID != 0) return;
         Quaternion rotation;
-        wheelCollider.GetWorldPose(out position, out rotation);
-
-        wheelMesh.transform.position = position;
+        wheelCollider.GetWorldPose(out _, out rotation);
         wheelMesh.transform.rotation = rotation;
     }
 
@@ -1040,28 +1081,6 @@ internal class VehicleControllerPatches
         }
 
         vehicleData[vehicle].lastSteeringAngle = angle;
-    }
-
-    static public void SyncTyreStressRpc(ulong clientId, FastBufferReader reader)
-    {
-        reader.ReadNetworkSerializable(out NetworkObjectReference cruiserRef);
-        reader.ReadValue(out float stress);
-        reader.ReadValue(out bool stressed);
-        if (!cruiserRef.TryGet(out NetworkObject cruiserNetObj)) return;
-        if (!cruiserNetObj.TryGetComponent(out VehicleController vehicle)) return;
-
-        if (NetworkManager.Singleton.IsHost)
-        {
-            FastBufferWriter bufferWriter = new(16, Unity.Collections.Allocator.Temp);
-
-            bufferWriter.WriteValue(cruiserRef);
-            bufferWriter.WriteValue(stress);
-            bufferWriter.WriteValue(stressed);
-            NetworkSync.SendToClients("SyncTyreStressRpc", ref bufferWriter);
-        }
-
-        vehicleData[vehicle].lastTyreStress = stress;
-        vehicleData[vehicle].lastTyreStressPlaying = stressed;
     }
 
     static public void SyncMotorTorqueRpc(ulong clientId, FastBufferReader reader)
@@ -1090,6 +1109,8 @@ internal class VehicleControllerPatches
     [HarmonyPrefix]
     static void SetCarEffects_Prefix(VehicleController __instance, ref float setSteering)
     {
+        if (__instance.vehicleID != 0) return;
+
         //Fix the steering wheel desync bug
         if (__instance.localPlayerInControl)
         {
@@ -1121,23 +1142,12 @@ internal class VehicleControllerPatches
     [HarmonyPostfix]
     static void SetCarEffects_Postfix(VehicleController __instance, float setSteering)
     {
+        if (__instance.vehicleID != 0) return;
+
         if (!NetworkSync.SyncedWithHost) return;
         // Sync the tyre skidding effects 
         if (__instance.IsOwner)
         {
-            //if ((Time.realtimeSinceStartup - vehicleData[__instance].timeSinceTyreSkidSync) > 0.05f &&
-            //    (__instance.skiddingAudio.volume != vehicleData[__instance].lastTyreStress) ||
-            //    (__instance.skiddingAudio.isPlaying != vehicleData[__instance].lastTyreStressPlaying))
-            //{
-            //    vehicleData[__instance].timeSinceTyreSkidSync = Time.realtimeSinceStartup;
-            //    FastBufferWriter bufferWriter = new(16, Unity.Collections.Allocator.Temp);
-
-            //    bufferWriter.WriteValue(new NetworkObjectReference(__instance.NetworkObject));
-            //    bufferWriter.WriteValue(__instance.skiddingAudio.volume);
-            //    bufferWriter.WriteValue(__instance.skiddingAudio.isPlaying);
-            //    NetworkSync.SendToHost("SyncTyreStressRpc", bufferWriter);
-            //}
-
             if ((Time.realtimeSinceStartup - vehicleData[__instance].timeSinceTorqueSync) > 0.12f &&
                 (__instance.FrontLeftWheel.motorTorque != vehicleData[__instance].lastMotorTorque) ||
                 (__instance.FrontLeftWheel.brakeTorque != vehicleData[__instance].lastBrakeTorque))
@@ -1152,23 +1162,6 @@ internal class VehicleControllerPatches
             }
             return;
         }
-
-        // Play the skidding effects on clients sides
-        //float stressAmount = vehicleData[__instance].lastTyreStress;
-        //bool tyreStressing = vehicleData[__instance].lastTyreStressPlaying &&
-        //    stressAmount > 0.3f && __instance.gear == CarGearShift.Drive &&
-        //    __instance.ignitionStarted;
-        //bool tyreSparksActive = (tyreStressing && __instance.averageVelocity.magnitude > 8f);
-        //__instance.SetVehicleAudioProperties(__instance.skiddingAudio, tyreStressing, 0f, stressAmount, 3f, true, 1f);
-
-        //if (tyreSparksActive && !__instance.tireSparks.isPlaying)
-        //{
-        //    __instance.tireSparks.Play(true);
-        //}
-        //else if (!tyreStressing && __instance.tireSparks.isPlaying)
-        //{
-        //    __instance.tireSparks.Stop(true, ParticleSystemStopBehavior.StopEmitting);
-        //}
     }
 
     [HarmonyPatch("SetCarEffects")]
@@ -1205,6 +1198,8 @@ internal class VehicleControllerPatches
     [HarmonyPostfix]
     static void BreakWindshield_Postfix(VehicleController __instance)
     {
+        if (__instance.vehicleID != 0) return;
+
         Material[] bodyMaterials = __instance.mainBodyMesh.sharedMaterials;
         bodyMaterials[2] = __instance.windshieldBrokenMat;
         __instance.lod1Mesh.sharedMaterials = bodyMaterials;
@@ -1215,6 +1210,8 @@ internal class VehicleControllerPatches
     [HarmonyPostfix]
     static void SetHeadlightMaterial_Postfix(VehicleController __instance, bool on)
     {
+        if (__instance.vehicleID != 0) return;
+
         Material headlightMat = on ? __instance.headlightsOnMat : __instance.headlightsOffMat;
         Material[] bodyMaterials = __instance.mainBodyMesh.sharedMaterials;
         bodyMaterials[1] = headlightMat;
@@ -1236,7 +1233,7 @@ internal class VehicleControllerPatches
             return true;
         }
         var targetVehicle = (VehicleController)target;
-
+        if (targetVehicle.vehicleID != 0) return true;
         //don't process the rpc if the sender isn't the driver
         if (targetVehicle.currentDriver == null || rpcParams.Server.Receive.SenderClientId != targetVehicle.currentDriver.actualClientId) return false;
         return true;
@@ -1312,6 +1309,7 @@ internal class VehicleControllerPatches
     //Injected method, return true if impact audio should be detectable by dogs
     static bool ShouldPlayDetectableAudio(VehicleController instance)
     {
+        if (instance.vehicleID != 0) return true;
         return instance.ignitionStarted || !NetworkSync.Config.SilentCollisions;
     }
 
@@ -1364,6 +1362,9 @@ internal class VehicleControllerPatches
     //Method to override StartMagneting's target angle and position. Returns eulerAngles, sets magnetTargetPosition and magnetTargetRotation fields.
     static Vector3 FixMagnet(VehicleController instance)
     {
+        if (instance.vehicleID != 0) 
+            return instance.transform.eulerAngles;
+
         Vector3 eulerAngles = instance.transform.eulerAngles;
         eulerAngles.y = Mathf.Round((eulerAngles.y + 90f) / 180f) * 180f - 90f;
         eulerAngles.z = Mathf.Round(eulerAngles.z / 90f) * 90f;
@@ -1371,12 +1372,9 @@ internal class VehicleControllerPatches
         eulerAngles.x = Mathf.Clamp(x, -20f, 20f);
         instance.magnetTargetRotation = Quaternion.Euler(eulerAngles);
 
-        if (instance.vehicleID == 0)
-        {
-            Vector3 offset = new(0f, -0.5f, -instance.boundsCollider.size.x * 0.5f * instance.boundsCollider.transform.lossyScale.x);
-            Vector3 localPos = StartOfRound.Instance.magnetPoint.position + offset;
-            instance.magnetTargetPosition = StartOfRound.Instance.elevatorTransform.InverseTransformPoint(localPos);
-        }
+        Vector3 offset = new(0f, -0.5f, -instance.boundsCollider.size.x * 0.5f * instance.boundsCollider.transform.lossyScale.x);
+        Vector3 localPos = StartOfRound.Instance.magnetPoint.position + offset;
+        instance.magnetTargetPosition = StartOfRound.Instance.elevatorTransform.InverseTransformPoint(localPos);
 
         return eulerAngles;
     }
@@ -1449,12 +1447,14 @@ internal class VehicleControllerPatches
     [HarmonyPostfix]
     static void SetRadioStationClientRpc_Postfix(VehicleController __instance)
     {
+        if (__instance.vehicleID != 0) return;
         __instance.SetRadioOnLocalClient(true, true);
     }
 
     //Set radio time consistently across owner and non-owners
     static void SetRadioTime(VehicleController instance)
     {
+        if (instance.vehicleID != 0) return;
         instance.radioAudio.time = Mathf.Clamp(instance.currentSongTime % instance.radioAudio.clip.length, 0.01f, instance.radioAudio.clip.length - 0.1f);
     }
 
@@ -1462,6 +1462,7 @@ internal class VehicleControllerPatches
     [HarmonyPostfix]
     static void SetRadioOnLocalClient_Postfix(VehicleController __instance, bool on, bool setClip)
     {
+        if (__instance.vehicleID != 0) return;
         if (on && setClip)
         {
             SetRadioTime(__instance);
@@ -1472,6 +1473,7 @@ internal class VehicleControllerPatches
     [HarmonyPostfix]
     static void SwitchRadio_Postfix(VehicleController __instance)
     {
+        if (__instance.vehicleID != 0) return;
         if (__instance.radioOn)
         {
             __instance.SetRadioStationServerRpc(__instance.currentRadioClip, (int)Mathf.Round(__instance.radioSignalQuality));
@@ -1495,6 +1497,8 @@ internal class VehicleControllerPatches
     [HarmonyPostfix]
     static public void RemoveKeyFromIgnition_Postfix(VehicleController __instance)
     {
+        if (__instance.vehicleID != 0) return;
+
         if (__instance.localPlayerInControl || __instance.currentDriver != null) return;
 
         //standing key removal if enabled and no one's driving
@@ -1513,6 +1517,8 @@ internal class VehicleControllerPatches
     [HarmonyPrefix]
     static public bool SetIgnition_Prefix(VehicleController __instance, bool started)
     {
+        if (__instance.vehicleID != 0) return true;
+
         if (!started && __instance.carExhaustParticle.isEmitting) __instance.carExhaustParticle.Stop(true, ParticleSystemStopBehavior.StopEmitting);
         return started != __instance.ignitionStarted;
     }
