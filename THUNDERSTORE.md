@@ -33,13 +33,12 @@ Clients will copy the host's settings if both sides have the mod installed.
 - \[Host&Client\] Fixed driven wheel torques not being synced.
 - \[Host\] Prevent the gas pedal or brake pedal from being stuck down if the player leaves the Cruiser while holding them.
 - \[Host\] Fix items left floating where the Cruiser was when reloading a save. All items will now be moved into the ship instead of just some.
+- \[Host\] Fix radio not making audible noise alerts.
 - \[Client\] Fix issues with materials (broken windshield, headlight on/off material) not being applied to lower-level-of-detail models.
-- \[Client\] Fix visual issues with driven wheels not rotating properly.
-- \[Client\] Fix small entities (anything except Eyeless Dog, Kidnapper Fox, Forest Giant, Old Bird) being impossible to run over.
 - \[Client\] Fix steering wheel visually desyncing from the actual steering angle.
 - \[Client\] Fixed Baboon Hawks requiring very high speed to run over.
 - \[Client\] Fixed passenger seat collisions
-- \[Client\] Fixed an issue where high speed impacts would potentially desynch enemy health. (V70+)
+- \[Client\] Fixed an issue where high speed impacts would potentially desync enemy health. (V70+)
 - \[Client\] Fixed ignition parameters not being set properly.
 - \[Client\] Fixed controls continuing to work in the Cruiser while typing in chat or the pause menu is open.
 - \[Client\] Fixed slow collisions dealing 2 damage to entities clientside (thanks to [Buttery Stancakes](https://github.com/ButteryStancakes))
