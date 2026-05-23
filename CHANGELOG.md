@@ -1,3 +1,8 @@
+## 1.5.7
+
+## Hotfix
+- \[Client] Fixed vehicle being catapulted into the atmosphere never to be seen again caused by 1.5.6. Sorry for the mild inconvience.
+
 ## 1.5.6
 
 ## Bugfixes
