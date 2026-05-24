@@ -376,6 +376,7 @@ internal class VehicleControllerPatches
     [HarmonyPostfix]
     static void VehicleController_Post_SetRadioValues(VehicleController __instance)
     {
+		if (__instance.vehicleID != 0) return;
         if (__instance.IsServer && __instance.radioAudio.isPlaying && Time.realtimeSinceStartup > vehicleData[__instance].radioPingTimestamp)
         {
             vehicleData[__instance].radioPingTimestamp = Time.realtimeSinceStartup + 1f;
