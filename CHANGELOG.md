@@ -1,7 +1,12 @@
+## 1.5.9
+
+## Hotfix
+- \[Client/Host] Fixed some transpiler issues. Additionally fixed ItemFallThroughPatch for real.
+
 ## 1.5.8
 
 ## Hotfix
-- \[Server] Fixed null-ref spam caused by a radio patch on custom vehicles such as the Road-Rage by Boom. Apologies.
+- \[Host] Fixed null-ref spam caused by a radio patch on custom vehicles such as the Road-Rage by Boom. Apologies.
 
 ## 1.5.7
 
