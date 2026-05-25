@@ -721,6 +721,7 @@ internal class VehicleControllerPatches
     {
 		if (__instance == null || player == null)
 				return;
+		if (__instance.vehicleID != 0) return
 
         __instance.SetVehicleCollisionForPlayer(false, player);
 	}
