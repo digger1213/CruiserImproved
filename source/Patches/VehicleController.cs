@@ -1363,12 +1363,12 @@ internal class VehicleControllerPatches
     }
 
     //Method to override StartMagneting's target angle and position. Returns eulerAngles, sets magnetTargetPosition and magnetTargetRotation fields.
-    static Vector3 FixMagnet(VehicleController instance)
+    static void FixMagnet(VehicleController instance, ref Vector3 eulerAngles)
     {
-        if (instance.vehicleID != 0) 
-            return instance.transform.eulerAngles;
+        if (instance.vehicleID != 0)
+            return;
 
-        Vector3 eulerAngles = instance.transform.eulerAngles;
+        eulerAngles = instance.transform.eulerAngles;
         eulerAngles.y = Mathf.Round((eulerAngles.y + 90f) / 180f) * 180f - 90f;
         eulerAngles.z = Mathf.Round(eulerAngles.z / 90f) * 90f;
         float x = Mathf.Repeat(eulerAngles.x + UnityEngine.Random.Range(-5f, 5f) + 180, 360) - 180;
@@ -1378,8 +1378,6 @@ internal class VehicleControllerPatches
         Vector3 offset = new(0f, -0.5f, -instance.boundsCollider.size.x * 0.5f * instance.boundsCollider.transform.lossyScale.x);
         Vector3 localPos = StartOfRound.Instance.magnetPoint.position + offset;
         instance.magnetTargetPosition = StartOfRound.Instance.elevatorTransform.InverseTransformPoint(localPos);
-
-        return eulerAngles;
     }
 
     [HarmonyPatch("StartMagneting")]
@@ -1425,8 +1423,8 @@ internal class VehicleControllerPatches
         codes.InsertRange(index + 1, [
             //call custom fixMagnet method
             new(OpCodes.Ldarg_0),
+            new(OpCodes.Ldloca_S, (byte)1),
             new(OpCodes.Call, fixMagnet),
-            new(OpCodes.Stloc_1),
 
             //return early if no localPlayerController yet to prevent a nullref when calling the rpc
             new(OpCodes.Call, PatchUtils.Method(typeof(GameNetworkManager), "get_Instance")),
