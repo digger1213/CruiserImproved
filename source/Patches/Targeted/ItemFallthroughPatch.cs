@@ -21,7 +21,7 @@ internal class ItemFallthroughPatch
             //v80+ patch
             return info;
         }      
-        if (PatchUtils.TryMethod(typeof(GrabbableObject), "GetPhysicsRegionOfDroppedObject", [typeof(PlayerControllerB), typeof(Vector3).MakeByRefType()], out info))
+        else if (PatchUtils.TryMethod(typeof(GrabbableObject), "GetPhysicsRegionOfDroppedObject", [typeof(PlayerControllerB), typeof(Vector3).MakeByRefType()], out info))
         {
             //v64-v73 patch
             return info;
