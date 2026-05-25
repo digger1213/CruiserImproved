@@ -16,9 +16,14 @@ internal class ItemFallthroughPatch
 {
     public static MethodBase TargetMethod()
     {
+        if (PatchUtils.TryMethod(typeof(GrabbableObject), "GetPhysicsRegionOfDroppedObject", [typeof(PlayerControllerB), typeof(Vector3).MakeByRefType(), typeof(bool)], out var info))
+        {
+            //v80+ patch
+            return info;
+        }      
         if (PatchUtils.TryMethod(typeof(GrabbableObject), "GetPhysicsRegionOfDroppedObject", [typeof(PlayerControllerB), typeof(Vector3).MakeByRefType()], out var info))
         {
-            //v64 patch
+            //v64-v73 patch
             return info;
         }
         else if (PatchUtils.TryMethod(typeof(PlayerControllerB), "DiscardHeldObject", out info))
