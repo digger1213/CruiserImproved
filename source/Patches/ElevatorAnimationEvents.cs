@@ -16,7 +16,7 @@ internal class ElevatorAnimationEventsPatches
         if (localPlayer.physicsParent == null) return;
 
         VehicleController vehicle = localPlayer.physicsParent.GetComponentInParent<VehicleController>();
-        if (vehicle && vehicle.magnetedToShip)
+        if (vehicle && vehicle.vehicleID == 0 && vehicle.magnetedToShip)
         {
             localPlayer.isInElevator = true;
         }
