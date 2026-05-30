@@ -1,3 +1,8 @@
+## 1.6.0
+
+## Changes
+- \[Client] The Scan-while-seated is now vehicle-ID checked to allow custom vehicles such as the Company Hauler or the ScanVan to define their own scanning logic.
+
 ## 1.5.9
 
 ## Hotfix
