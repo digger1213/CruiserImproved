@@ -1,5 +1,6 @@
 ﻿using CruiserImproved.Network;
 using HarmonyLib;
+using GameNetcodeStuff;
 
 namespace CruiserImproved.Patches;
 
