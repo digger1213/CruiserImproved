@@ -13,7 +13,9 @@ internal class HUDManagerPatches
         if (!NetworkSync.Config.ScanWhileSeated || __result) return;
 
         //override to allow scan while seated
-        if (GameNetworkManager.Instance.localPlayerController.inVehicleAnimation && !GameNetworkManager.Instance.localPlayerController.isPlayerDead)
+        PlayerControllerB localPlayer = GameNetworkManager.Instance.localPlayerController;
+        bool validCruiser = localPlayer.inVehicleAnimation && localPlayer.currentTriggerInAnimationWith && localPlayer.currentTriggerInAnimationWith.overridePlayerParent;
+        if (validCruiser && !localPlayer.isPlayerDead && localPlayer.currentTriggerInAnimationWith.overridePlayerParent.TryGetComponent<VehicleController>(out var controller) && controller.vehicleID == 0)
             __result = true;
     }
 }
