@@ -2,7 +2,6 @@ using CruiserImproved.Network;
 using GameNetcodeStuff;
 using HarmonyLib;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using UnityEngine;
@@ -16,30 +15,34 @@ internal class VehicleCollisionTriggerPatches
     [HarmonyTranspiler]
     static IEnumerable<CodeInstruction> VehicleCollisionTrigger_Trans_OnTriggerEnter(IEnumerable<CodeInstruction> instructions)
     {
-        List<CodeInstruction> codes = instructions.ToList();
+        // Don't really need to be this specific with the matches, but might as well.
+        CodeMatcher codeMatcher = new CodeMatcher(instructions).MatchForward(useEnd: false,
+            new(OpCodes.Ldstr, "Truck collision: {0} || {1} || {2}"),
+            new(OpCodes.Ldloc_S), // V_7
+            new(OpCodes.Ldnull));
 
-        MethodInfo log = AccessTools.Method(typeof(Debug), nameof(Debug.Log), [typeof(object)]);
-        for (int i = 0; i < codes.Count; i++)
+        if (codeMatcher.IsInvalid)
         {
-            if (codes[i].opcode == OpCodes.Ldstr && (string)codes[i].operand == "Truck collision: {0} || {1} || {2}")
-            {
-                for (int j = i; j < codes.Count; j++)
-                {
-                    if (codes[j].opcode == OpCodes.Call && codes[j].operand as MethodInfo == log)
-                    {
-                        codes[j].opcode = OpCodes.Nop;
-                        break;
-                    }
-
-                    codes[j].opcode = OpCodes.Nop;
-                }
-                CruiserImproved.LogDebug($"Transpiler (Cruiser collision): Resolve NRE by removing unnecessary log");
-                return codes;
-            }
+            CruiserImproved.LogWarning("Cruiser collision transpiler failed at first match");
+            return instructions;
         }
+        int start = codeMatcher.Pos + 1; // Starting index of the instructions to remove.
 
-        CruiserImproved.LogWarning($"Cruiser collision transpiler failed");
-        return codes;
+        _ = codeMatcher.SetOpcodeAndAdvance(OpCodes.Ret) // Set Opcode instead of full instruction to not mess with existing labels.
+        .MatchForward(useEnd: true,
+            new(OpCodes.Ldfld, typeof(EnemyAICollisionDetect).GetField(nameof(EnemyAICollisionDetect.mainScript), BindingFlags.Instance | BindingFlags.Public)),
+            new(OpCodes.Ldfld, typeof(EnemyAI).GetField(nameof(EnemyAI.isEnemyDead), BindingFlags.Instance | BindingFlags.Public)),
+            new(OpCodes.Box, typeof(bool)),
+            new(OpCodes.Call, typeof(string).GetMethod(nameof(string.Format), [typeof(string), typeof(object), typeof(object), typeof(object)])),
+            new(OpCodes.Call), // typeof(Debug).GetMethod(nameof(Debug.Log), [typeof(object)])
+            new(OpCodes.Ret));
+
+        if (codeMatcher.IsInvalid)
+        {
+            CruiserImproved.LogWarning("Cruiser collision transpiler failed at second match");
+            return instructions;
+        }
+        return codeMatcher.RemoveInstructionsInRange(start, end: codeMatcher.Pos).InstructionEnumeration();
     }
 
     [HarmonyPatch("OnTriggerEnter")]
