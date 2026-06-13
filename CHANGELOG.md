@@ -1,3 +1,8 @@
+## 1.6.1
+
+## Fixes
+- \[Client] Re-wrote a transpiler to prevent an issue when using mods such as AsyncLoggers, which would effectively brick the vehicles collision trigger.
+
 ## 1.6.0
 
 ## Changes
