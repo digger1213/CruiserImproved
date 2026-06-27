@@ -478,52 +478,6 @@ internal class VehicleControllerPatches
         return instructions;
     }
 
-    [HarmonyPatch("CancelTryIgnitionClientRpc")]
-    [HarmonyPostfix]
-    static void CancelTryIgnitionClientRpc_Postfix(VehicleController __instance, int driverId)
-    {
-        if (__instance.vehicleID != 0)
-            return;
-
-        if ((int)GameNetworkManager.Instance.localPlayerController.playerClientId != driverId)
-        {
-            __instance.keyIgnitionCoroutine = null;
-            __instance.keyIsInDriverHand = false;
-        }
-    }
-
-    public static float GetAnimationSpeed(VehicleController vehicleController)
-    {
-        if (vehicleController.vehicleID == 0)
-            return -2f;
-
-        return 2f;
-    }
-
-    [HarmonyPatch("SetCarEffects")]
-    [HarmonyTranspiler]
-    private static IEnumerable<CodeInstruction> VehicleController_Trans_SetCarEffects(IEnumerable<CodeInstruction> instructions)
-    {
-        List<CodeInstruction> codes = instructions.ToList();
-
-        FieldInfo playerBodyAnimator = AccessTools.Field(typeof(PlayerControllerB), nameof(PlayerControllerB.playerBodyAnimator));
-        MethodInfo getFloat = AccessTools.Method(typeof(Animator), nameof(Animator.GetFloat), [typeof(string)]);
-        for (int i = 4; i < codes.Count; i++)
-        {
-            if (codes[i].opcode == OpCodes.Ldc_R4 && (float)codes[i].operand == 2f && codes[i - 2].opcode == OpCodes.Callvirt && codes[i - 2].operand as MethodInfo == getFloat && codes[i - 3].opcode == OpCodes.Ldstr && (string)codes[i - 3].operand == "animationSpeed" && codes[i - 4].opcode == OpCodes.Ldfld && (FieldInfo)codes[i - 4].operand == playerBodyAnimator)
-            {
-                codes[i].opcode = OpCodes.Call;
-                codes[i].operand = AccessTools.Method(typeof(VehicleControllerPatches), nameof(GetAnimationSpeed));
-                codes.Insert(i, new(OpCodes.Ldarg_0));
-                CruiserImproved.LogDebug($"Transpiler (Vehicles): Dynamic animation speed");
-                return codes;
-            }
-        }
-
-        CruiserImproved.LogWarning($"Vehicles animation speed transpiler failed");
-        return instructions;
-    }
-
     [HarmonyPatch("Update")]
     [HarmonyPostfix]
     static void Update_Postfix(VehicleController __instance)
