@@ -1,3 +1,28 @@
+## 1.6.1
+
+## Fixes
+- \[Client] Re-wrote a transpiler to prevent an issue when using mods such as AsyncLoggers, which would effectively brick the vehicles collision trigger.
+
+## 1.6.0
+
+## Changes
+- \[Client] The Scan-while-seated is now vehicle-ID checked to allow custom vehicles such as the Company Hauler or the ScanVan to define their own scanning logic.
+
+## 1.5.9
+
+## Hotfix
+- \[Client/Host] Fixed some transpiler issues. Additionally fixed ItemFallThroughPatch for real.
+
+## 1.5.8
+
+## Hotfix
+- \[Host] Fixed null-ref spam caused by a radio patch on custom vehicles such as the Road-Rage by Boom. Apologies.
+
+## 1.5.7
+
+## Hotfix
+- \[Client] Fixed vehicle being catapulted into the atmosphere never to be seen again caused by 1.5.6. Sorry for the mild inconvience.
+
 ## 1.5.6
 
 ## Bugfixes

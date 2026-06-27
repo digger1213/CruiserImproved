@@ -376,6 +376,8 @@ internal class VehicleControllerPatches
     [HarmonyPostfix]
     static void VehicleController_Post_SetRadioValues(VehicleController __instance)
     {
+        if (__instance.vehicleID != 0) 
+          return;
         if (__instance.IsServer && __instance.radioAudio.isPlaying && Time.realtimeSinceStartup > vehicleData[__instance].radioPingTimestamp)
         {
             vehicleData[__instance].radioPingTimestamp = Time.realtimeSinceStartup + 1f;
@@ -388,6 +390,12 @@ internal class VehicleControllerPatches
     static void FixedUpdate_Postfix(VehicleController __instance)
     {
         if (__instance.vehicleID != 0) return;
+
+     		if (__instance.magnetedToShip)
+        {
+            __instance.syncedPosition = __instance.transform.position;
+            __instance.syncedRotation = __instance.transform.rotation;
+        }
 
         //Anti-hill sideslip
         if (!NetworkSync.Config.AntiSideslip) return;
@@ -405,13 +413,16 @@ internal class VehicleControllerPatches
         }
         groundNormal = groundNormal.normalized;
 
+        if (groundedWheelCount < 3 || Vector3.Angle(-groundNormal, Physics.gravity) > 30f)
+            return;
+
         Vector3 carFrontHillDirection = Vector3.ProjectOnPlane(__instance.transform.forward, groundNormal).normalized;
         Vector3 hillGravity = -groundNormal * Physics.gravity.magnitude;
 
         Vector3 force = hillGravity - Physics.gravity; //apply the difference between real gravity and the 'hill' downward gravity
 
         //if we're not in park, or past a tipping point (or less than 3 wheels grounded) don't apply forces in the forward or backward direction (car should still roll down hills)
-        if (__instance.gear != CarGearShift.Park || groundedWheelCount < 3 || Vector3.Angle(-groundNormal, Physics.gravity) > 30f)
+        if (__instance.gear != CarGearShift.Park)
         {
             force = Vector3.ProjectOnPlane(force, carFrontHillDirection);
         }
@@ -419,13 +430,52 @@ internal class VehicleControllerPatches
         //CruiserImproved.Log.LogMessage("Anti-slip force magnitude " + force.magnitude);
 
         __instance.mainRigidbody.AddForce(force, ForceMode.Acceleration);
+    }
 
-        if (!__instance.magnetedToShip)
-        {
+    [HarmonyPatch("CancelTryIgnitionClientRpc")]
+    [HarmonyPostfix]
+    static void CancelTryIgnitionClientRpc_Postfix(VehicleController __instance, int driverId)
+    {
+        if (__instance.vehicleID != 0)
             return;
+
+        if ((int)GameNetworkManager.Instance.localPlayerController.playerClientId != driverId)
+        {
+            __instance.keyIgnitionCoroutine = null;
+            __instance.keyIsInDriverHand = false;
         }
-        __instance.syncedPosition = __instance.transform.position;
-        __instance.syncedRotation = __instance.transform.rotation;
+    }
+
+    public static float GetAnimationSpeed(VehicleController vehicleController)
+    {
+        if (vehicleController.vehicleID == 0)
+            return -2f;
+
+        return 2f;
+    }
+
+    [HarmonyPatch("SetCarEffects")]
+    [HarmonyTranspiler]
+    private static IEnumerable<CodeInstruction> VehicleController_Trans_SetCarEffects(IEnumerable<CodeInstruction> instructions)
+    {
+        List<CodeInstruction> codes = instructions.ToList();
+
+        FieldInfo playerBodyAnimator = AccessTools.Field(typeof(PlayerControllerB), nameof(PlayerControllerB.playerBodyAnimator));
+        MethodInfo getFloat = AccessTools.Method(typeof(Animator), nameof(Animator.GetFloat), [typeof(string)]);
+        for (int i = 4; i < codes.Count; i++)
+        {
+            if (codes[i].opcode == OpCodes.Ldc_R4 && (float)codes[i].operand == 2f && codes[i - 2].opcode == OpCodes.Callvirt && codes[i - 2].operand as MethodInfo == getFloat && codes[i - 3].opcode == OpCodes.Ldstr && (string)codes[i - 3].operand == "animationSpeed" && codes[i - 4].opcode == OpCodes.Ldfld && (FieldInfo)codes[i - 4].operand == playerBodyAnimator)
+            {
+                codes[i].opcode = OpCodes.Call;
+                codes[i].operand = AccessTools.Method(typeof(VehicleControllerPatches), nameof(GetAnimationSpeed));
+                codes.Insert(i, new(OpCodes.Ldarg_0));
+                CruiserImproved.LogDebug($"Transpiler (Vehicles): Dynamic animation speed");
+                return codes;
+            }
+        }
+
+        CruiserImproved.LogWarning($"Vehicles animation speed transpiler failed");
+        return instructions;
     }
 
     [HarmonyPatch("CancelTryIgnitionClientRpc")]
@@ -718,6 +768,7 @@ internal class VehicleControllerPatches
     {
 		if (__instance == null || player == null)
 				return;
+		if (__instance.vehicleID != 0) return;
 
         __instance.SetVehicleCollisionForPlayer(false, player);
 	}
@@ -1360,12 +1411,12 @@ internal class VehicleControllerPatches
     }
 
     //Method to override StartMagneting's target angle and position. Returns eulerAngles, sets magnetTargetPosition and magnetTargetRotation fields.
-    static Vector3 FixMagnet(VehicleController instance)
+    static void FixMagnet(VehicleController instance, ref Vector3 eulerAngles)
     {
-        if (instance.vehicleID != 0) 
-            return instance.transform.eulerAngles;
+        if (instance.vehicleID != 0)
+            return;
 
-        Vector3 eulerAngles = instance.transform.eulerAngles;
+        eulerAngles = instance.transform.eulerAngles;
         eulerAngles.y = Mathf.Round((eulerAngles.y + 90f) / 180f) * 180f - 90f;
         eulerAngles.z = Mathf.Round(eulerAngles.z / 90f) * 90f;
         float x = Mathf.Repeat(eulerAngles.x + UnityEngine.Random.Range(-5f, 5f) + 180, 360) - 180;
@@ -1375,8 +1426,6 @@ internal class VehicleControllerPatches
         Vector3 offset = new(0f, -0.5f, -instance.boundsCollider.size.x * 0.5f * instance.boundsCollider.transform.lossyScale.x);
         Vector3 localPos = StartOfRound.Instance.magnetPoint.position + offset;
         instance.magnetTargetPosition = StartOfRound.Instance.elevatorTransform.InverseTransformPoint(localPos);
-
-        return eulerAngles;
     }
 
     [HarmonyPatch("StartMagneting")]
@@ -1422,8 +1471,8 @@ internal class VehicleControllerPatches
         codes.InsertRange(index + 1, [
             //call custom fixMagnet method
             new(OpCodes.Ldarg_0),
+            new(OpCodes.Ldloca_S, (byte)1),
             new(OpCodes.Call, fixMagnet),
-            new(OpCodes.Stloc_1),
 
             //return early if no localPlayerController yet to prevent a nullref when calling the rpc
             new(OpCodes.Call, PatchUtils.Method(typeof(GameNetworkManager), "get_Instance")),
