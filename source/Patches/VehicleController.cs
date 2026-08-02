@@ -195,7 +195,7 @@ internal class VehicleControllerPatches
             cabLightToggle.transform.localScale = new(0.55f, 0.1f, 0.04f);
 
             trigger = cabLightToggle.GetComponent<InteractTrigger>();
-            trigger.hoverTip = "Switch light: [LMB]";
+            trigger.hoverTip = "Switch light : [LMB]";
             trigger.onInteract = new();
             trigger.onInteract.AddListener((PlayerControllerB player) => { InteractCabLight(vehicle, player); });
         }
