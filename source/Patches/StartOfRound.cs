@@ -14,6 +14,7 @@ namespace CruiserImproved.Patches;
 [HarmonyPatch(typeof(StartOfRound))]
 internal class StartOfRoundPatches
 {
+    /*
     //injected sorting method
     static void SetItemPosition(StartOfRound instance, int index, Vector3[] positionArray, int[] itemArray)
     {
@@ -75,6 +76,7 @@ internal class StartOfRoundPatches
 
         return codes;
     }
+    */
 
     [HarmonyPatch("LoadAttachedVehicle")]
     [HarmonyPostfix]
