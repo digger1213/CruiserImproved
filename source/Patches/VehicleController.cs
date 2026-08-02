@@ -372,6 +372,17 @@ internal class VehicleControllerPatches
         }
     }
 
+	[HarmonyPatch("Start")]
+    [HarmonyPostfix]
+    private static void Start_Postfix(VehicleController __instance)
+    {
+        if (__instance.vehicleID != 0) return;
+        if (__instance.headlightsContainer.activeSelf)
+		{
+			__instance.SetHeadlightMaterial(on: true);
+		}
+    }
+
     [HarmonyPatch("SetRadioValues")]
     [HarmonyPostfix]
     static void VehicleController_Post_SetRadioValues(VehicleController __instance)
@@ -391,7 +402,7 @@ internal class VehicleControllerPatches
     {
         if (__instance.vehicleID != 0) return;
 
-     		if (__instance.magnetedToShip)
+     	if (__instance.magnetedToShip)
         {
             __instance.syncedPosition = __instance.transform.position;
             __instance.syncedRotation = __instance.transform.rotation;
