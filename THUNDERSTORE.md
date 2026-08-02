@@ -7,7 +7,7 @@ A clientside mod to improve the behaviour of Lethal Company's 'Company Cruiser' 
 ### Features
 All features can be configured or disabled in the generated .cfg file in BepInEx/config.
 Clients will copy the host's settings if both sides have the mod installed.
-- Ability to lean to look back around the side of the truck and through the small window by turning the camera around.
+- Ability to lean to look back around the side of the Cruiser, and through the small window by turning the camera around.
 - Increased seat height for better visibility over the Cruiser's hood.
 - Slight invulnerability for the Cruiser after taking damage to reduce the damage taken by rolling or multi-impacts at low speed.
 - Short invulnerability for the Cruiser when critically damaged (engine on fire) allowing players to react and escape before the Cruiser explodes.
@@ -65,7 +65,7 @@ Feel free to post suggestions or issues to:
 - The mod's [thread](https://discord.com/channels/1168655651455639582/1258980772996448309) in the [LC Modding discord server](https://discord.gg/XeyYqRdRGC)
 
 ### Compatibility
-Compatible with Lethal Company v80+.
+Compatible with Lethal Company v81+.
 
 CruiserImproved should be compatible with most mods, but it works well with:
 - [BetterVehicleControls](https://thunderstore.io/c/lethal-company/p/Dev1A3/BetterVehicleControls/)
