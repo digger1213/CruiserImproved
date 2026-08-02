@@ -1103,7 +1103,7 @@ internal class VehicleControllerPatches
             bufferWriter.WriteValue(cruiserRef);
             bufferWriter.WriteValue(motor);
             bufferWriter.WriteValue(brake);
-            NetworkSync.SendToClients("SyncTyreStressRpc", ref bufferWriter);
+            NetworkSync.SendToClients("SyncMotorTorqueRpc", ref bufferWriter);
         }
 
         vehicleData[vehicle].lastMotorTorque = motor;
@@ -1148,7 +1148,6 @@ internal class VehicleControllerPatches
     static void SetCarEffects_Postfix(VehicleController __instance, float setSteering)
     {
         if (__instance.vehicleID != 0) return;
-
         if (!NetworkSync.SyncedWithHost) return;
         // Sync the tyre skidding effects 
         if (__instance.IsOwner)
@@ -1165,7 +1164,6 @@ internal class VehicleControllerPatches
                 bufferWriter.WriteValue(__instance.FrontLeftWheel.brakeTorque);
                 NetworkSync.SendToHost("SyncMotorTorqueRpc", bufferWriter);
             }
-            return;
         }
     }
 
