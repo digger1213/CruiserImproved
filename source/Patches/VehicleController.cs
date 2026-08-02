@@ -1057,6 +1057,8 @@ internal class VehicleControllerPatches
         return codes;
     }
 
+	/*
+	//Will come up with a better solution for this at some point
     //Visual: Fix wheel meshes not using the rotation of the WheelCollider
     [HarmonyPatch("MatchWheelMeshToCollider")]
     [HarmonyPostfix]
@@ -1067,6 +1069,7 @@ internal class VehicleControllerPatches
         wheelCollider.GetWorldPose(out _, out rotation);
         wheelMesh.transform.rotation = rotation;
     }
+	*/
 
     //Rpc Args: NetworkObjectReference cruiserRef, float angle
     static public void SyncSteeringRpc(ulong clientId, FastBufferReader reader)
