@@ -43,7 +43,9 @@ internal class UserConfig
     internal static ConfigEntry<bool> SyncSeat;
     internal static ConfigEntry<bool> PreventPassengersEjectingDriver;
     internal static ConfigEntry<bool> EntitiesAvoidCruiser;
+    /*
     internal static ConfigEntry<bool> SortEquipmentOnLoad;
+    */
     internal static ConfigEntry<bool> SaveCruiserValues;
 
     //QOL
@@ -92,7 +94,9 @@ internal class UserConfig
         SyncSeat = config.Bind("Host-side", "Synchronise Seat Boost", false, "If true, set all other players using CruiserImproved in your lobbies to have the same Seat Boost Scale setting as you.\nAll other settings are always synchronised.");
         EntitiesAvoidCruiser = config.Bind("Host-side", "Entities Avoid Cruiser", true, "If true, entities will pathfind around stationary cruisers with no driver.\nEyeless Dogs will still attack it if they hear noise!");
         PreventPassengersEjectingDriver = config.Bind("Host-side", "Prevent Passengers Eject Driver", false, "If true, prevent anyone except the driver of the cruiser from using the eject button in your lobbies.");
+        /*
         SortEquipmentOnLoad = config.Bind("Host-side", "Sort Equipment On Load", true, "If true, equipment and weapons will be separated from other scrap when items are moved out of the Cruiser on save load.\nThese items will be placed in a second pile in the center of the ship.");
+        */
         SaveCruiserValues = config.Bind("Host-side", "Save Cruiser Values", true, "If true, the Cruiser's turbo count, ignition state, and magnet position will be saved to/loaded from the save file.");
 
         //QOL
