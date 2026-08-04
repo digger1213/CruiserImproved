@@ -732,9 +732,9 @@ internal class VehicleControllerPatches
     static void SetPassengerInCar_Postfix(VehicleController __instance, PlayerControllerB player)
     {
 		if (__instance == null || player == null)
-				return;
-		if (__instance.vehicleID != 0) return;
-
+			return;
+		if (__instance.vehicleID != 0) 
+			return;
         __instance.SetVehicleCollisionForPlayer(false, player);
 	}
 
