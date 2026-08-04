@@ -78,6 +78,30 @@ internal class StartOfRoundPatches
     }
     */
 
+    [HarmonyPatch("LoadShipGrabbableItems")]
+    [HarmonyTranspiler]
+    static IEnumerable<CodeInstruction> LoadShipGrabbableItems_Transpiler(IEnumerable<CodeInstruction> instructions)
+    {
+        var codes = instructions.ToList();
+
+        int index = PatchUtils.LocateCodeSegment(0, codes, [
+            new(OpCodes.Ldfld, PatchUtils.Field(typeof(StartOfRound), "shipBounds"))
+            ]);
+
+        if(index != -1)
+        {
+            //fix items floating by using the inner room bounds instead (shipBounds is too large and keeps items floating near ship walls)
+            codes[index].operand = PatchUtils.Field(typeof(StartOfRound), "shipInnerRoomBounds");
+        }
+        else
+        {
+            index = 0;
+            CruiserImproved.LogWarning("Could not patch LoadShipGrabbableItems bounds!");
+        }
+
+        return codes;
+    }
+
     [HarmonyPatch("LoadAttachedVehicle")]
     [HarmonyPostfix]
     static void LoadAttachedVehicle_Postfix(StartOfRound __instance)
