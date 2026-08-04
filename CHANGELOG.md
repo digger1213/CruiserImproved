@@ -1,9 +1,14 @@
+## 1.6.3
+
+## Fixes
+- \[Host] Fixed items left floating where the Cruiser was when reloading a save.
+
 ## 1.6.2
 
 ## Fixes
 - \[Client&Host] Fixed motor torque sync
 ## Changes
-- \[Host] Removed Sort-Equipment-On-Load, this feature has been broken for a year and I have tried everything within my power to make it work, all results either made the problem worse or flat-out didn't do anything, so this feature is pulled for now
+- \[Host] Removed Sort-Equipment-On-Load, this feature has been broken for a year and I have tried everything within my power to make it work, all results either made the problem worse or flat-out didn't do anything, so this feature is pulled for now.
 
 ## 1.6.1
 
