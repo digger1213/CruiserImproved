@@ -18,7 +18,7 @@ internal class ItemFallthroughPatch
     {
         if (PatchUtils.TryMethod(typeof(GrabbableObject), "GetPhysicsRegionOfDroppedObject", [typeof(PlayerControllerB), typeof(Vector3).MakeByRefType(), typeof(bool)], out var info))
         {
-            //v80+ patch
+            //v81+ patch
             return info;
         }      
         else if (PatchUtils.TryMethod(typeof(GrabbableObject), "GetPhysicsRegionOfDroppedObject", [typeof(PlayerControllerB), typeof(Vector3).MakeByRefType()], out info))
