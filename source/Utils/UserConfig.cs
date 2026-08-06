@@ -63,35 +63,35 @@ internal class UserConfig
         config.SaveOnConfigSet = false;
 
         //General
-        AllowLean = config.Bind("General", "Allow Leaning", true, "If true, allow the player to look backward out the window or through the cabin window.");
-        PreventMissileKnockback = config.Bind("General", "Prevent Missile Knockback", true, "If true, prevent the player being ejected from seats by Old Bird missile knockback.");
-        AllowPushDestroyedCar = config.Bind("General", "Allow Pushing Destroyed Cruisers", true, "If true, allow players to push destroyed cruisers.");
-        SilentCollisions = config.Bind("General", "Silent Collisions", true, "If true, entities hitting the Cruiser when it's engine is off will not make noise.\nThis means Eyeless Dogs will not get stuck in a loop attacking it, triggering noise, and attacking it again while the engine is off.");
+        AllowLean = config.Bind("General", "Allow Leaning", false, "If true, allow the player to look backward out the window or through the cabin window.");
+        PreventMissileKnockback = config.Bind("General", "Prevent Missile Knockback", false, "If true, prevent the player being ejected from seats by Old Bird missile knockback.");
+        AllowPushDestroyedCar = config.Bind("General", "Allow Pushing Destroyed Cruisers", false, "If true, allow players to push destroyed cruisers.");
+        SilentCollisions = config.Bind("General", "Silent Collisions", false, "If true, entities hitting the Cruiser when it's engine is off will not make noise.\nThis means Eyeless Dogs will not get stuck in a loop attacking it, triggering noise, and attacking it again while the engine is off.");
         DisableRadioStatic = config.Bind("General", "Disable Radio Static", false, "If true, disable the radio interference static sound on the radio.");
-        TurboExhaust = config.Bind("General", "Turbo Exhaust Smoke", true, "If true, the Cruiser's exhaust will be slightly tinted blue when at least one turbo boost is stored.");
-        CruiserScanNode = config.Bind("General", "Cruiser Scan Node", ScanNodeOptions.Enabled | ScanNodeOptions.VisibleThroughWalls | ScanNodeOptions.HealthEstimate, "Customize a scan node to easily find your Cruiser, like the scan nodes on the ship and the main entrance." +
+        TurboExhaust = config.Bind("General", "Turbo Exhaust Smoke", false, "If true, the Cruiser's exhaust will be slightly tinted blue when at least one turbo boost is stored.");
+        CruiserScanNode = config.Bind("General", "Cruiser Scan Node", ScanNodeOptions.VisibleThroughWalls, "Customize a scan node to easily find your Cruiser, like the scan nodes on the ship and the main entrance." +
             "\nCan display information according to values set. If multiple settings are specified for the same information, the most detailed is used.");
-        CabinLightToggle = config.Bind("General", "Cabin Light Toggle", true, "If true, allow toggling the cabin light by interacting with it.\nThe light state will be synced with other CruiserImproved users.");
+        CabinLightToggle = config.Bind("General", "Cabin Light Toggle", false, "If true, allow toggling the cabin light by interacting with it.\nThe light state will be synced with other CruiserImproved users.");
 
         AcceptableValueRange<float> seatScale = new(0f, 1f);
-        SeatBoostScale = config.Bind("General", "Seat Boost Scale", 0.5f, new ConfigDescription("How much to boost the seat up? Set 0 to disable.", seatScale));
+        SeatBoostScale = config.Bind("General", "Seat Boost Scale", 0f, new ConfigDescription("How much to boost the seat up? Set 0 to disable.", seatScale));
 
         //Cruiser Health
         AcceptableValueRange<float> invulnerableDuration = new(0f, 2f);
-        CruiserInvulnerabilityDuration = config.Bind("Cruiser Health", "Cruiser Invulnerability Duration", 0.5f, new ConfigDescription("How long after taking damage is the Cruiser invulnerable for? Set 0 to disable.", invulnerableDuration));
+        CruiserInvulnerabilityDuration = config.Bind("Cruiser Health", "Cruiser Invulnerability Duration", 0f, new ConfigDescription("How long after taking damage is the Cruiser invulnerable for? Set 0 to disable.", invulnerableDuration));
 
         AcceptableValueRange<float> criticalInvulnerableDuration = new(0f, 6f);
-        CruiserCriticalInvulnerabilityDuration = config.Bind("Cruiser Health", "Cruiser Critical Invulnerability Duration", 4.0f, new ConfigDescription("How long after critical damage (engine on fire) is the Cruiser invulnerable for? Set 0 to disable.", criticalInvulnerableDuration));
+        CruiserCriticalInvulnerabilityDuration = config.Bind("Cruiser Health", "Cruiser Critical Invulnerability Duration", 0f, new ConfigDescription("How long after critical damage (engine on fire) is the Cruiser invulnerable for? Set 0 to disable.", criticalInvulnerableDuration));
 
 
         AcceptableValueRange<int> criticalHitCount = new(0, 100);
-        MaxCriticalHitCount = config.Bind("Cruiser Health", "Critical Protection Hit Count", 1, new ConfigDescription("Number of hits the Cruiser can block during the Critical Invulnerability Duration. \nIf the Cruiser receives this many hits while critical, it will emit a sound cue before exploding once the duration is up.\nIf 0, any hit that triggers the critical state will also trigger this delayed explosion.", criticalHitCount));
+        MaxCriticalHitCount = config.Bind("Cruiser Health", "Critical Protection Hit Count", 0, new ConfigDescription("Number of hits the Cruiser can block during the Critical Invulnerability Duration. \nIf the Cruiser receives this many hits while critical, it will emit a sound cue before exploding once the duration is up.\nIf 0, any hit that triggers the critical state will also trigger this delayed explosion.", criticalHitCount));
 
         //Physics
         AntiSideslip = config.Bind("Physics", "Anti-Sideslip", true, "If true, prevent the Cruiser from sliding sideways when on slopes.");
 
         //Host-side
-        SyncSeat = config.Bind("Host-side", "Synchronise Seat Boost", false, "If true, set all other players using CruiserImproved in your lobbies to have the same Seat Boost Scale setting as you.\nAll other settings are always synchronised.");
+        SyncSeat = config.Bind("Host-side", "Synchronise Seat Boost", true, "If true, set all other players using CruiserImproved in your lobbies to have the same Seat Boost Scale setting as you.\nAll other settings are always synchronised.");
         EntitiesAvoidCruiser = config.Bind("Host-side", "Entities Avoid Cruiser", true, "If true, entities will pathfind around stationary cruisers with no driver.\nEyeless Dogs will still attack it if they hear noise!");
         PreventPassengersEjectingDriver = config.Bind("Host-side", "Prevent Passengers Eject Driver", false, "If true, prevent anyone except the driver of the cruiser from using the eject button in your lobbies.");
         /*
@@ -100,8 +100,8 @@ internal class UserConfig
         SaveCruiserValues = config.Bind("Host-side", "Save Cruiser Values", true, "If true, the Cruiser's turbo count, ignition state, and magnet position will be saved to/loaded from the save file.");
 
         //QOL
-        HandsfreeDoors = config.Bind("Quality of Life", "Handsfree Doors", true, "If true, allow opening the Cruiser's back and side doors when holding a 2 handed item.");
-        StandingKeyRemoval = config.Bind("Quality of Life", "Standing Key Removal", true, "If true, allow the removal of the key from the ignition when not seated.");
+        HandsfreeDoors = config.Bind("Quality of Life", "Handsfree Doors", false, "If true, allow opening the Cruiser's back and side doors when holding a 2 handed item.");
+        StandingKeyRemoval = config.Bind("Quality of Life", "Standing Key Removal", false, "If true, allow the removal of the key from the ignition when not seated.");
         ScanWhileSeated = config.Bind("Quality of Life", "Scan While Seated", true, "If true, allow players to scan while seated in the Cruiser.");
 
         MigrateOldConfigs(config);
