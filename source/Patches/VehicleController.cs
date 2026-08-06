@@ -726,16 +726,35 @@ internal class VehicleControllerPatches
             extraData.lastDamageReceived = amount;
         }
     }
+
+    [HarmonyPatch("SetPassengerInCar")]
+    [HarmonyPrefix]
+    private static bool SetPassengerInCar(VehicleController __instance, PlayerControllerB player)
+    {
+         return player != null;
+    }
 	
     [HarmonyPatch("SetPassengerInCar")]
     [HarmonyPostfix]
     static void SetPassengerInCar_Postfix(VehicleController __instance, PlayerControllerB player)
     {
-		if (__instance == null || player == null)
-			return;
 		if (__instance.vehicleID != 0) 
 			return;
-        __instance.SetVehicleCollisionForPlayer(false, player);
+		if (player == null)
+			return;
+		if (player != GameNetworkManager.Instance.localPlayerController)
+			return;
+        __instance.SetVehicleCollisionForPlayer(false, GameNetworkManager.Instance.localPlayerController);
+		__instance.passengerSideDoorTrigger.hoverTip = "Exit : [LMB]";		
+	}
+
+	[HarmonyPatch("OnPassengerExit")]
+    [HarmonyPrefix]
+    static void OnPassengerExit_Prefix(VehicleController __instance)
+    {
+		if (__instance.vehicleID != 0) 
+			return;
+		__instance.passengerSideDoorTrigger.hoverTip = "Use door : [LMB]";		
 	}
 
     [HarmonyPatch("AddEngineOilOnLocalClient")]
