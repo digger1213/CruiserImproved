@@ -2,6 +2,10 @@
 
 ## Fixes
 - \[Host] Fixed items left floating where the Cruiser was when reloading a save.
+- \[Client] Fixed the passenger door hover-tip not changing like the drivers-side door
+
+## Changes
+- \[Host&Client] Adjusted many of the default settings, out of the box this mod is now mostly purely fixes, any additional settings must manually be turned on.
 
 ## 1.6.2
 
