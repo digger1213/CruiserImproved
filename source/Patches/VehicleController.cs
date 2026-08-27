@@ -1011,6 +1011,9 @@ internal class VehicleControllerPatches
         }
 
         codes[insertBefore + 4].operand = hitEnemyOnLocalClient;
+		codes[insertBefore + 3].opcode = OpCodes.Ldc_I4;
+        codes[insertBefore + 3].operand = 331;
+        codes[insertBefore + 2].opcode = OpCodes.Ldc_I4_1;
         codes.Insert(insertBefore + 1, new CodeInstruction(OpCodes.Call, get_zero));
     }
 
