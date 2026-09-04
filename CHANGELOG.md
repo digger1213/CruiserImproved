@@ -1,3 +1,8 @@
+## 1.6.4
+
+## Fixes
+- \[Client] Fixed hit sound not playing for enemies at high speed (Thanks ButteryStancakes)
+
 ## 1.6.3
 
 ## Fixes
